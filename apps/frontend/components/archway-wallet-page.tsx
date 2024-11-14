@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,8 +12,8 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { Copy, ArrowUpRight, RefreshCcw, Moon, Sun } from 'lucide-react'
+} from "@/components/ui/navigation-menu";
+import { Copy, ArrowUpRight, RefreshCcw, Moon, Sun } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,21 +21,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { useTheme } from "next-themes"
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { useTheme } from "next-themes";
 
 export function ArchwayWalletPageComponent() {
-  const [balance, setBalance] = useState(100.23)
-  const [tokenName, setTokenName] = useState('')
-  const [tokenSymbol, setTokenSymbol] = useState('')
-  const [tokenSupply, setTokenSupply] = useState('')
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const [tokenName, setTokenName] = useState("");
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [tokenSupply, setTokenSupply] = useState("");
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Sample token data - replace with API data later
   const tokens = [
@@ -43,9 +42,9 @@ export function ArchwayWalletPageComponent() {
       name: "NUSD",
       symbol: "NUSD",
       balance: "2,180.00",
-      value: 2180.00,
-      change: 0.00,
-      icon: "/placeholder.svg?height=32&width=32"
+      value: 2180.0,
+      change: 0.0,
+      icon: "/placeholder.svg?height=32&width=32",
     },
     {
       name: "Arch",
@@ -53,7 +52,7 @@ export function ArchwayWalletPageComponent() {
       balance: "0.97646",
       value: 208.06,
       change: 3.57,
-      icon: "/placeholder.svg?height=32&width=32"
+      icon: "/placeholder.svg?height=32&width=32",
     },
     {
       name: "Saturn",
@@ -61,27 +60,32 @@ export function ArchwayWalletPageComponent() {
       balance: "1.00",
       value: 312.83,
       change: 15.64,
-      icon: "/placeholder.svg?height=32&width=32"
-    }
-  ]
+      icon: "/placeholder.svg?height=32&width=32",
+    },
+  ];
 
   // Sample created tokens data
   const createdTokens = [
     { createdAt: "2023-11-15", ticker: "AWE", supply: 1000000, minted: 750000 },
     { createdAt: "2023-11-16", ticker: "COOL", supply: 500000, minted: 500000 },
-    { createdAt: "2023-11-17", ticker: "MOON", supply: 2000000, minted: 1000000 },
-  ]
+    {
+      createdAt: "2023-11-17",
+      ticker: "MOON",
+      supply: 2000000,
+      minted: 1000000,
+    },
+  ];
 
   const handleCreateToken = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Creating token:', { tokenName, tokenSymbol, tokenSupply })
-    setTokenName('')
-    setTokenSymbol('')
-    setTokenSupply('')
-  }
+    e.preventDefault();
+    console.log("Creating token:", { tokenName, tokenSymbol, tokenSupply });
+    setTokenName("");
+    setTokenSymbol("");
+    setTokenSupply("");
+  };
 
   if (!mounted) {
-    return null
+    return null;
   }
 
   return (
@@ -106,7 +110,8 @@ export function ArchwayWalletPageComponent() {
                               Coming Soon
                             </div>
                             <p className="text-sm text-center text-muted-foreground mt-2">
-                              Trading features will be available in the near future.
+                              Trading features will be available in the near
+                              future.
                             </p>
                           </a>
                         </NavigationMenuLink>
@@ -128,7 +133,8 @@ export function ArchwayWalletPageComponent() {
                               Coming Soon
                             </div>
                             <p className="text-sm text-center text-muted-foreground mt-2">
-                              Explore features will be available in the near future.
+                              Explore features will be available in the near
+                              future.
                             </p>
                           </a>
                         </NavigationMenuLink>
@@ -144,7 +150,11 @@ export function ArchwayWalletPageComponent() {
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
               <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
@@ -160,29 +170,29 @@ export function ArchwayWalletPageComponent() {
                 <p className="text-lg text-green-500">+$19.21 +0.72%</p>
               </div>
               <div className="grid grid-cols-4 gap-4">
-                <Button 
-                  className="flex flex-col items-center justify-center h-20" 
+                <Button
+                  className="flex flex-col items-center justify-center h-20"
                   variant="outline"
                 >
                   <Copy className="h-5 w-5 mb-1" />
                   <span className="text-xs">Receive</span>
                 </Button>
-                <Button 
-                  className="flex flex-col items-center justify-center h-20" 
+                <Button
+                  className="flex flex-col items-center justify-center h-20"
                   variant="outline"
                 >
                   <ArrowUpRight className="h-5 w-5 mb-1" />
                   <span className="text-xs">Send</span>
                 </Button>
-                <Button 
-                  className="flex flex-col items-center justify-center h-20" 
+                <Button
+                  className="flex flex-col items-center justify-center h-20"
                   variant="outline"
                 >
                   <RefreshCcw className="h-5 w-5 mb-1" />
                   <span className="text-xs">Swap</span>
                 </Button>
-                <Button 
-                  className="flex flex-col items-center justify-center h-20" 
+                <Button
+                  className="flex flex-col items-center justify-center h-20"
                   variant="outline"
                 >
                   <span className="text-lg mb-1">$</span>
@@ -204,7 +214,9 @@ export function ArchwayWalletPageComponent() {
                       />
                       <div>
                         <h3 className="font-medium">{token.name}</h3>
-                        <p className="text-sm text-muted-foreground">{token.balance} {token.symbol}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {token.balance} {token.symbol}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -221,7 +233,9 @@ export function ArchwayWalletPageComponent() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">Create New Token</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Create New Token
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateToken} className="space-y-6">
@@ -256,10 +270,7 @@ export function ArchwayWalletPageComponent() {
                     required
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full py-6 text-lg"
-                >
+                <Button type="submit" className="w-full py-6 text-lg">
                   Create Token
                 </Button>
               </form>
@@ -268,7 +279,9 @@ export function ArchwayWalletPageComponent() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">Created Tokens</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Created Tokens
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -288,8 +301,13 @@ export function ArchwayWalletPageComponent() {
                       <TableCell>{token.supply.toLocaleString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Progress value={(token.minted / token.supply) * 100} className="w-24" />
-                          <span>{((token.minted / token.supply) * 100).toFixed(0)}%</span>
+                          <Progress
+                            value={(token.minted / token.supply) * 100}
+                            className="w-24"
+                          />
+                          <span>
+                            {((token.minted / token.supply) * 100).toFixed(0)}%
+                          </span>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -301,5 +319,5 @@ export function ArchwayWalletPageComponent() {
         </div>
       </main>
     </div>
-  )
+  );
 }
