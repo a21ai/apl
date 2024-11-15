@@ -23,7 +23,16 @@ export default function Home() {
   console.log("Is Connected", isConnected);
 
   return (
-    <div className="max-w-xl mx-auto space-y-4 flex flex-col justify-center items-center h-full min-h-screen">
+    <div className="max-w-md mx-auto space-y-4 flex flex-col items-center min-h-screen pt-8">
+      <Card 
+        className="backdrop-blur-md bg-white/10 hover:bg-black/40 border-white/20 p-4 rounded-3xl w-full cursor-pointer transition-all duration-300 ease-in-out"
+        onClick={() => window.location.href = '/'}
+      >
+        <div className="flex justify-center items-center">
+          <p className="text-white text-3xl font-bold tracking-wider">[ archway ]</p>
+        </div>
+      </Card>
+
       {!isConnected ? (
         <Card className="p-4 w-full">
           <p className="text-white text-lg font-semibold text-center mb-4">
@@ -38,16 +47,12 @@ export default function Home() {
               <div>
                 <p className="text-white/60 text-xs">Token Address</p>
                 <p className="text-white text-sm font-mono">
-                  {isConnected
-                    ? address
-                      ? truncateAddress(address)
-                      : "..."
-                    : "Not Connected"}
+                  {isConnected ? address ? truncateAddress(address) : "..." : "Not Connected"}
                 </p>
               </div>
               <div className="flex items-center justify-center w-6">
                 <Power
-                  className={`w-6 h-6 ${isConnected ? "text-green-500" : "text-red-500"} cursor-pointer transition-colors`}
+                  className={`w-5 h-5 text-gray-400 cursor-pointer transition-colors`}
                   onClick={() => disconnect()}
                 />
               </div>
