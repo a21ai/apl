@@ -1,39 +1,15 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
-import { ConnectWallet } from "@/components/ConnectWallet";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { useProgramAccounts } from "@/lib/hooks/useProgramAccounts";
 
-const tokens = [
-  {
-    name: "NUSD",
-    symbol: "NUSD",
-    balance: "2,180.00",
-    value: 2180.0,
-    change: 0.0,
-    icon: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    name: "Arch",
-    symbol: "ARCH",
-    balance: "0.97646",
-    value: 208.06,
-    change: 3.57,
-    icon: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    name: "Saturn",
-    symbol: "SAT",
-    balance: "1.00",
-    value: 312.83,
-    change: 15.64,
-    icon: "/placeholder.svg?height=32&width=32",
-  },
-];
+// Helper function to truncate addresses for display
+const truncateAddress = (address: string) => {
+  return `${address.slice(0, 5)}...${address.slice(-5)}`;
+};
 
 export default function Home() {
   const laserEyes = useLaserEyes();
@@ -41,6 +17,8 @@ export default function Home() {
   const { publicKey } = laserEyes;
   const { address } = useArchAddress(publicKey);
   const { accounts } = useProgramAccounts(publicKey);
+
+  // Keep the existing not-connected state
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black p-4 md:p-8 relative overflow-hidden">
@@ -60,7 +38,7 @@ export default function Home() {
               <p className="text-white/60">
                 Connect your wallet to get started
               </p>
-              <ConnectWallet />
+              <Button>Connect Wallet</Button>
             </CardContent>
           </Card>
         </div>
@@ -68,96 +46,97 @@ export default function Home() {
     );
   }
 
-  console.log("Public Key", publicKey);
-  console.log("Address", address);
-  console.log("Accounts", accounts);
-  const copyAddress = async () => {
-    if (address) {
-      await navigator.clipboard.writeText(address);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black p-4 md:p-8 relative overflow-hidden">
-      {/* Floating Elements */}
+      {/* Floating Elements - keeping existing animation elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-20 h-20 bg-pink-500/30 rounded-full blur-xl animate-float" />
         <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-xl animate-float-delayed" />
         <div className="absolute bottom-1/4 right-1/3 w-24 h-24 bg-purple-500/20 rounded-full blur-xl animate-float" />
       </div>
 
-      <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
-        <Card className="backdrop-blur-md bg-white/10 border-white/20 w-full max-w-xl">
-          <CardContent className="space-y-6 pt-6">
-            <div className="text-center space-y-2">
-              <p className="text-5xl font-bold text-white">$2,700.89</p>
-              <p className="text-lg text-green-400">+$19.21 +0.72%</p>
-              <div className="flex items-center justify-center gap-2">
-                <code className="relative rounded bg-white/5 px-[0.3rem] py-[0.2rem] font-mono text-sm text-white/80">
-                  {address ? address : "..."}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={copyAddress}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
+      <div className="max-w-md mx-auto space-y-4">
+        <Card className="backdrop-blur-md bg-white/10 border-white/20 p-6 rounded-3xl">
+          <div className="flex justify-between mb-6">
+            <div>
+              <p className="text-white/60 text-xs">BTC Address</p>
+              <p className="text-white text-sm font-mono">
+                {address ? truncateAddress(address) : "..."}
+              </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                className="flex flex-col items-center justify-center h-20 bg-white/5 hover:bg-white/10 text-white border-white/10"
-                variant="outline"
-              >
-                <Copy className="h-5 w-5 mb-1" />
-                <span className="text-xs">Receive</span>
-              </Button>
-              <Button
-                className="flex flex-col items-center justify-center h-20 bg-white/5 hover:bg-white/10 text-white border-white/10"
-                variant="outline"
-              >
-                <ArrowUpRight className="h-5 w-5 mb-1" />
-                <span className="text-xs">Send</span>
-              </Button>
+            <div className="text-right">
+              <p className="text-white/60 text-xs">Token Address</p>
+              <p className="text-white text-sm font-mono">
+                {publicKey ? truncateAddress(publicKey.toString()) : "..."}
+              </p>
             </div>
+          </div>
 
-            <div className="space-y-2 pt-4">
-              {tokens.map((token) => (
-                <div
-                  key={token.symbol}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={token.icon}
-                      alt={token.name}
-                      className="w-8 h-8 rounded-full bg-white/10"
-                    />
-                    <div>
-                      <h3 className="font-medium text-white">{token.name}</h3>
-                      <p className="text-sm text-white/60">
-                        {token.balance} {token.symbol}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-white">
-                      ${token.value.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-green-400">
-                      +${token.change.toFixed(2)}
-                    </p>
-                  </div>
+          <div>
+            <p className="text-white/60 text-sm">Available Balance</p>
+            <div className="flex items-center gap-2">
+              <p className="text-white text-3xl font-semibold">2,450</p>
+              {/* Arch Logo SVG */}
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 163 118"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-white"
+              >
+                {/* ... SVG paths from the example ... */}
+              </svg>
+            </div>
+          </div>
+
+          <div className="flex gap-4 mt-6">
+            <Button
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20"
+              variant="ghost"
+            >
+              Send
+            </Button>
+            <Button
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20"
+              variant="ghost"
+            >
+              Receive
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="backdrop-blur-md bg-white/10 border-white/20 rounded-3xl overflow-hidden">
+          <CardHeader className="border-b border-white/10">
+            <CardTitle className="text-white text-xl">Token Balances</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
+                  <img
+                    src="/placeholder.svg?height=48&width=48"
+                    alt="Angry Cat Token"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              ))}
+                <div>
+                  <p className="text-white font-semibold">218 ANGRY CAT</p>
+                  <p className="text-white/60 text-sm">$436.00 USD</p>
+                </div>
+              </div>
+              <Button
+                className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20"
+                variant="ghost"
+              >
+                Mint Tokens
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Keeping existing animation styles */}
       <style jsx global>{`
         @keyframes float {
           0% {
