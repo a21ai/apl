@@ -4,9 +4,11 @@
 
 import { useLaserEyes, UNISAT } from "@omnisat/lasereyes";
 import { Button } from "@/components/ui/button";
+import { archConnection } from "@/lib/arch";
 
 export function ConnectWallet() {
-  const { connect, disconnect, connected, hasUnisat } = useLaserEyes();
+  const { connect, disconnect, connected, hasUnisat, publicKey } =
+    useLaserEyes();
 
   const handleConnect = async () => {
     if (!hasUnisat) {
