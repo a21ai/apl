@@ -6,6 +6,7 @@ import { Copy, ArrowUpRight } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
+import { useProgramAccounts } from "@/lib/hooks/useProgramAccounts";
 
 const tokens = [
   {
@@ -38,8 +39,8 @@ export default function Home() {
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey } = laserEyes;
-  const { address, isLoading, error } = useArchAddress(publicKey);
-
+  const { address } = useArchAddress(publicKey);
+  const { accounts } = useProgramAccounts(publicKey);
   if (!isConnected) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -58,7 +59,7 @@ export default function Home() {
 
   console.log("Public Key", publicKey);
   console.log("Address", address);
-
+  console.log("Accounts", accounts);
   const copyAddress = async () => {
     if (address) {
       await navigator.clipboard.writeText(address);

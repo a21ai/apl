@@ -7,20 +7,20 @@ import { PubkeyUtil } from "@saturnbtcio/arch-sdk";
  * @param publicKey - The public key to fetch the address for
  * @returns Object containing the address data, loading state, and error state
  */
-export function useArchAddress(publicKey: string) {
+export function useProgramAccounts(publicKey: string) {
   // Define fetcher function that uses archConnection
   const fetcher = async (key: string) => {
     // Remove the prefix before processing
-    const actualKey = key.replace("arch-address:", "");
+    const actualKey = key.replace("program-accounts:", "");
     if (!actualKey) return null;
     try {
       console.log(Buffer.from(actualKey, "hex"));
-      const address = await archConnection.getAccountAddress(
+      const address = await archConnection.getProgramAccounts(
         PubkeyUtil.fromHex(actualKey)
       );
       return address;
     } catch (error) {
-      console.error("Error fetching arch address:", error);
+      console.error("Error fetching program accounts:", error);
       throw error;
     }
   };
@@ -28,7 +28,7 @@ export function useArchAddress(publicKey: string) {
   // Use SWR hook with conditional fetching and prefixed key
   const { data, error, isLoading } = useSWR(
     // Add prefix to create unique cache key
-    publicKey ? `arch-address:${publicKey}` : null,
+    publicKey ? `program-accounts:${publicKey}` : null,
     fetcher,
     {
       revalidateOnFocus: false, // Disable automatic revalidation on window focus
@@ -37,7 +37,7 @@ export function useArchAddress(publicKey: string) {
   );
 
   return {
-    address: data,
+    accounts: data,
     isLoading,
     error,
   };
