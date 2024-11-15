@@ -115,13 +115,13 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
                   <img
-                    src="/placeholder.svg?height=48&width=48"
-                    alt="Angry Cat Token"
+                    src="/stoned-cat.gif"
+                    alt="Stoned Cat Token"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">218 ANGRY CAT</p>
+                  <p className="text-white font-semibold">218 Stoned Cat</p>
                   <p className="text-white/60 text-sm">$436.00 USD</p>
                 </div>
               </div>
