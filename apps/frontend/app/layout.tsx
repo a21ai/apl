@@ -30,7 +30,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <DefaultLayout>{children}</DefaultLayout>
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black p-4 md:p-8 relative overflow-hidden">
+          {/* Floating Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[20%] left-[20%] w-48 h-48 bg-pink-500/30 rounded-full blur-2xl animate-float" />
+            <div className="absolute top-[25%] right-[25%] w-64 h-64 bg-blue-500/20 rounded-full blur-2xl animate-float-delayed" />
+            <div className="absolute bottom-[30%] left-[30%] w-56 h-56 bg-purple-500/20 rounded-full blur-2xl animate-float" />
+          </div>
+
+          <DefaultLayout>{children}</DefaultLayout>
+        </div>
       </body>
     </html>
   );
