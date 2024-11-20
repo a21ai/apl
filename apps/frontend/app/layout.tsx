@@ -18,6 +18,14 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Archway.gg",
   description: "Your gateway to the Arch ecosystem",
+  openGraph: {
+    images: [{
+      url: 'https://media.ordinalswallet.com/b4ed12ce805c6d1ab0ab44e7b454f20cb4c81e4ec8b1999616839efb397bc243.png',
+      width: 1200,
+      height: 630,
+      alt: 'Description of the image',
+    }],
+  },
 };
 
 export default function RootLayout({
@@ -27,12 +35,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta property="og:image" content="https://media.ordinalswallet.com/b4ed12ce805c6d1ab0ab44e7b454f20cb4c81e4ec8b1999616839efb397bc243.png">
-        <meta property="og:image:width" content="1200">
-        <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" content="Description of the image">
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
