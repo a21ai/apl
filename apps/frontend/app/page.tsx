@@ -29,14 +29,7 @@ export default function Home() {
 
       <div className="max-w-md mx-auto space-y-4">
         {/* Keep existing header card */}
-        <Card 
-          className="backdrop-blur-md bg-white/10 hover:bg-black/40 border-white/20 p-4 rounded-3xl w-full cursor-pointer transition-all duration-300 ease-in-out"
-          onClick={() => window.location.href = '/'}
-        >
-          <div className="flex justify-center items-center">
-            <p className="text-white text-3xl font-bold tracking-wider">[ archway ]</p>
-          </div>
-        </Card>
+
 
         {!isConnected ? (
           <Card className="p-4 w-full">
