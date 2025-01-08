@@ -6,9 +6,9 @@ import {
   Instruction,
   AccountMeta
 } from "@saturnbtcio/arch-sdk";
-import { webcrypto as crypto } from 'node:crypto';
 import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
+import { sha256 } from '@noble/hashes/sha2';
 
 // Type for converting Solana PublicKey to Arch Pubkey
 type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;
@@ -39,10 +39,10 @@ Buffer.from("associated-token-account").copy(associatedTokenAccountProgramIdByte
 export const ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new Uint8Array(associatedTokenAccountProgramIdBytes);
 
 // Associated Token Account functions
-export async function deriveAssociatedTokenAddress(
+export function deriveAssociatedTokenAddress(
   wallet: Pubkey,
   mint: Pubkey
-): Promise<[Pubkey, number]> {
+): [Pubkey, number] {
   // Derive PDA using SHA256 hash of concatenated seeds
   const seeds = Buffer.concat([
     Buffer.from(wallet),
@@ -51,13 +51,9 @@ export async function deriveAssociatedTokenAddress(
   ]);
   
   const programId = Buffer.from(ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID);
-  const hash = await crypto.subtle.digest(
-    'SHA-256',
-    Buffer.concat([seeds, programId])
-  );
-
-  // Return the first 32 bytes as the PDA and the last byte as bump seed
-  const hashArray = new Uint8Array(hash);
+  
+  // Use noble hashes for SHA-256
+  const hashArray = sha256(Buffer.concat([seeds, programId]));
   // Ensure we have a valid bump seed
   if (hashArray.length < 32) {
     throw new Error('Invalid hash length for PDA derivation');
