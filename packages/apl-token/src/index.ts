@@ -6,9 +6,11 @@ import {
   Instruction,
   AccountMeta
 } from "@saturnbtcio/arch-sdk";
-import { webcrypto as crypto } from 'node:crypto';
 import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
+
+// Use browser's native crypto API
+const crypto = typeof window !== 'undefined' ? window.crypto : require('crypto').webcrypto;
 
 // Type for converting Solana PublicKey to Arch Pubkey
 type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;

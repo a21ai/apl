@@ -13,12 +13,45 @@ const nextConfig = {
         crypto: false,
         stream: false,
         buffer: false,
+        util: false,
+        assert: false,
+        fs: false,
+        path: false,
+        os: false
       };
+
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'node:crypto': false,
+        'node:stream': false,
+        'node:buffer': false,
+        'node:util': false,
+        'node:assert': false,
+        'node:fs': false,
+        'node:path': false,
+        'node:os': false
+      };
+
       config.plugins.push(
         new webpack.ProvidePlugin({
-          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+          Buffer: ['buffer', 'Buffer']
         })
       );
+
+      // Ensure proper handling of ESM modules
+      config.module = {
+        ...config.module,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.m?js/,
+            resolve: {
+              fullySpecified: false
+            }
+          }
+        ]
+      };
     }
     return config;
   }
