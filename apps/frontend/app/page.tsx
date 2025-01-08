@@ -75,13 +75,13 @@ export default function Home() {
               <div className="flex justify-center gap-4 mt-6">
                 <Button 
                   variant="ghost"
-                  className="flex-1"
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
                 >
                   <Send className="mr-2 h-5 w-5" /> Send
                 </Button>
                 <Button
                   variant="ghost"
-                  className="flex-1"
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
                 >
                   <ArrowDownToLine className="mr-2 h-5 w-5" /> Receive
                 </Button>
