@@ -22,8 +22,8 @@ describe('Associated Token Account', () => {
     payerKeypair = Keypair.generate();
   });
 
-  it('should derive associated token address with correct seeds', async () => {
-    const [associatedAddress, bumpSeed] = await deriveAssociatedTokenAddress(
+  it('should derive associated token address with correct seeds', () => {
+    const [associatedAddress, bumpSeed] = deriveAssociatedTokenAddress(
       toArchPubkey(walletKeypair.publicKey),
       toArchPubkey(mintKeypair.publicKey)
     );

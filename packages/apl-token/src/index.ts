@@ -39,10 +39,10 @@ Buffer.from("associated-token-account").copy(associatedTokenAccountProgramIdByte
 export const ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new Uint8Array(associatedTokenAccountProgramIdBytes);
 
 // Associated Token Account functions
-export async function deriveAssociatedTokenAddress(
+export function deriveAssociatedTokenAddress(
   wallet: Pubkey,
   mint: Pubkey
-): Promise<[Pubkey, number]> {
+): [Pubkey, number] {
   // Derive PDA using SHA256 hash of concatenated seeds
   const seeds = Buffer.concat([
     Buffer.from(wallet),
@@ -53,10 +53,7 @@ export async function deriveAssociatedTokenAddress(
   const programId = Buffer.from(ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID);
   
   // Use noble hashes for SHA-256
-  const hash = sha256(Buffer.concat([seeds, programId]));
-
-  // hash is already a Uint8Array from noble hashes
-  const hashArray = hash;
+  const hashArray = sha256(Buffer.concat([seeds, programId]));
   // Ensure we have a valid bump seed
   if (hashArray.length < 32) {
     throw new Error('Invalid hash length for PDA derivation');
