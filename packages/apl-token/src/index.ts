@@ -20,6 +20,90 @@ const TOKEN_PROGRAM_ID = new PublicKey(programIdBytes);
 // Export program ID for external use
 export const APL_TOKEN_PROGRAM_ID = TOKEN_PROGRAM_ID;
 
+// Associated Token Account Program ID - matches Rust implementation
+// pub fn id() -> Pubkey {
+//     Pubkey::from_slice(b"associated-token-account00000000")
+// }
+const associatedTokenAccountProgramIdBytes = Buffer.alloc(32);
+Buffer.from("associated-token-account").copy(associatedTokenAccountProgramIdBytes);
+export const ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(associatedTokenAccountProgramIdBytes);
+
+/**
+ * Derives the associated token account address for a given wallet and token mint.
+ * Matches the Rust implementation's PDA derivation exactly.
+ * @param wallet The wallet address to derive for
+ * @param mint The token mint address
+ * @returns A tuple of [associated token address, bump seed]
+ */
+export async function deriveAssociatedTokenAddress(
+  wallet: PublicKey,
+  mint: PublicKey,
+): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddress(
+    [
+      wallet.toBuffer(),
+      APL_TOKEN_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+}
+
+/**
+ * Creates an associated token account for a given wallet and token mint.
+ * Follows the exact sequence from the Rust implementation:
+ * 1. Allocate space for the token account
+ * 2. Assign the account to the APL Token program
+ * 3. Initialize the token account
+ * 
+ * @param wallet The wallet to create an associated token account for
+ * @param mint The token mint address
+ * @param payer The account paying for the creation (usually the wallet)
+ * @param signer Callback for transaction signing
+ * @returns Signed transaction for creating the associated token account
+ */
+export async function createAssociatedTokenAccountTx(
+  wallet: PublicKey,
+  mint: PublicKey,
+  payer: PublicKey,
+  signer: SignerCallback
+): Promise<Transaction> {
+  const [associatedTokenAddress, bumpSeed] = await deriveAssociatedTokenAddress(wallet, mint);
+  const tx = new Transaction();
+
+  // Calculate account space from Rust implementation (apl_token::state::Account::LEN)
+  const space = 165; // Matches Rust Account struct size
+
+  // 1. Allocate space for the account
+  const createAccountIx = SystemProgram.createAccount({
+    fromPubkey: payer,
+    newAccountPubkey: associatedTokenAddress,
+    lamports: 0, // Rent will be handled by the program
+    space: space,
+    programId: APL_TOKEN_PROGRAM_ID
+  });
+  tx.add(createAccountIx);
+
+  // 2. Assign to APL Token program (ownership)
+  const assignIx = SystemProgram.assign({
+    accountPubkey: associatedTokenAddress,
+    programId: APL_TOKEN_PROGRAM_ID
+  });
+  tx.add(assignIx);
+
+  // 3. Initialize the token account
+  const initializeIx = await initializeAccountTx(
+    associatedTokenAddress,
+    mint,
+    wallet,
+    payer,
+    signer
+  );
+  tx.add(initializeIx);
+
+  return await signer(tx);
+}
+
 // Signer callback type
 export type SignerCallback = (transaction: Transaction) => Promise<Transaction>;
 
