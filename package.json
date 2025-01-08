@@ -10,7 +10,8 @@
   "devDependencies": {
     "prettier": "^3.2.5",
     "turbo": "^2.2.3",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "webpack": "^5.97.1"
   },
   "engines": {
     "node": ">=18"

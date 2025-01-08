@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowDownToLine, Power, Coins } from 'lucide-react';
+import { Power, Send, ArrowDownToLine } from 'lucide-react';
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { ConnectWallet } from "@/components/ConnectWallet";
@@ -54,42 +54,39 @@ export default function Home() {
                     onClick={() => disconnect()}
                   />
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
-                    <img 
-                      src="/stoned-cat.gif"
-                      alt="Stoned Cat Token" 
-                      className="w-full h-full object-cover"
-                    />
+                {address && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
+                      <img 
+                        src="/stoned-cat.gif"
+                        alt="Stoned Cat Token" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-white uppercase font-bold">Stoner Cat</p>
+                      <p className="text-white/60 text-sm">218 SCAT</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white uppercase font-bold">Stoner Cat</p>
-                    <p className="text-white/60 text-sm">218 SCAT</p>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
-                  variant="ghost"
-                >
-                  <Coins className="mr-2 h-5 w-5" /> Mint SCAT
-                </Button>
+                )}
               </div>
             </Card>
-
-            <div className="flex justify-center gap-4 mt-6">
-              <Button
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
-                variant="ghost"
-              >
-                <Send className="mr-2 h-5 w-5" /> Send
-              </Button>
-              <Button
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
-                variant="ghost"
-              >
-                <ArrowDownToLine className="mr-2 h-5 w-5" /> Receive
-              </Button>
-            </div>
+            {address && (
+              <div className="flex justify-center gap-4 mt-6">
+                <Button 
+                  variant="ghost"
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
+                >
+                  <Send className="mr-2 h-5 w-5" /> Send
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
+                >
+                  <ArrowDownToLine className="mr-2 h-5 w-5" /> Receive
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>
