@@ -104,23 +104,23 @@ export function TokenBalance({ walletAddress }: TokenBalanceProps) {
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Token Balance</h2>
+    <Card className="backdrop-blur-md bg-white/10 border-white/20 p-6 rounded-3xl">
+      <h2 className="text-xl font-semibold mb-4 text-white">Token Balance</h2>
       <div className="space-y-4">
         {loading ? (
-          <p>Loading balance...</p>
+          <p className="text-white/60">Loading balance...</p>
         ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-400">{error}</p>
         ) : (
           <div>
-            <p className="text-sm text-gray-500">Token ID</p>
-            <p className="font-mono mb-2">{HARDCODED_TOKEN_ID}</p>
-            <p className="text-sm text-gray-500">Balance</p>
-            <p className="text-2xl font-bold">{balance.toString()}</p>
+            <p className="text-white/60 text-xs">Token ID</p>
+            <p className="text-white text-sm font-mono mb-2">{HARDCODED_TOKEN_ID}</p>
+            <p className="text-white/60 text-xs">Balance</p>
+            <p className="text-white text-2xl font-bold">{balance.toString()}</p>
             
             <div className="mt-4">
-              <p className="text-sm text-gray-500 mb-2">Your Token Account Address</p>
-              <p className="font-mono text-sm break-all">{walletAddress}</p>
+              <p className="text-white/60 text-xs mb-2">Your Token Account Address</p>
+              <p className="text-white text-sm font-mono break-all">{walletAddress}</p>
             </div>
           </div>
         )}
@@ -129,16 +129,17 @@ export function TokenBalance({ walletAddress }: TokenBalanceProps) {
           <Button 
             onClick={handleCreateTokenAccount}
             disabled={loading}
-            className="w-full"
+            variant="ghost"
+            className="w-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
           >
             Create Token Account
           </Button>
           
           <Button 
             onClick={handleSend}
+            variant="ghost"
             disabled={loading}
-            variant="outline"
-            className="w-full"
+            className="w-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
           >
             Send 10 Tokens
           </Button>
