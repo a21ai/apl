@@ -8,9 +8,7 @@ import {
 } from "@saturnbtcio/arch-sdk";
 import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
-
-// Use browser's native crypto API
-const crypto = typeof window !== 'undefined' ? window.crypto : require('crypto').webcrypto;
+import { sha256 } from '@noble/hashes/sha2';
 
 // Type for converting Solana PublicKey to Arch Pubkey
 type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;
@@ -53,13 +51,12 @@ export async function deriveAssociatedTokenAddress(
   ]);
   
   const programId = Buffer.from(ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID);
-  const hash = await crypto.subtle.digest(
-    'SHA-256',
-    Buffer.concat([seeds, programId])
-  );
+  
+  // Use noble hashes for SHA-256
+  const hash = sha256(Buffer.concat([seeds, programId]));
 
-  // Return the first 32 bytes as the PDA and the last byte as bump seed
-  const hashArray = new Uint8Array(hash);
+  // hash is already a Uint8Array from noble hashes
+  const hashArray = hash;
   // Ensure we have a valid bump seed
   if (hashArray.length < 32) {
     throw new Error('Invalid hash length for PDA derivation');
