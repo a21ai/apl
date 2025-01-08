@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { TokenInstruction, AuthorityType, serializeInstruction, serializeU64LE, serializeOptionPubkey } from '../index.js';
+import { TokenInstruction, AuthorityType, serializeInstruction, serializeU64LE, serializeOptionPubkey, APL_TOKEN_PROGRAM_ID } from '../index.js';
 import { describe, it, expect } from '@jest/globals';
 
 describe('Token Instruction Serialization', () => {
@@ -123,5 +123,15 @@ describe('Token Instruction Serialization', () => {
     const somePubkey = serializeOptionPubkey(TEST_PUBKEY);
     expect(somePubkey.length).toBe(36); // 4 bytes tag + 32 bytes pubkey
     expect(Buffer.compare(somePubkey.slice(0, 4), Buffer.from([1, 0, 0, 0]))).toBe(0);
+  });
+});
+
+describe('APL Token Program ID', () => {
+  it('should match Rust implementation program ID bytes', () => {
+    const expectedBytes = Buffer.alloc(32);
+    Buffer.from("apl-token").copy(expectedBytes);
+    // Convert PublicKey bytes to Buffer for comparison
+    const actualBytes = Buffer.from(APL_TOKEN_PROGRAM_ID.toBytes());
+    expect(actualBytes).toEqual(expectedBytes);
   });
 });

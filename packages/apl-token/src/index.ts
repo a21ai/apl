@@ -7,8 +7,18 @@ import {
 } from "@solana/web3.js";
 import { Buffer } from 'buffer';
 
-// Token Program ID - this should be configured appropriately
-const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+// APL Token Program ID - matches Rust implementation
+// pub fn id() -> Pubkey {
+//     Pubkey::from_slice(b"apl-token00000000000000000000000")
+// }
+// Convert string to bytes, padding to 32 bytes
+const programIdBytes = Buffer.alloc(32);
+Buffer.from("apl-token").copy(programIdBytes);
+
+const TOKEN_PROGRAM_ID = new PublicKey(programIdBytes);
+
+// Export program ID for external use
+export const APL_TOKEN_PROGRAM_ID = TOKEN_PROGRAM_ID;
 
 // Signer callback type
 export type SignerCallback = (transaction: Transaction) => Promise<Transaction>;
