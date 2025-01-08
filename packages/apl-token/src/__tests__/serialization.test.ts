@@ -1,16 +1,22 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { TokenInstruction, AuthorityType, serializeInstruction, serializeU64LE, serializeOptionPubkey, APL_TOKEN_PROGRAM_ID } from '../index.js';
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 
 describe('Token Instruction Serialization', () => {
-  const TEST_PUBKEY = new PublicKey(new Uint8Array(32).fill(1));
-  const TEST_PUBKEY_2 = new PublicKey(new Uint8Array(32).fill(2));
-  const TEST_PUBKEY_3 = new PublicKey(new Uint8Array(32).fill(3));
+  let testKeypair: Keypair;
+  let testKeypair2: Keypair;
+  let testKeypair3: Keypair;
+
+  beforeEach(() => {
+    testKeypair = Keypair.generate();
+    testKeypair2 = Keypair.generate();
+    testKeypair3 = Keypair.generate();
+  });
 
   it('should serialize InitializeMint instruction correctly', () => {
     const data = {
       decimals: 2,
-      mint_authority: TEST_PUBKEY,
+      mint_authority: testKeypair.publicKey,
       freeze_authority: null,
     };
     const result = serializeInstruction(TokenInstruction.InitializeMint, data);
@@ -19,7 +25,7 @@ describe('Token Instruction Serialization', () => {
     const expected = Buffer.concat([
       Buffer.from([0]), // instruction tag
       Buffer.from([2]), // decimals
-      Buffer.from(new Uint8Array(32).fill(1)), // mint_authority
+      Buffer.from(testKeypair.publicKey.toBytes()), // mint_authority
       Buffer.from([0, 0, 0, 0]), // freeze_authority: None
     ]);
     
@@ -57,7 +63,7 @@ describe('Token Instruction Serialization', () => {
   it('should serialize SetAuthority instruction correctly', () => {
     const data = {
       authority_type: AuthorityType.MintTokens,
-      new_authority: TEST_PUBKEY_2,
+      new_authority: testKeypair2.publicKey,
     };
     const result = serializeInstruction(TokenInstruction.SetAuthority, data);
     
@@ -66,7 +72,7 @@ describe('Token Instruction Serialization', () => {
       Buffer.from([6]), // instruction tag
       Buffer.from([AuthorityType.MintTokens]), // authority type
       Buffer.from([1, 0, 0, 0]), // Some
-      Buffer.from(new Uint8Array(32).fill(2)), // new_authority
+      Buffer.from(testKeypair2.publicKey.toBytes()), // new_authority
     ]);
     
     expect(Buffer.compare(result, expected)).toBe(0);
@@ -120,7 +126,7 @@ describe('Token Instruction Serialization', () => {
     expect(Buffer.compare(nullPubkey, Buffer.from([0, 0, 0, 0]))).toBe(0);
     
     // Test Some pubkey
-    const somePubkey = serializeOptionPubkey(TEST_PUBKEY);
+    const somePubkey = serializeOptionPubkey(testKeypair.publicKey);
     expect(somePubkey.length).toBe(36); // 4 bytes tag + 32 bytes pubkey
     expect(Buffer.compare(somePubkey.slice(0, 4), Buffer.from([1, 0, 0, 0]))).toBe(0);
   });
