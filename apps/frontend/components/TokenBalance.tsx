@@ -5,7 +5,7 @@ import { HARDCODED_TOKEN_ID } from "../lib/constants";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { createAssociatedTokenAccountTx, transferTx } from "@repo/apl-token";
-import { Pubkey, RuntimeTransaction } from "@saturnbtcio/arch-sdk";
+import { RuntimeTransaction } from "@saturnbtcio/arch-sdk";
 
 interface TokenBalanceProps {
   walletAddress: string;
@@ -51,10 +51,9 @@ export function TokenBalance({ walletAddress }: TokenBalanceProps) {
       // Mock signer function for first pass implementation
       const mockSigner = async (tx: RuntimeTransaction) => tx;
       
-      // Convert addresses to Uint8Array format for mock implementation
-      // Note: In production, we would use proper Pubkey conversion
-      const walletPubkey = Buffer.from(walletAddress);
-      const tokenPubkey = Buffer.from(HARDCODED_TOKEN_ID);
+      // Convert string addresses to Uint8Array (Pubkey) format
+      const walletPubkey = new Uint8Array(Buffer.from(walletAddress, 'hex'));
+      const tokenPubkey = new Uint8Array(Buffer.from(HARDCODED_TOKEN_ID, 'hex'));
       
       const tx = await createAssociatedTokenAccountTx(
         walletPubkey,
@@ -82,8 +81,8 @@ export function TokenBalance({ walletAddress }: TokenBalanceProps) {
       const mockSigner = async (tx: RuntimeTransaction) => tx;
       
       // Mock recipient address for demo
-      const recipientAddress = Buffer.from("demo-recipient-address");
-      const senderAddress = Buffer.from(walletAddress);
+      const recipientAddress = new Uint8Array(Buffer.from("demo-recipient-address", 'hex'));
+      const senderAddress = new Uint8Array(Buffer.from(walletAddress, 'hex'));
       
       const tx = await transferTx(
         senderAddress,

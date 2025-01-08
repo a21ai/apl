@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { HARDCODED_TOKEN_ID } from "../lib/constants";
 
 interface TokenBalanceDisplayProps {
   walletAddress: string;
