@@ -8,7 +8,7 @@ import {
 } from '../index.js';
 import { PubkeyUtil, RuntimeTransaction } from '@saturnbtcio/arch-sdk';
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { webcrypto as crypto } from 'node:crypto';
+import { sha256 } from '@noble/hashes/sha2';
 
 describe('Associated Token Account', () => {
   let walletKeypair: Keypair;
@@ -22,8 +22,8 @@ describe('Associated Token Account', () => {
     payerKeypair = Keypair.generate();
   });
 
-  it('should derive associated token address with correct seeds', async () => {
-    const [associatedAddress, bumpSeed] = await deriveAssociatedTokenAddress(
+  it('should derive associated token address with correct seeds', () => {
+    const [associatedAddress, bumpSeed] = deriveAssociatedTokenAddress(
       toArchPubkey(walletKeypair.publicKey),
       toArchPubkey(mintKeypair.publicKey)
     );
@@ -37,10 +37,7 @@ describe('Associated Token Account', () => {
     ]);
     
     const programId = Buffer.from(ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID);
-    const hash = await crypto.subtle.digest(
-      'SHA-256',
-      Buffer.concat([seeds, programId])
-    );
+    const hash = sha256(Buffer.concat([seeds, programId]));
 
     const hashArray = new Uint8Array(hash);
     const verifyAddress = hashArray.slice(0, 32);
