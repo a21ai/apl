@@ -1,10 +1,13 @@
-/** @format */
-
 "use client";
 
 import React, { ReactNode } from "react";
-import LaserEyesProviderWrapper from "./LaserEyesProviderWrapper";
+import dynamic from "next/dynamic";
+
+const DynamicLaserEyesProvider = dynamic(
+  () => import("@omnisat/lasereyes").then((mod) => mod.LaserEyesProvider),
+  { ssr: false }
+);
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
-  return <LaserEyesProviderWrapper>{children}</LaserEyesProviderWrapper>;
+  return <DynamicLaserEyesProvider>{children}</DynamicLaserEyesProvider>;
 }
