@@ -1,11 +1,24 @@
-import { Pubkey } from "@saturnbtcio/arch-sdk";
+import { PublicKey } from "@solana/web3.js";
 import { 
-  Transaction, 
-  TransactionInstruction,
-  SystemProgram,
-  PublicKey
-} from "@solana/web3.js";
+  Pubkey,
+  RuntimeTransaction,
+  Message,
+  Instruction,
+  AccountMeta
+} from "@saturnbtcio/arch-sdk";
+import { webcrypto as crypto } from 'node:crypto';
+import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
+
+// Type for converting Solana PublicKey to Arch Pubkey
+type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;
+export const toArchPubkey: SolanaToArchPubkey = (solanaKey) => {
+  const bytes = solanaKey.toBytes();
+  if (bytes.length !== 32) {
+    throw new Error('Invalid public key length');
+  }
+  return new Uint8Array(bytes);
+};
 
 // APL Token Program ID - matches Rust implementation
 // pub fn id() -> Pubkey {
@@ -15,20 +28,148 @@ import { Buffer } from 'buffer';
 const programIdBytes = Buffer.alloc(32);
 Buffer.from("apl-token").copy(programIdBytes);
 
-const TOKEN_PROGRAM_ID = new PublicKey(programIdBytes);
+const TOKEN_PROGRAM_ID = new Uint8Array(programIdBytes);
 
-// Export program ID for external use
+// Export program IDs for external use
 export const APL_TOKEN_PROGRAM_ID = TOKEN_PROGRAM_ID;
 
-// Signer callback type
-export type SignerCallback = (transaction: Transaction) => Promise<Transaction>;
+// Associated Token Account Program ID
+const associatedTokenAccountProgramIdBytes = Buffer.alloc(32);
+Buffer.from("associated-token-account").copy(associatedTokenAccountProgramIdBytes);
+export const ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new Uint8Array(associatedTokenAccountProgramIdBytes);
+
+// Associated Token Account functions
+export async function deriveAssociatedTokenAddress(
+  wallet: Pubkey,
+  mint: Pubkey
+): Promise<[Pubkey, number]> {
+  // Derive PDA using SHA256 hash of concatenated seeds
+  const seeds = Buffer.concat([
+    Buffer.from(wallet),
+    Buffer.from(APL_TOKEN_PROGRAM_ID),
+    Buffer.from(mint)
+  ]);
+  
+  const programId = Buffer.from(ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID);
+  const hash = await crypto.subtle.digest(
+    'SHA-256',
+    Buffer.concat([seeds, programId])
+  );
+
+  // Return the first 32 bytes as the PDA and the last byte as bump seed
+  const hashArray = new Uint8Array(hash);
+  // Ensure we have a valid bump seed
+  if (hashArray.length < 32) {
+    throw new Error('Invalid hash length for PDA derivation');
+  }
+  
+  // SHA-256 always produces 32 bytes, so this is guaranteed to be a number
+  // We've already checked length >= 32, so this access is safe
+  const bumpSeed = hashArray[31] as number;
+  
+  // Verify our Pubkey conversion
+  const pda = hashArray.slice(0, 32);
+  if (pda.length !== 32) {
+    throw new Error('Invalid PDA length');
+  }
+  
+  return [pda, bumpSeed];
+}
+
+export async function createAssociatedTokenAccountTx(
+  wallet: Pubkey,
+  mint: Pubkey,
+  payer: Pubkey,
+  signer: SignerCallback
+): Promise<RuntimeTransaction> {
+  const [associatedAccount] = await deriveAssociatedTokenAddress(wallet, mint);
+
+  // Create account
+  const createInstruction: Instruction = {
+    program_id: APL_TOKEN_PROGRAM_ID,
+    accounts: [
+      { pubkey: payer, is_signer: true, is_writable: true },
+      { pubkey: associatedAccount, is_signer: false, is_writable: true }
+    ],
+    data: new Uint8Array([])
+  };
+
+  // Assign to token program
+  const assignInstruction: Instruction = {
+    program_id: APL_TOKEN_PROGRAM_ID,
+    accounts: [
+      { pubkey: associatedAccount, is_signer: false, is_writable: true }
+    ],
+    data: new Uint8Array([])
+  };
+
+  // Initialize account
+  const initializeInstruction = createTokenInstruction(
+    TokenInstruction.InitializeAccount,
+    APL_TOKEN_PROGRAM_ID,
+    [
+      { pubkey: associatedAccount, is_signer: false, is_writable: true },
+      { pubkey: mint, is_signer: false, is_writable: false },
+      { pubkey: wallet, is_signer: false, is_writable: false },
+      { pubkey: payer, is_signer: true, is_writable: true }
+    ],
+    serializeInstruction(TokenInstruction.InitializeAccount, {})
+  );
+
+  return createAndSignTransaction(
+    [createInstruction, assignInstruction, initializeInstruction],
+    signer
+  );
+}
+
+/**
+ * Callback function for signing transactions.
+ * This flexible interface allows different signing implementations:
+ * - Node.js environment with private key signing
+ * - Web3 wallets (Unisat, etc.) that need custom signing logic
+ * - Any other custom signing implementation
+ * 
+ * The callback is responsible for:
+ * 1. Populating transaction.signatures with appropriate signatures
+ * 2. Optionally modifying transaction.message.signers if needed
+ * 3. Returning the signed transaction
+ * 
+ * @param transaction - The RuntimeTransaction to sign
+ * @returns Promise<RuntimeTransaction> - The signed transaction
+ */
+export type SignerCallback = (transaction: RuntimeTransaction) => Promise<RuntimeTransaction>;
+
+/**
+ * Mock signer for testing purposes.
+ * In real usage, implement this with actual signing logic:
+ * - For Node.js: Use private key to generate signatures
+ * - For Web3: Use wallet.signTransaction or similar
+ */
+/**
+ * Mock signer for testing purposes.
+ * In real usage, implement this with actual signing logic:
+ * - For Node.js: Use private key to generate signatures
+ * - For Web3: Use wallet.signTransaction or similar
+ */
+export const mockSigner: SignerCallback = async (tx: RuntimeTransaction): Promise<RuntimeTransaction> => {
+  // Preserve the original transaction structure
+  const signedTx: RuntimeTransaction = {
+    version: tx.version,
+    message: {
+      signers: [], // In real impl, add actual signers
+      instructions: tx.message.instructions
+    },
+    signatures: [] // In real impl, add actual Uint8Array signatures
+  };
+  return signedTx;
+};
 
 // Instruction data layouts
 export interface InitializeMintData {
   instruction: TokenInstruction.InitializeMint;
   decimals: number;
-  mintAuthority: PublicKey;
-  freezeAuthority: PublicKey | null;
+  mintAuthority: Pubkey;
+  freezeAuthority: Pubkey | null;
 }
 
 export interface TransferData {
@@ -55,7 +196,7 @@ export interface BurnData {
 export interface SetAuthorityData {
   instruction: TokenInstruction.SetAuthority;
   authorityType: AuthorityType;
-  newAuthority: PublicKey | null;
+  newAuthority: Pubkey | null;
 }
 
 export interface InitializeAccountData {
@@ -148,13 +289,13 @@ export enum AccountState {
 
 // Instruction Builders
 export async function initializeMintTx(
-  mint: PublicKey,
+  mint: Pubkey,
   decimals: number,
-  mintAuthority: PublicKey,
-  freezeAuthority: PublicKey | null,
-  payer: PublicKey,
+  mintAuthority: Pubkey,
+  freezeAuthority: Pubkey | null,
+  payer: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.InitializeMint, {
     decimals,
     mint_authority: mintAuthority,
@@ -162,8 +303,8 @@ export async function initializeMintTx(
   });
 
   const keys = [
-    { pubkey: mint, isSigner: false, isWritable: true },
-    { pubkey: payer, isSigner: true, isWritable: true },
+    { pubkey: mint, is_signer: false, is_writable: true },
+    { pubkey: payer, is_signer: true, is_writable: true },
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -177,19 +318,19 @@ export async function initializeMintTx(
 }
 
 export async function initializeAccountTx(
-  account: PublicKey,
-  mint: PublicKey,
-  owner: PublicKey,
-  payer: PublicKey,
+  account: Pubkey,
+  mint: Pubkey,
+  owner: Pubkey,
+  payer: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.InitializeAccount, {});
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: mint, isSigner: false, isWritable: false },
-    { pubkey: owner, isSigner: false, isWritable: false },
-    { pubkey: payer, isSigner: true, isWritable: true },
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: mint, is_signer: false, is_writable: false },
+    { pubkey: owner, is_signer: false, is_writable: false },
+    { pubkey: payer, is_signer: true, is_writable: true },
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -203,18 +344,18 @@ export async function initializeAccountTx(
 }
 
 export async function transferTx(
-  source: PublicKey,
-  destination: PublicKey,
+  source: Pubkey,
+  destination: Pubkey,
   amount: bigint,
-  owner: PublicKey,
+  owner: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.Transfer, { amount });
 
   const keys = [
-    { pubkey: source, isSigner: false, isWritable: true },
-    { pubkey: destination, isSigner: false, isWritable: true },
-    { pubkey: owner, isSigner: true, isWritable: false }
+    { pubkey: source, is_signer: false, is_writable: true },
+    { pubkey: destination, is_signer: false, is_writable: true },
+    { pubkey: owner, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -228,18 +369,18 @@ export async function transferTx(
 }
 
 export async function approveTx(
-  source: PublicKey,
-  delegate: PublicKey,
-  owner: PublicKey,
+  source: Pubkey,
+  delegate: Pubkey,
+  owner: Pubkey,
   amount: bigint,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.Approve, { amount });
 
   const keys = [
-    { pubkey: source, isSigner: false, isWritable: true },
-    { pubkey: delegate, isSigner: false, isWritable: false },
-    { pubkey: owner, isSigner: true, isWritable: false }
+    { pubkey: source, is_signer: false, is_writable: true },
+    { pubkey: delegate, is_signer: false, is_writable: false },
+    { pubkey: owner, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -253,15 +394,15 @@ export async function approveTx(
 }
 
 export async function revokeTx(
-  source: PublicKey,
-  owner: PublicKey,
+  source: Pubkey,
+  owner: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.Revoke, {});
 
   const keys = [
-    { pubkey: source, isSigner: false, isWritable: true },
-    { pubkey: owner, isSigner: true, isWritable: false }
+    { pubkey: source, is_signer: false, is_writable: true },
+    { pubkey: owner, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -275,20 +416,20 @@ export async function revokeTx(
 }
 
 export async function setAuthorityTx(
-  account: PublicKey,
-  currentAuthority: PublicKey,
-  newAuthority: PublicKey | null,
+  account: Pubkey,
+  currentAuthority: Pubkey,
+  newAuthority: Pubkey | null,
   authorityType: AuthorityType,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.SetAuthority, {
     authority_type: authorityType,
     new_authority: newAuthority
   });
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: currentAuthority, isSigner: true, isWritable: false }
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: currentAuthority, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -302,18 +443,18 @@ export async function setAuthorityTx(
 }
 
 export async function mintToTx(
-  mint: PublicKey,
-  destination: PublicKey,
+  mint: Pubkey,
+  destination: Pubkey,
   amount: bigint,
-  mintAuthority: PublicKey,
+  mintAuthority: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.MintTo, { amount });
 
   const keys = [
-    { pubkey: mint, isSigner: false, isWritable: true },
-    { pubkey: destination, isSigner: false, isWritable: true },
-    { pubkey: mintAuthority, isSigner: true, isWritable: false }
+    { pubkey: mint, is_signer: false, is_writable: true },
+    { pubkey: destination, is_signer: false, is_writable: true },
+    { pubkey: mintAuthority, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -327,18 +468,18 @@ export async function mintToTx(
 }
 
 export async function burnTx(
-  account: PublicKey,
-  mint: PublicKey,
+  account: Pubkey,
+  mint: Pubkey,
   amount: bigint,
-  owner: PublicKey,
+  owner: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.Burn, { amount });
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: mint, isSigner: false, isWritable: true },
-    { pubkey: owner, isSigner: true, isWritable: false }
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: mint, is_signer: false, is_writable: true },
+    { pubkey: owner, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -352,17 +493,17 @@ export async function burnTx(
 }
 
 export async function closeAccountTx(
-  account: PublicKey,
-  destination: PublicKey,
-  owner: PublicKey,
+  account: Pubkey,
+  destination: Pubkey,
+  owner: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.CloseAccount, {});
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: destination, isSigner: false, isWritable: true },
-    { pubkey: owner, isSigner: true, isWritable: false }
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: destination, is_signer: false, is_writable: true },
+    { pubkey: owner, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -376,17 +517,17 @@ export async function closeAccountTx(
 }
 
 export async function freezeAccountTx(
-  account: PublicKey,
-  mint: PublicKey,
-  authority: PublicKey,
+  account: Pubkey,
+  mint: Pubkey,
+  authority: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.FreezeAccount, {});
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: mint, isSigner: false, isWritable: false },
-    { pubkey: authority, isSigner: true, isWritable: false }
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: mint, is_signer: false, is_writable: false },
+    { pubkey: authority, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -400,20 +541,20 @@ export async function freezeAccountTx(
 }
 
 export async function initializeMultisigTx(
-  multisig: PublicKey,
+  multisig: Pubkey,
   m: number,
-  signers: PublicKey[],
-  payer: PublicKey,
+  signers: Pubkey[],
+  payer: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.InitializeMultisig, { m });
 
   const keys = [
-    { pubkey: multisig, isSigner: false, isWritable: true },
+    { pubkey: multisig, is_signer: false, is_writable: true },
     ...signers.map(signer => ({
       pubkey: signer,
-      isSigner: false,
-      isWritable: false
+      is_signer: false,
+      is_writable: false
     }))
   ];
 
@@ -422,17 +563,17 @@ export async function initializeMultisigTx(
 }
 
 export async function thawAccountTx(
-  account: PublicKey,
-  mint: PublicKey,
-  authority: PublicKey,
+  account: Pubkey,
+  mint: Pubkey,
+  authority: Pubkey,
   signer: SignerCallback
-): Promise<Transaction> {
+): Promise<RuntimeTransaction> {
   const data = serializeInstruction(TokenInstruction.ThawAccount, {});
 
   const keys = [
-    { pubkey: account, isSigner: false, isWritable: true },
-    { pubkey: mint, isSigner: false, isWritable: false },
-    { pubkey: authority, isSigner: true, isWritable: false }
+    { pubkey: account, is_signer: false, is_writable: true },
+    { pubkey: mint, is_signer: false, is_writable: false },
+    { pubkey: authority, is_signer: true, is_writable: false }
   ];
 
   const tokenInstruction = createTokenInstruction(
@@ -458,21 +599,33 @@ export function serializeU64LE(value: number | bigint): Buffer {
   return buf;
 }
 
-export function serializePubkey(pubkey: PublicKey): Buffer {
-  return Buffer.from(pubkey.toBytes());
+/**
+ * Serialize a public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
+ * @param pubkey - The public key to serialize
+ * @returns Buffer containing the 32-byte public key
+ */
+export function serializePubkey(pubkey: Pubkey | PublicKey): Buffer {
+  if (pubkey instanceof PublicKey) {
+    return Buffer.from(pubkey.toBytes());
+  }
+  return Buffer.from(pubkey);
 }
 
-export function serializeOptionPubkey(pubkey: PublicKey | null): Buffer {
-  const buffers: Buffer[] = [];
+/**
+ * Serialize an optional public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
+ * @param pubkey - The public key to serialize, or null
+ * @returns Buffer containing the serialized optional public key
+ */
+export function serializeOptionPubkey(pubkey: Pubkey | PublicKey | null): Buffer {
   if (pubkey === null) {
     // None - [0,0,0,0]
-    buffers.push(Buffer.from([0, 0, 0, 0]));
-  } else {
-    // Some - [1,0,0,0] + pubkey bytes
-    buffers.push(Buffer.from([1, 0, 0, 0]));
-    buffers.push(serializePubkey(pubkey));
+    return Buffer.from([0, 0, 0, 0]);
   }
-  return Buffer.concat(buffers);
+  // Some - [1,0,0,0] + pubkey bytes
+  return Buffer.concat([
+    Buffer.from([1, 0, 0, 0]),
+    serializePubkey(pubkey)
+  ]);
 }
 // to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
 
@@ -558,31 +711,58 @@ export function serializeInstruction(instruction: TokenInstruction, data: any): 
 
 function createTokenInstruction(
   instruction: TokenInstruction,
-  programId: PublicKey,
+  programId: Pubkey,
   keys: Array<{
-    pubkey: PublicKey;
-    isSigner: boolean;
-    isWritable: boolean;
+    pubkey: Pubkey;
+    is_signer: boolean;
+    is_writable: boolean;
   }>,
   data: Buffer
-): TransactionInstruction {
-  return new TransactionInstruction({
-    keys,
-    programId,
-    data,
-  });
+): Instruction {
+  // Convert keys to Arch SDK AccountMeta format
+  const accounts: AccountMeta[] = keys.map(key => ({
+    pubkey: key.pubkey,
+    is_signer: key.is_signer,    // Use snake_case to match Arch SDK
+    is_writable: key.is_writable // Use snake_case to match Arch SDK
+  }));
+
+  // Create Arch SDK Instruction
+  return {
+    program_id: programId,
+    accounts,
+    data: new Uint8Array(data)
+  };
 }
 
 // Helper to create and sign a transaction
 async function createAndSignTransaction(
-  instructions: TransactionInstruction | TransactionInstruction[],
+  instructions: Instruction | Instruction[],
   signer: SignerCallback
-): Promise<Transaction> {
-  const transaction = new Transaction();
-  if (Array.isArray(instructions)) {
-    instructions.forEach(ix => transaction.add(ix));
-  } else {
-    transaction.add(instructions);
-  }
-  return await signer(transaction);
+): Promise<RuntimeTransaction> {
+  // Convert single instruction to array
+  const actualInstructions = Array.isArray(instructions) ? instructions : [instructions];
+
+  // Build the Arch network Message with proper structure
+  const message: Message = {
+    signers: [], // Will be populated by signer callback
+    instructions: actualInstructions.map(instruction => ({
+      program_id: instruction.program_id,
+      accounts: instruction.accounts.map(account => ({
+        pubkey: account.pubkey,
+        is_signer: account.is_signer,
+        is_writable: account.is_writable
+      })),
+      data: instruction.data
+    }))
+  };
+
+  // Create RuntimeTransaction with version 1
+  const runtimeTx: RuntimeTransaction = {
+    version: 1,
+    signatures: [], // Will be populated by signer callback
+    message
+  };
+
+  // Pass to signer callback for signature population
+  return await signer(runtimeTx);
 }
