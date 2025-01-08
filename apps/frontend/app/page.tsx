@@ -6,8 +6,6 @@ import { Power, Send, ArrowDownToLine } from 'lucide-react';
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { TokenBalanceDisplay } from "@/components/TokenBalanceDisplay";
-import { TokenAccountControls } from "@/components/TokenAccountControls";
 
 // Helper function to truncate addresses for display
 const truncateAddress = (address: string) => {
@@ -57,38 +55,33 @@ export default function Home() {
                   />
                 </div>
                 {address && (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
-                        <img 
-                          src="/stoned-cat.gif"
-                          alt="Stoned Cat Token" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-white uppercase font-bold">APL Token</p>
-                        <TokenBalanceDisplay walletAddress={address} />
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
+                      <img 
+                        src="/stoned-cat.gif"
+                        alt="Stoned Cat Token" 
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <TokenAccountControls walletAddress={address} />
-                  </>
+                    <div>
+                      <p className="text-white uppercase font-bold">Stoner Cat</p>
+                      <p className="text-white/60 text-sm">218 SCAT</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </Card>
             {address && (
               <div className="flex justify-center gap-4 mt-6">
                 <Button 
-                  onClick={() => (document.getElementById('send-modal') as HTMLDialogElement)?.showModal()}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
                   variant="ghost"
+                  className="flex-1"
                 >
                   <Send className="mr-2 h-5 w-5" /> Send
                 </Button>
                 <Button
-                  onClick={() => (document.getElementById('receive-modal') as HTMLDialogElement)?.showModal()}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
                   variant="ghost"
+                  className="flex-1"
                 >
                   <ArrowDownToLine className="mr-2 h-5 w-5" /> Receive
                 </Button>
