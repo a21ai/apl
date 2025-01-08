@@ -41,36 +41,7 @@ export interface BurnData {
   amount: bigint;
 }
 
-// Layout helpers
-const uint64 = (property: string) => {
-  return {
-    property,
-    type: 'u64'
-  };
-};
-
-const uint8 = (property: string) => {
-  return {
-    property,
-    type: 'u8'
-  };
-};
-
-const publicKey = (property: string) => {
-  return {
-    property,
-    type: 'pubkey'
-  };
-};
-
-const optionalPublicKey = (property: string) => {
-  return {
-    property,
-    type: 'optionalPubkey'
-  };
-};
-
-// Additional instruction data layouts
+// Instruction data interfaces
 export interface SetAuthorityData {
   instruction: TokenInstruction.SetAuthority;
   authorityType: AuthorityType;
@@ -117,90 +88,37 @@ export interface BurnCheckedData {
   decimals: number;
 }
 
-// Instruction Layout Schemas
-const layouts = {
-  initializeMint: {
-    instruction: uint8('instruction'),
-    decimals: uint8('decimals'),
-    mintAuthority: publicKey('mintAuthority'),
-    freezeAuthority: optionalPublicKey('freezeAuthority'),
-  },
-  initializeAccount: {
-    instruction: uint8('instruction'),
-  },
-  transfer: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-  },
-  transferChecked: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-    decimals: uint8('decimals'),
-  },
-  approve: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-  },
-  revoke: {
-    instruction: uint8('instruction'),
-  },
-  setAuthority: {
-    instruction: uint8('instruction'),
-    authorityType: uint8('authorityType'),
-    newAuthority: optionalPublicKey('newAuthority')
-  },
-  approveChecked: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-    decimals: uint8('decimals'),
-  },
-  mintTo: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-  },
-  mintToChecked: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-    decimals: uint8('decimals'),
-  },
-  burn: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-  },
-  burnChecked: {
-    instruction: uint8('instruction'),
-    amount: uint64('amount'),
-    decimals: uint8('decimals'),
-  },
-  closeAccount: {
-    instruction: uint8('instruction'),
-  },
-  freezeAccount: {
-    instruction: uint8('instruction'),
-  },
-  thawAccount: {
-    instruction: uint8('instruction'),
-  },
-};
+export interface InitializeMultisigData {
+  instruction: TokenInstruction.InitializeMultisig;
+  m: number;
+}
 
 // Instruction Types (matching Rust enum)
+// Verified against Rust token program's instruction.rs
 export enum TokenInstruction {
-  InitializeMint = 0,
-  InitializeAccount = 1,
-  InitializeMultisig = 2,
-  Transfer = 3,
-  Approve = 4,
-  Revoke = 5,
-  SetAuthority = 6,
-  MintTo = 7,
-  Burn = 8,
-  CloseAccount = 9,
-  FreezeAccount = 10,
-  ThawAccount = 11,
-  TransferChecked = 12,
-  ApproveChecked = 13,
-  MintToChecked = 14,
-  BurnChecked = 15,
+  InitializeMint = 0,      // [0, decimals(1), mint_authority(32), freeze_authority_option(1 + 32)]
+  InitializeAccount = 1,    // [1]
+  InitializeMultisig = 2,   // [2, m(1)]
+  Transfer = 3,            // [3, amount(8)]
+  Approve = 4,             // [4, amount(8)]
+  Revoke = 5,              // [5]
+  SetAuthority = 6,        // [6, authority_type(1), new_authority_option(1 + 32)]
+  MintTo = 7,              // [7, amount(8)]
+  Burn = 8,                // [8, amount(8)]
+  CloseAccount = 9,        // [9]
+  FreezeAccount = 10,      // [10]
+  ThawAccount = 11,        // [11]
+  TransferChecked = 12,    // [12, amount(8), decimals(1)]
+  ApproveChecked = 13,     // [13, amount(8), decimals(1)]
+  MintToChecked = 14,      // [14, amount(8), decimals(1)]
+  BurnChecked = 15,        // [15, amount(8), decimals(1)]
+  InitializeAccount2 = 16,  // [16, owner(32)]
+  InitializeAccount3 = 17,  // [17, owner(32)]
+  InitializeMint2 = 18,    // [18, decimals(1), mint_authority(32), freeze_authority_option(1 + 32)]
+  GetAccountDataSize = 19,  // [19]
+  InitializeImmutableOwner = 20, // [20]
+  AmountToUiAmount = 21,   // [21, amount(8)]
+  UiAmountToAmount = 22,   // [22, ui_amount_string(len + string_bytes)]
 }
 
 // Authority Types (matching Rust enum)
@@ -227,11 +145,10 @@ export async function initializeMintTx(
   payer: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.initializeMint, {
-    instruction: TokenInstruction.InitializeMint,
+  const data = serializeInstruction(TokenInstruction.InitializeMint, {
     decimals,
-    mintAuthority,
-    freezeAuthority,
+    mint_authority: mintAuthority,
+    freeze_authority: freezeAuthority,
   });
 
   const keys = [
@@ -239,14 +156,14 @@ export async function initializeMintTx(
     { pubkey: payer, isSigner: true, isWritable: true },
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.InitializeMint,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function initializeAccountTx(
@@ -256,11 +173,7 @@ export async function initializeAccountTx(
   payer: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.initializeAccount || {
-    instruction: uint8('instruction')
-  }, {
-    instruction: TokenInstruction.InitializeAccount
-  });
+  const data = serializeInstruction(TokenInstruction.InitializeAccount, {});
 
   const keys = [
     { pubkey: account, isSigner: false, isWritable: true },
@@ -269,14 +182,14 @@ export async function initializeAccountTx(
     { pubkey: payer, isSigner: true, isWritable: true },
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.InitializeAccount,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function transferTx(
@@ -286,10 +199,7 @@ export async function transferTx(
   owner: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.transfer, {
-    instruction: TokenInstruction.Transfer,
-    amount
-  });
+  const data = serializeInstruction(TokenInstruction.Transfer, { amount });
 
   const keys = [
     { pubkey: source, isSigner: false, isWritable: true },
@@ -297,14 +207,14 @@ export async function transferTx(
     { pubkey: owner, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.Transfer,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function approveTx(
@@ -314,10 +224,7 @@ export async function approveTx(
   amount: bigint,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.approve, {
-    instruction: TokenInstruction.Approve,
-    amount
-  });
+  const data = serializeInstruction(TokenInstruction.Approve, { amount });
 
   const keys = [
     { pubkey: source, isSigner: false, isWritable: true },
@@ -325,14 +232,14 @@ export async function approveTx(
     { pubkey: owner, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.Approve,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function revokeTx(
@@ -340,23 +247,21 @@ export async function revokeTx(
   owner: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.revoke, {
-    instruction: TokenInstruction.Revoke
-  });
+  const data = serializeInstruction(TokenInstruction.Revoke, {});
 
   const keys = [
     { pubkey: source, isSigner: false, isWritable: true },
     { pubkey: owner, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.Revoke,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function setAuthorityTx(
@@ -366,10 +271,9 @@ export async function setAuthorityTx(
   authorityType: AuthorityType,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.setAuthority, {
-    instruction: TokenInstruction.SetAuthority,
-    authorityType,
-    newAuthority: newAuthority || null
+  const data = serializeInstruction(TokenInstruction.SetAuthority, {
+    authority_type: authorityType,
+    new_authority: newAuthority
   });
 
   const keys = [
@@ -377,14 +281,14 @@ export async function setAuthorityTx(
     { pubkey: currentAuthority, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.SetAuthority,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function mintToTx(
@@ -394,10 +298,7 @@ export async function mintToTx(
   mintAuthority: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.mintTo, {
-    instruction: TokenInstruction.MintTo,
-    amount
-  });
+  const data = serializeInstruction(TokenInstruction.MintTo, { amount });
 
   const keys = [
     { pubkey: mint, isSigner: false, isWritable: true },
@@ -405,14 +306,14 @@ export async function mintToTx(
     { pubkey: mintAuthority, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.MintTo,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function burnTx(
@@ -422,10 +323,7 @@ export async function burnTx(
   owner: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.burn, {
-    instruction: TokenInstruction.Burn,
-    amount
-  });
+  const data = serializeInstruction(TokenInstruction.Burn, { amount });
 
   const keys = [
     { pubkey: account, isSigner: false, isWritable: true },
@@ -433,14 +331,14 @@ export async function burnTx(
     { pubkey: owner, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.Burn,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function closeAccountTx(
@@ -449,9 +347,7 @@ export async function closeAccountTx(
   owner: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.closeAccount, {
-    instruction: TokenInstruction.CloseAccount
-  });
+  const data = serializeInstruction(TokenInstruction.CloseAccount, {});
 
   const keys = [
     { pubkey: account, isSigner: false, isWritable: true },
@@ -459,14 +355,14 @@ export async function closeAccountTx(
     { pubkey: owner, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.CloseAccount,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function freezeAccountTx(
@@ -475,9 +371,7 @@ export async function freezeAccountTx(
   authority: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.freezeAccount, {
-    instruction: TokenInstruction.FreezeAccount
-  });
+  const data = serializeInstruction(TokenInstruction.FreezeAccount, {});
 
   const keys = [
     { pubkey: account, isSigner: false, isWritable: true },
@@ -485,14 +379,36 @@ export async function freezeAccountTx(
     { pubkey: authority, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.FreezeAccount,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
+}
+
+export async function initializeMultisigTx(
+  multisig: PublicKey,
+  m: number,
+  signers: PublicKey[],
+  payer: PublicKey,
+  signer: SignerCallback
+): Promise<Transaction> {
+  const data = serializeInstruction(TokenInstruction.InitializeMultisig, { m });
+
+  const keys = [
+    { pubkey: multisig, isSigner: false, isWritable: true },
+    ...signers.map(signer => ({
+      pubkey: signer,
+      isSigner: false,
+      isWritable: false
+    }))
+  ];
+
+  const tokenInstruction = createTokenInstruction(TokenInstruction.InitializeMultisig, TOKEN_PROGRAM_ID, keys, data);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 export async function thawAccountTx(
@@ -501,9 +417,7 @@ export async function thawAccountTx(
   authority: PublicKey,
   signer: SignerCallback
 ): Promise<Transaction> {
-  const data = serializeLayout(layouts.thawAccount, {
-    instruction: TokenInstruction.ThawAccount
-  });
+  const data = serializeInstruction(TokenInstruction.ThawAccount, {});
 
   const keys = [
     { pubkey: account, isSigner: false, isWritable: true },
@@ -511,58 +425,125 @@ export async function thawAccountTx(
     { pubkey: authority, isSigner: true, isWritable: false }
   ];
 
-  const instruction = createTokenInstruction(
+  const tokenInstruction = createTokenInstruction(
     TokenInstruction.ThawAccount,
     TOKEN_PROGRAM_ID,
     keys,
     data
   );
 
-  return createAndSignTransaction(instruction, signer);
+  return createAndSignTransaction(tokenInstruction, signer);
 }
 
 // Helper functions for instruction creation and serialization
-function serializeLayout(layout: any, data: any): Buffer {
-  const buffer = Buffer.alloc(1000); // Max size, will trim
-  let offset = 0;
-
-  for (const [key, value] of Object.entries(layout)) {
-    const field = value as { property: string; type: string };
-    const dataValue = data[field.property];
-
-    switch (field.type) {
-      case 'u8':
-        buffer.writeUInt8(dataValue, offset);
-        offset += 1;
-        break;
-      case 'u64':
-        const bigIntValue = BigInt(dataValue);
-        buffer.writeBigUInt64LE(bigIntValue, offset);
-        offset += 8;
-        break;
-      case 'pubkey':
-        const pubkeyBytes = (dataValue as PublicKey).toBytes();
-        buffer.set(pubkeyBytes, offset);
-        offset += 32;
-        break;
-      case 'optionalPubkey':
-        if (dataValue === null) {
-          buffer.writeUInt32LE(0, offset);
-          offset += 36; // 4 bytes for option tag + 32 bytes of zeroes
-        } else {
-          buffer.writeUInt32LE(1, offset);
-          offset += 4;
-          const pubkeyBytes = (dataValue as PublicKey).toBytes();
-          buffer.set(pubkeyBytes, offset);
-          offset += 32;
-        }
-        break;
-      default:
-        throw new Error(`Unknown type: ${field.type}`);
-    }
+// Serialization utilities that match Rust token program's byte-level patterns
+export function serializeU64LE(value: number | bigint): Buffer {
+  const buf = Buffer.alloc(8);
+  // Convert to BigInt to handle both number and bigint inputs
+  const bigIntValue = BigInt(value);
+  // Write as little-endian u64, matching Rust's byte pattern
+  for (let i = 0; i < 8; i++) {
+    buf[i] = Number((bigIntValue >> BigInt(i * 8)) & BigInt(0xFF));
   }
+  return buf;
+}
 
-  return buffer.slice(0, offset);
+export function serializePubkey(pubkey: PublicKey): Buffer {
+  return Buffer.from(pubkey.toBytes());
+}
+
+export function serializeOptionPubkey(pubkey: PublicKey | null): Buffer {
+  const buffers: Buffer[] = [];
+  if (pubkey === null) {
+    // None - [0,0,0,0]
+    buffers.push(Buffer.from([0, 0, 0, 0]));
+  } else {
+    // Some - [1,0,0,0] + pubkey bytes
+    buffers.push(Buffer.from([1, 0, 0, 0]));
+    buffers.push(serializePubkey(pubkey));
+  }
+  return Buffer.concat(buffers);
+}
+// to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
+
+// Main serialization function that matches Rust's pack() implementation
+export function serializeInstruction(instruction: TokenInstruction, data: any): Buffer {
+  const buffers: Buffer[] = [];
+  
+  // Add instruction tag
+  buffers.push(Buffer.from([instruction]));
+  
+  // Add instruction-specific data
+  switch (instruction) {
+    case TokenInstruction.InitializeMultisig: {
+      const { m } = data;
+      buffers.push(Buffer.from([m]));
+      break;
+    }
+    case TokenInstruction.InitializeMint:
+    case TokenInstruction.InitializeMint2: {
+      const { decimals, mint_authority, freeze_authority } = data;
+      buffers.push(Buffer.from([decimals]));
+      buffers.push(serializePubkey(mint_authority));
+      buffers.push(serializeOptionPubkey(freeze_authority));
+      break;
+    }
+    case TokenInstruction.Transfer:
+    case TokenInstruction.Approve:
+    case TokenInstruction.MintTo:
+    case TokenInstruction.Burn:
+    case TokenInstruction.AmountToUiAmount: {
+      const { amount } = data;
+      // Ensure exact byte pattern: [tag, amount(8 bytes LE)]
+      const amountBuf = Buffer.alloc(8);
+      amountBuf.writeBigUInt64LE(BigInt(amount));
+      buffers.push(amountBuf);
+      break;
+    }
+    case TokenInstruction.TransferChecked:
+    case TokenInstruction.ApproveChecked:
+    case TokenInstruction.MintToChecked:
+    case TokenInstruction.BurnChecked: {
+      const { amount, decimals } = data;
+      // Ensure exact byte pattern: [tag, amount(8 bytes LE), decimals(1)]
+      const amountBuf = Buffer.alloc(8);
+      amountBuf.writeBigUInt64LE(BigInt(amount));
+      buffers.push(amountBuf);
+      buffers.push(Buffer.from([decimals]));
+      break;
+    }
+    case TokenInstruction.SetAuthority: {
+      const { authority_type, new_authority } = data;
+      buffers.push(Buffer.from([authority_type]));
+      buffers.push(serializeOptionPubkey(new_authority));
+      break;
+    }
+    case TokenInstruction.InitializeAccount2:
+    case TokenInstruction.InitializeAccount3: {
+      const { owner } = data;
+      buffers.push(serializePubkey(owner));
+      break;
+    }
+    case TokenInstruction.UiAmountToAmount: {
+      const { ui_amount } = data;
+      // Convert string to UTF-8 bytes without length prefix
+      buffers.push(Buffer.from(ui_amount, 'utf8'));
+      break;
+    }
+    // Simple instructions with just a tag
+    case TokenInstruction.InitializeAccount:
+    case TokenInstruction.Revoke:
+    case TokenInstruction.CloseAccount:
+    case TokenInstruction.FreezeAccount:
+    case TokenInstruction.ThawAccount:
+    case TokenInstruction.GetAccountDataSize:
+    case TokenInstruction.InitializeImmutableOwner:
+      break;
+    default:
+      throw new Error(`Unknown instruction: ${instruction}`);
+  }
+  
+  return Buffer.concat(buffers);
 }
 
 function createTokenInstruction(
@@ -584,9 +565,14 @@ function createTokenInstruction(
 
 // Helper to create and sign a transaction
 async function createAndSignTransaction(
-  instruction: TransactionInstruction,
+  instructions: TransactionInstruction | TransactionInstruction[],
   signer: SignerCallback
 ): Promise<Transaction> {
-  const transaction = new Transaction().add(instruction);
+  const transaction = new Transaction();
+  if (Array.isArray(instructions)) {
+    instructions.forEach(ix => transaction.add(ix));
+  } else {
+    transaction.add(instructions);
+  }
   return await signer(transaction);
 }
