@@ -1,36 +1,60 @@
-# Turborepo starter
+# Archway Project
 
-This is an official starter Turborepo.
+A comprehensive token management system built on Arch Network, featuring a Rust-based token program and TypeScript integration libraries.
 
-## Using this example
+## Project Overview
 
-Run the following command:
+The Archway project consists of several key components:
 
-```sh
-npx create-turbo@latest
-```
+1. **Token Program (Rust)**: Core token management functionality implemented in Rust
+2. **APL Token Library**: TypeScript/JavaScript SDK for token operations
+3. **Frontend Applications**: Next.js-based web interfaces for token management
 
-## What's inside?
+### Long-term Development Plans
 
-This Turborepo includes the following packages/apps:
+#### Phase 1: Token Program Implementation
+- Integration of raw token program from Rust
+- Implementation of core token operations (mint, transfer, burn)
+- Security auditing and optimization
 
-### Apps and Packages
+#### Phase 2: APL Token Library Development
+- Cross-platform TypeScript/JavaScript SDK
+- Support for both Node.js and browser environments
+- Integration with @saturnbtcio/arch-sdk
+- Comprehensive token account management
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+#### Phase 3: Frontend Integration
+- Token balance interface implementation
+- Wallet connection and management
+- Transaction history and monitoring
+- User-friendly token operations UI
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Getting Started
 
-### Utilities
+## Project Structure
 
-This Turborepo has some additional tools already setup for you:
+This monorepo is built with Turborepo and includes the following components:
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Core Components
+
+- `token-program`: Rust implementation of the token program (upcoming)
+- `packages/apl-token`: TypeScript SDK for token operations
+- `apps/frontend`: Main Next.js application for token management
+- `apps/web`: Additional Next.js application
+- `packages/ui`: Shared React component library
+- `packages/eslint-config`: ESLint configurations
+- `packages/typescript-config`: Shared TypeScript configurations
+
+The project is primarily written in TypeScript, with the token program implemented in Rust.
+
+### Development Tools
+
+The project utilizes modern development tools:
+
+- [TypeScript](https://www.typescriptlang.org/) for type-safe development
+- [ESLint](https://eslint.org/) for code quality
+- [Prettier](https://prettier.io) for consistent formatting
+- Rust toolchain for token program development (upcoming)
 
 ### Build
 
