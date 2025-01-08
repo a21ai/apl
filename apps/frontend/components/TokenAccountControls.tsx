@@ -97,7 +97,7 @@ export function TokenAccountControls({ walletAddress }: TokenAccountControlsProp
                   );
                   
                   console.log("Transfer transaction:", tx);
-                  document.getElementById('send-modal')?.close();
+                  (document.getElementById('send-modal') as HTMLDialogElement)?.close();
                 } catch (err) {
                   setError("Failed to send tokens");
                   console.error("Error sending tokens:", err);
@@ -122,8 +122,9 @@ export function TokenAccountControls({ walletAddress }: TokenAccountControlsProp
             <p className="text-white/60">Your Token Account Address:</p>
             <p className="font-mono text-sm break-all text-white">{walletAddress}</p>
             <Button
-              onClick={() => {
-                navigator.clipboard.writeText(walletAddress);
+              onClick={async () => {
+                await navigator.clipboard.writeText(walletAddress);
+                (document.getElementById('receive-modal') as HTMLDialogElement)?.close();
               }}
               variant="ghost"
               className="w-full bg-white/10 hover:bg-white/20 text-white"
