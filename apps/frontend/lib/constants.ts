@@ -1,4 +1,4 @@
-export const RPC_URL = "http://localhost:9002";
+export const RPC_URL = "http://3.236.57.169";
 
 // Token ID for APL token operations (32-byte hex string)
 // This is a placeholder ID for initial implementation
