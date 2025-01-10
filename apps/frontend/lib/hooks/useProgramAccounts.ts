@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { archConnection } from "../arch";
-import { PubkeyUtil } from "@saturnbtcio/arch-sdk";
+import { PubkeyUtil } from "@repo/arch-typescript-sdk";
 
 /**
  * Custom hook to fetch an Arch address using SWR
