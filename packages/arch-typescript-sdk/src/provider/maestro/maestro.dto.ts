@@ -1,8 +1,8 @@
-import { SerializeHexString, SerializeUint8Array } from '../../serde/uint8array';
-import { AccountInfoResult } from '../../struct/account';
-import { Block } from '../../struct/block';
-import { ProcessedTransaction } from '../../struct/processed-transaction';
-import { ProgramAccount } from '../../struct/program-account';
+import { SerializeHexString, SerializeUint8Array } from '../../serde/uint8array.js';
+import { AccountInfoResult } from '../../struct/account.js';
+import { Block } from '../../struct/block.js';
+import { ProcessedTransaction } from '../../struct/processed-transaction.js';
+import { ProgramAccount } from '../../struct/program-account.js';
 
 export interface MaestroResponse<T> {
   data: T;
