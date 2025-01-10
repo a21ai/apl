@@ -8,7 +8,7 @@ import {
   APL_TOKEN_PROGRAM_ID,
   toArchPubkey 
 } from '../index.js';
-import { PubkeyUtil } from '@saturnbtcio/arch-sdk';
+import { PubkeyUtil } from '@repo/arch-typescript-sdk';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 
 describe('Token Instruction Serialization', () => {
