@@ -1,9 +1,9 @@
 {
-  "name": "@repo/api-cli",
+  "name": "@repo/apl-cli",
   "version": "0.0.1",
   "type": "module",
   "bin": {
-    "api-cli": "./dist/index.js"
+    "apl-cli": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc && chmod +x ./dist/index.js",

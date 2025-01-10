@@ -1,4 +1,4 @@
-# @repo/api-cli
+# @repo/apl-cli
 
 Command-line interface for wallet and token operations on the Arch network.
 
@@ -6,16 +6,16 @@ Command-line interface for wallet and token operations on the Arch network.
 
 ### Global Installation
 ```bash
-npm install -g @repo/api-cli
+npm install -g @repo/apl-cli
 # or
-yarn global add @repo/api-cli
+yarn global add @repo/apl-cli
 ```
 
 ### Local Installation
 ```bash
-npm install @repo/api-cli
+npm install @repo/apl-cli
 # or
-yarn add @repo/api-cli
+yarn add @repo/apl-cli
 ```
 
 ## Prerequisites
@@ -28,9 +28,9 @@ yarn add @repo/api-cli
 
 Create a new keypair:
 ```bash
-api-cli create-keypair
+apl-cli create-keypair
 # or specify output location
-api-cli create-keypair -o ./my-keypair.json
+apl-cli create-keypair -o ./my-keypair.json
 ```
 
 The keypair file is stored in JSON format:
@@ -45,7 +45,7 @@ The keypair file is stored in JSON format:
 
 Check wallet balance:
 ```bash
-api-cli wallet balance -k ./keypair.json -r http://localhost:8899
+apl-cli wallet balance -k ./keypair.json -r http://localhost:8899
 ```
 
 Options:
@@ -56,7 +56,7 @@ Options:
 
 Send tokens:
 ```bash
-api-cli token send \
+apl-cli token send \
   -k ./sender-keypair.json \
   -t recipient-address \
   -a 1000
@@ -69,7 +69,7 @@ Options:
 
 Mint new tokens:
 ```bash
-api-cli token mint \
+apl-cli token mint \
   -k ./minter-keypair.json \
   -m mint-address \
   -t recipient-address \

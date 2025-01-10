@@ -35,7 +35,7 @@ const createSignerFromKeypair = (keypairData: { secretKey: string }): SignerCall
 };
 
 program
-  .name('api-cli')
+  .name('apl-cli')
   .description('CLI for wallet and token operations on Arch network')
   .version('0.0.1');
 
