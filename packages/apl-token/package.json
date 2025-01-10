@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "jest"
+    "pretest": "cd ../arch-sdk && yarn build",
+    "test": "jest --no-cache"
   },
   "exports": {
     ".": {
@@ -22,7 +23,7 @@
   },
   "dependencies": {
     "@noble/hashes": "^1.7.0",
-    "@saturnbtcio/arch-sdk": "^0.0.6",
+    "@repo/arch-sdk": "*",
     "@solana/web3.js": "^1.95.4",
     "borsh": "^2.0.0"
   }

@@ -26,7 +26,7 @@ The APL Token library provides a JavaScript interface for creating and signing A
 
 ```typescript
 import { createMint, SignerCallback } from '@repo/apl-token';
-import { RuntimeTransaction } from '@saturnbtcio/arch-sdk';
+import { RuntimeTransaction } from '@repo/arch-sdk';
 
 // Example signer callback for Node.js
 const nodeSigner: SignerCallback = async (tx: RuntimeTransaction) => {

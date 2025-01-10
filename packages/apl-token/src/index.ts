@@ -5,10 +5,11 @@ import {
   Message,
   Instruction,
   AccountMeta
-} from "@saturnbtcio/arch-sdk";
+} from "@repo/arch-sdk";
 import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
 import { sha256 } from '@noble/hashes/sha2';
+import Borsh from "borsh";
 
 // Type for converting Solana PublicKey to Arch Pubkey
 type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;

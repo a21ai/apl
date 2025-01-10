@@ -6,7 +6,7 @@ import {
   APL_TOKEN_PROGRAM_ID,
   toArchPubkey
 } from '../index.js';
-import { PubkeyUtil, RuntimeTransaction } from '@saturnbtcio/arch-sdk';
+import { PubkeyUtil, RuntimeTransaction } from '@repo/arch-sdk';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { sha256 } from '@noble/hashes/sha2';
 

@@ -26,7 +26,7 @@ yarn add @repo/apl-token
 
 ```typescript
 import { createMint, transfer } from '@repo/apl-token';
-import { RuntimeTransaction } from '@saturnbtcio/arch-sdk';
+import { RuntimeTransaction } from '@repo/arch-sdk';
 
 // Example: Create a new token
 const mint = await createMint(
