@@ -1,7 +1,7 @@
 import { hex } from '@scure/base';
-import { Instruction } from '../struct/instruction';
-import { serialize as serializeAccountMeta } from './account';
-import { AccountUtil } from '..';
+import { Instruction } from '../struct/instruction.js';
+import { serialize as serializeAccountMeta } from './account.js';
+import { AccountUtil } from '../index.js';
 
 export const serialize = (instruction: Instruction): Uint8Array => {
   const serializedProgramId = instruction.program_id;

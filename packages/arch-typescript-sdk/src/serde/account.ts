@@ -1,5 +1,5 @@
 import { hex } from '@scure/base';
-import { AccountMeta } from '../struct/account';
+import { AccountMeta } from '../struct/account.js';
 
 export const serialize = (account: AccountMeta): Uint8Array => {
   return new Uint8Array([

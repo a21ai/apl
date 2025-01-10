@@ -1,5 +1,5 @@
-import { RuntimeTransaction } from '../struct/runtime-transaction';
-import { MessageUtil } from '..';
+import { RuntimeTransaction } from '../struct/runtime-transaction.js';
+import { MessageUtil } from '../index.js';
 import { hex } from '@scure/base';
 
 export const toHex = (transaction: RuntimeTransaction) => {

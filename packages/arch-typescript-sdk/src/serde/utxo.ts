@@ -1,4 +1,4 @@
-import { UtxoMeta, UtxoMetaData } from '../struct/utxo';
+import { UtxoMeta, UtxoMetaData } from '../struct/utxo.js';
 import { hex } from '@scure/base';
 
 export const fromBytes = (txid: Uint8Array, vout: number): UtxoMeta => {

@@ -1,9 +1,9 @@
-import { AccountInfoResult } from '../struct/account';
-import { Block } from '../struct/block';
-import { ProcessedTransaction } from '../struct/processed-transaction';
-import { ProgramAccount } from '../struct/program-account';
-import { Pubkey } from '../struct/pubkey';
-import { RuntimeTransaction } from '../struct/runtime-transaction';
+import { AccountInfoResult } from '../struct/account.js';
+import { Block } from '../struct/block.js';
+import { ProcessedTransaction } from '../struct/processed-transaction.js';
+import { ProgramAccount } from '../struct/program-account.js';
+import { Pubkey } from '../struct/pubkey.js';
+import { RuntimeTransaction } from '../struct/runtime-transaction.js';
 
 export interface Provider {
   sendTransaction: (transaction: RuntimeTransaction) => Promise<string>;
