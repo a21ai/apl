@@ -1,0 +1,23 @@
+{
+  "name": "@repo/apl-cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "apl-cli": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x ./dist/index.js",
+    "dev": "tsc --watch",
+    "test": "echo 'No tests yet' && exit 0"
+  },
+  "dependencies": {
+    "@repo/arch-sdk": "*",
+    "@repo/apl-token": "*",
+    "@solana/web3.js": "^1.95.4",
+    "commander": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.5.4"
+  }
+}
