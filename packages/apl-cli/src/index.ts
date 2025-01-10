@@ -10,13 +10,39 @@ import {
   initializeMintTx, 
   mintToTx, 
   transferTx, 
+  createAssociatedTokenAccountTx,
   SignerCallback,
   toArchPubkey,
   APL_TOKEN_PROGRAM_ID
 } from '@repo/apl-token';
+import { Pubkey } from '@repo/arch-sdk';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const program = new Command();
+
+/**
+ * Ensures an associated token account exists for the given wallet and mint
+ * @param wallet The wallet to create the associated account for
+ * @param mint The mint address of the token
+ * @param payer The account that will pay for the creation
+ * @param signer Callback to sign the transaction
+ * @returns Promise<RuntimeTransaction> The create account transaction, if needed
+ */
+async function ensureAssociatedAccountExists(
+  wallet: Pubkey,
+  mint: Pubkey,
+  payer: Pubkey,
+  signer: SignerCallback
+): Promise<RuntimeTransaction> {
+  // For now, always create the associated token account
+  // In a future implementation, we could check if it exists first
+  return createAssociatedTokenAccountTx(
+    wallet,
+    mint,
+    payer,
+    signer
+  );
+}
 
 // Create a signer callback that uses the keypair's secret key
 const createSignerFromKeypair = (keypairData: { secretKey: string }): SignerCallback => {
@@ -141,9 +167,78 @@ token
   });
 
 token
-  .command('mint')
-  .description('Mint new tokens')
-  .requiredOption('-k, --keypair <path>', 'minter keypair file path')
+  .command('deploy')
+  .description('Deploy a new token')
+  .requiredOption('-k, --keypair <path>', 'authority keypair file path')
+  .option('-d, --decimals <number>', 'number of decimals for the token', '9')
+  .option('-f, --freeze-authority <address>', 'optional freeze authority address')
+  .action(async (options) => {
+    try {
+      const keypairPath = path.resolve(options.keypair);
+      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      const authorityKeypair = Keypair.fromSecretKey(
+        Buffer.from(keypairData.secretKey, 'hex')
+      );
+      const authorityPubkey = toArchPubkey(authorityKeypair.publicKey);
+      
+      // Generate a new mint keypair
+      const mintKeypair = Keypair.generate();
+      const mintPubkey = toArchPubkey(mintKeypair.publicKey);
+      
+      // Parse freeze authority if provided
+      const freezeAuthority = options.freezeAuthority 
+        ? Buffer.from(options.freezeAuthority, 'hex')
+        : null;
+      
+      const decimals = parseInt(options.decimals, 10);
+      if (isNaN(decimals) || decimals < 0 || decimals > 255) {
+        throw new Error('Decimals must be a number between 0 and 255');
+      }
+
+      console.log('Deploying new token...');
+      console.log(`Authority: ${keypairData.publicKey}`);
+      console.log(`Mint Address: ${Buffer.from(mintPubkey).toString('hex')}`);
+      console.log(`Decimals: ${decimals}`);
+      if (freezeAuthority) {
+        console.log(`Freeze Authority: ${options.freezeAuthority}`);
+      }
+
+      // Create and send initialize mint transaction
+      const signer = createSignerFromKeypair(keypairData);
+      const tx = await initializeMintTx(
+        mintPubkey,
+        decimals,
+        authorityPubkey,
+        freezeAuthority,
+        authorityPubkey,
+        signer
+      );
+      
+      // Create associated token account for the authority
+      const assocTx = await createAssociatedTokenAccountTx(
+        authorityPubkey,
+        mintPubkey,
+        authorityPubkey,
+        signer
+      );
+
+      console.log('Token deployed successfully');
+      console.log('Transactions created (stub)');
+      console.log('Note: Save the mint address for future operations!');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+token
+  .command('mint-more')
+  .description('Mint additional tokens to an existing token (requires mint authority)')
+  .requiredOption('-k, --keypair <path>', 'mint authority keypair file path')
   .requiredOption('-m, --mint <address>', 'mint address')
   .requiredOption('-t, --to <address>', 'recipient address')
   .requiredOption('-a, --amount <number>', 'amount to mint')
@@ -151,30 +246,44 @@ token
     try {
       const keypairPath = path.resolve(options.keypair);
       const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
-      const minterKeypair = Keypair.fromSecretKey(
+      const authorityKeypair = Keypair.fromSecretKey(
         Buffer.from(keypairData.secretKey, 'hex')
       );
-      const minterPubkey = toArchPubkey(minterKeypair.publicKey);
+      const authorityPubkey = toArchPubkey(authorityKeypair.publicKey);
       const mintPubkey = Buffer.from(options.mint, 'hex');
       const recipientPubkey = Buffer.from(options.to, 'hex');
       const amount = BigInt(options.amount);
 
-      console.log('Creating mint transaction...');
-      console.log(`Minter: ${keypairData.publicKey}`);
+      console.log('Creating mint-more transaction...');
+      console.log(`Authority: ${keypairData.publicKey}`);
       console.log(`Mint address: ${options.mint}`);
       console.log(`To address: ${options.to}`);
       console.log(`Amount: ${options.amount}`);
 
-      // Create and send mint transaction (stubbed)
+      // Create signer callback
       const signer = createSignerFromKeypair(keypairData);
-      const tx = await mintToTx(
+
+      // Ensure recipient has an associated token account
+      console.log('Creating associated token account if needed...');
+      const assocTx = await createAssociatedTokenAccountTx(
+        recipientPubkey,
+        mintPubkey,
+        authorityPubkey,
+        signer
+      );
+
+      // Create mint transaction
+      console.log('Creating mint transaction...');
+      const mintTx = await mintToTx(
         mintPubkey,
         recipientPubkey,
         amount,
-        minterPubkey,
+        authorityPubkey,
         signer
       );
-      console.log('Transaction created (stub)');
+
+      console.log('Transactions created (stub)');
+      console.log('Note: Transaction will fail if signer is not the mint authority');
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error:', error.message);

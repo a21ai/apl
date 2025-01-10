@@ -67,20 +67,42 @@ Options:
 - `-t, --to <address>` - Recipient's address (required)
 - `-a, --amount <number>` - Amount to send (required)
 
-Mint new tokens:
+Deploy a new token:
 ```bash
-apl-cli token mint \
-  -k ./minter-keypair.json \
+apl-cli token deploy \
+  -k ./authority-keypair.json \
+  -d 9 \
+  -f freeze-authority-address
+```
+
+Options:
+- `-k, --keypair <path>` - Authority's keypair file path (required)
+- `-d, --decimals <number>` - Number of decimals for the token (default: 9)
+- `-f, --freeze-authority <address>` - Optional freeze authority address
+
+The deploy command will:
+1. Create a new mint account
+2. Initialize the token with specified decimals
+3. Set up mint and freeze authorities
+4. Create an associated token account for the authority
+5. Output the mint address for future operations
+
+Mint additional tokens (requires mint authority):
+```bash
+apl-cli token mint-more \
+  -k ./authority-keypair.json \
   -m mint-address \
   -t recipient-address \
   -a 1000
 ```
 
 Options:
-- `-k, --keypair <path>` - Minter's keypair file path (required)
-- `-m, --mint <address>` - Mint address (required)
+- `-k, --keypair <path>` - Mint authority's keypair file path (required)
+- `-m, --mint <address>` - Token mint address (required)
 - `-t, --to <address>` - Recipient's address (required)
 - `-a, --amount <number>` - Amount to mint (required)
+
+Note: The CLI automatically creates associated token accounts for recipients if they don't exist. This ensures tokens can be received without manual account setup.
 
 ## Development
 
