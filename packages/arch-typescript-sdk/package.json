@@ -22,7 +22,7 @@
     "sdk"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "lint": "tsc",
     "test": "vitest"
   },
