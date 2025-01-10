@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
+    "pretest": "cd ../arch-typescript-sdk && yarn build",
     "test": "jest --no-cache"
   },
   "exports": {
