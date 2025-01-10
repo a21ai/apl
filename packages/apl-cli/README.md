@@ -22,6 +22,25 @@ yarn add @repo/apl-cli
 - Node.js >= 18
 - Access to an Arch network RPC endpoint
 
+## Configuration
+
+The CLI uses a JSON configuration file located at `~/.apl-sdk/config.json`:
+
+```bash
+# View current config
+apl-cli config get
+
+# Set RPC URL
+apl-cli config set --url <url>
+
+# Set default keypair
+apl-cli config set --keypair <path>
+```
+
+The config file stores:
+- `rpcUrl`: RPC endpoint URL
+- `keypair`: Path to default keypair file
+
 ## Usage
 
 ### Keypair Management
@@ -41,44 +60,57 @@ The keypair file is stored in JSON format:
 }
 ```
 
-### Wallet Operations
+### Commands
 
-Check wallet balance:
+List all token accounts:
 ```bash
-apl-cli wallet balance -k ./keypair.json -r http://localhost:8899
+apl-cli accounts [-v]
 ```
 
 Options:
-- `-k, --keypair <path>` - Path to keypair file (required)
-- `-r, --rpc <url>` - RPC endpoint URL (required)
+- `-v, --verbose` - Show detailed token information
 
-### Token Operations
+Create token account:
+```bash
+apl-cli create-account <token_address>
+```
+
+Check token balance:
+```bash
+apl-cli balance
+```
+
+Note: Uses keypair and RPC URL from config file
 
 Send tokens:
 ```bash
-apl-cli token send \
-  -k ./sender-keypair.json \
-  -t recipient-address \
-  -a 1000
+apl-cli send -t <recipient-address> -a <amount>
 ```
 
 Options:
-- `-k, --keypair <path>` - Sender's keypair file path (required)
 - `-t, --to <address>` - Recipient's address (required)
 - `-a, --amount <number>` - Amount to send (required)
 
-Deploy a new token:
+Note: Uses keypair from config file
+
+Create a new token:
 ```bash
-apl-cli token deploy \
-  -k ./authority-keypair.json \
-  -d 9 \
-  -f freeze-authority-address
+apl-cli create-token [--decimals <n>] [--freeze-authority <pubkey>]
 ```
 
 Options:
-- `-k, --keypair <path>` - Authority's keypair file path (required)
-- `-d, --decimals <number>` - Number of decimals for the token (default: 9)
-- `-f, --freeze-authority <address>` - Optional freeze authority address
+- `--decimals <n>` - Number of decimals (default: 9)
+- `--freeze-authority <pubkey>` - Optional freeze authority
+
+Note: Uses keypair path from config file. Set with `apl-cli config set --keypair <path>`
+
+Get token supply:
+```bash
+apl-cli supply <token_address>
+```
+
+Arguments:
+- `<token_address>` - Public key of token mint account
 
 The deploy command will:
 1. Create a new mint account
@@ -89,18 +121,15 @@ The deploy command will:
 
 Mint tokens (requires mint authority):
 ```bash
-apl-cli token mint \
-  -k ./authority-keypair.json \
-  -m mint-address \
-  -t recipient-address \
-  -a 1000
+apl-cli mint -m <mint-address> -t <recipient-address> -a <amount>
 ```
 
 Options:
-- `-k, --keypair <path>` - Mint authority's keypair file path (required)
 - `-m, --mint <address>` - Token mint address (required)
-- `-t, --to <address>` - Recipient's address (required)
+- `-t, --to <address>` - Recipient address (required)
 - `-a, --amount <number>` - Amount to mint (required)
+
+Note: Uses keypair from config file. Must be mint authority.
 
 Note: The CLI automatically creates associated token accounts for recipients if they don't exist. This ensures tokens can be received without manual account setup.
 

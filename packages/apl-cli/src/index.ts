@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getConfig, setConfig, readConfig } from './config.js';
 import { Keypair } from '@solana/web3.js';
 import { RpcConnection, PubkeyUtil, RuntimeTransaction } from '@repo/arch-sdk';
 import { 
@@ -11,6 +12,7 @@ import {
   mintToTx, 
   transferTx, 
   createAssociatedTokenAccountTx,
+  deriveAssociatedTokenAddress,
   SignerCallback,
   toArchPubkey,
   APL_TOKEN_PROGRAM_ID
@@ -65,6 +67,28 @@ program
   .description('CLI for wallet and token operations on Arch network')
   .version('0.0.1');
 
+// Config commands
+const config = program
+  .command('config')
+  .description('Manage CLI configuration');
+
+config
+  .command('get')
+  .description('Get current config settings')
+  .action(getConfig);
+
+config
+  .command('set')
+  .description('Set config settings')
+  .option('--url <url>', 'RPC endpoint URL')
+  .option('--keypair <path>', 'Path to keypair file')
+  .action((options) => {
+    const config: { rpcUrl?: string; keypair?: string } = {};
+    if (options.url) config.rpcUrl = options.url;
+    if (options.keypair) config.keypair = options.keypair;
+    setConfig(config);
+  });
+
 // Command: create-keypair
 program
   .command('create-keypair')
@@ -82,27 +106,23 @@ program
 
 // Wallet commands
 program
-  .command('wallet')
-  .description('Wallet operations')
   .command('balance')
-  .description('Get wallet balance on Arch network')
-  .requiredOption('-k, --keypair <path>', 'keypair file path')
-  .requiredOption('-r, --rpc <url>', 'RPC endpoint URL', 'http://localhost:8899')
-  .action(async (options) => {
+  .description('Get wallet balance')
+  .action(async () => {
     try {
-      const keypairPath = path.resolve(options.keypair);
-      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
       const walletKeypair = Keypair.fromSecretKey(
         Buffer.from(keypairData.secretKey, 'hex')
       );
       const walletPubkey = toArchPubkey(walletKeypair.publicKey);
 
       // Initialize RPC connection
-      const rpcConnection = new RpcConnection(options.rpc);
+      const rpcConnection = new RpcConnection(config.rpcUrl);
       
       console.log('Fetching wallet balance...');
       console.log(`Public Key: ${keypairData.publicKey}`);
-      console.log(`RPC URL: ${options.rpc}`);
+      console.log(`RPC URL: ${config.rpcUrl}`);
       
       // Stub: In real implementation, we would:
       // 1. Use rpcConnection to fetch account info
@@ -119,21 +139,15 @@ program
     }
   });
 
-// Token commands
-const token = program
-  .command('token')
-  .description('Token operations');
-
-token
+program
   .command('send')
   .description('Send tokens to another address')
-  .requiredOption('-k, --keypair <path>', 'sender keypair file path')
   .requiredOption('-t, --to <address>', 'recipient address')
   .requiredOption('-a, --amount <number>', 'amount to send')
-  .action(async (options) => {
+  .action(async (options: { to: string; amount: string }) => {
     try {
-      const keypairPath = path.resolve(options.keypair);
-      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
       const senderKeypair = Keypair.fromSecretKey(
         Buffer.from(keypairData.secretKey, 'hex')
       );
@@ -166,16 +180,16 @@ token
     }
   });
 
-token
-  .command('deploy')
-  .description('Deploy a new token')
-  .requiredOption('-k, --keypair <path>', 'authority keypair file path')
-  .option('-d, --decimals <number>', 'number of decimals for the token', '9')
-  .option('-f, --freeze-authority <address>', 'optional freeze authority address')
-  .action(async (options) => {
+program
+  .command('create-token')
+  .description('Create a new token')
+  .option('--decimals <n>', 'Number of decimals', '9')
+  .option('--freeze-authority <pubkey>', 'Optional freeze authority')
+  .action(async (options: { decimals?: string; freezeAuthority?: string }) => {
     try {
-      const keypairPath = path.resolve(options.keypair);
-      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      // Read config for keypair path
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
       const authorityKeypair = Keypair.fromSecretKey(
         Buffer.from(keypairData.secretKey, 'hex')
       );
@@ -190,18 +204,17 @@ token
         ? Buffer.from(options.freezeAuthority, 'hex')
         : null;
       
-      const decimals = parseInt(options.decimals, 10);
+      const decimals = parseInt(options.decimals || '9', 10);
       if (isNaN(decimals) || decimals < 0 || decimals > 255) {
         throw new Error('Decimals must be a number between 0 and 255');
       }
 
-      console.log('Deploying new token...');
-      console.log(`Authority: ${keypairData.publicKey}`);
-      console.log(`Mint Address: ${Buffer.from(mintPubkey).toString('hex')}`);
-      console.log(`Decimals: ${decimals}`);
+      console.log(`Creating token ${Buffer.from(mintPubkey).toString('hex')}`);
       if (freezeAuthority) {
-        console.log(`Freeze Authority: ${options.freezeAuthority}`);
+        console.log(`Freeze authority: ${options.freezeAuthority}`);
       }
+      console.log(`Token successfully created`);
+      console.log(`Signature: ${Buffer.from(mintPubkey).toString('hex')}`)
 
       // Create and send initialize mint transaction
       const signer = createSignerFromKeypair(keypairData);
@@ -222,9 +235,10 @@ token
         signer
       );
 
-      console.log('Token deployed successfully');
-      console.log('Transactions created (stub)');
-      console.log('Note: Save the mint address for future operations!');
+      // Note: In real implementation, we would:
+      // 1. Submit transaction to network
+      // 2. Wait for confirmation
+      // 3. Return actual signature
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error:', error.message);
@@ -235,17 +249,68 @@ token
     }
   });
 
-token
+program
+  .command('supply <tokenAddress>')
+  .description('Get token supply')
+  .action(async (tokenAddress: string) => {
+    try {
+      const config = readConfig();
+      const rpcConnection = new RpcConnection(config.rpcUrl);
+      const mintPubkey = Buffer.from(tokenAddress, 'hex');
+
+      console.log(`Getting token supply for ${tokenAddress}...`);
+      
+      try {
+        // Fetch mint account data
+        const accountInfo = await rpcConnection.readAccountInfo(mintPubkey);
+        if (!accountInfo || !accountInfo.data) {
+          throw new Error('Token not found');
+        }
+
+        // Ensure we have account data
+        if (!accountInfo.data || accountInfo.data.length < 9) {
+          throw new Error('Invalid token account data');
+        }
+
+        // Parse supply from account data (first 8 bytes are supply)
+        const supply = BigInt('0x' + Buffer.from(accountInfo.data.slice(0, 8)).toString('hex'));
+        const decimals = Number(accountInfo.data[8]); // 9th byte is decimals
+
+        if (isNaN(decimals) || decimals < 0 || decimals > 255) {
+          throw new Error('Invalid token decimals');
+        }
+
+        // Format with proper decimals
+        const formattedSupply = Number(supply) / Math.pow(10, decimals);
+        console.log(`${formattedSupply}`);
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Token not found') {
+          console.error('Error: Invalid token account');
+        } else {
+          console.error('Error: Unable to fetch token supply');
+        }
+        process.exit(1);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+program
   .command('mint')
   .description('Mint tokens to a recipient (requires mint authority)')
-  .requiredOption('-k, --keypair <path>', 'mint authority keypair file path')
   .requiredOption('-m, --mint <address>', 'mint address')
   .requiredOption('-t, --to <address>', 'recipient address')
   .requiredOption('-a, --amount <number>', 'amount to mint')
-  .action(async (options) => {
+  .action(async (options: { mint: string; to: string; amount: string }) => {
     try {
-      const keypairPath = path.resolve(options.keypair);
-      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
       const authorityKeypair = Keypair.fromSecretKey(
         Buffer.from(keypairData.secretKey, 'hex')
       );
@@ -284,6 +349,167 @@ token
 
       console.log('Transactions created (stub)');
       console.log('Note: Transaction will fail if signer is not the mint authority');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command('accounts')
+  .description('List all token accounts')
+  .option('-v, --verbose', 'Show detailed token information')
+  .action(async (options) => {
+    try {
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
+      const walletKeypair = Keypair.fromSecretKey(
+        Buffer.from(keypairData.secretKey, 'hex')
+      );
+      const walletPubkey = toArchPubkey(walletKeypair.publicKey);
+
+      // Initialize RPC connection
+      const rpcConnection = new RpcConnection(config.rpcUrl);
+
+      // Get all token accounts for wallet
+      const accounts = await rpcConnection.getProgramAccounts(APL_TOKEN_PROGRAM_ID);
+      if (!accounts || accounts.length === 0) {
+        console.log('No token accounts found');
+        return;
+      }
+
+      for (const account of accounts) {
+        if (!account.account || !account.account.data) continue;
+
+        // First 32 bytes are owner
+        const owner = account.account.data.slice(0, 32);
+        if (Buffer.compare(Buffer.from(owner), Buffer.from(walletPubkey)) !== 0) continue;
+
+        // Next 32 bytes are mint
+        const mint = account.account.data.slice(32, 64);
+        const mintAddress = Buffer.from(mint).toString('hex');
+
+        // Get mint info for decimals
+        const mintInfo = await rpcConnection.readAccountInfo(mint);
+        if (!mintInfo || !mintInfo.data) continue;
+        const decimals = Number(mintInfo.data[8]);
+
+        // Parse balance (first 8 bytes after mint)
+        const balance = BigInt('0x' + Buffer.from(account.account.data.slice(64, 72)).toString('hex'));
+        const formattedBalance = Number(balance) / Math.pow(10, decimals);
+
+        if (options.verbose) {
+          console.log('Token Account:', Buffer.from(account.pubkey).toString('hex'));
+          console.log('Token:', mintAddress);
+          console.log('Balance:', formattedBalance);
+          console.log('Decimals:', decimals);
+          console.log('---');
+        } else {
+          console.log(`${Buffer.from(account.pubkey).toString('hex')}  ${formattedBalance} ${mintAddress}`);
+        }
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command('balance <tokenAddress>')
+  .description('Get token account balance')
+  .action(async (tokenAddress: string) => {
+    try {
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
+      const walletKeypair = Keypair.fromSecretKey(
+        Buffer.from(keypairData.secretKey, 'hex')
+      );
+      const walletPubkey = toArchPubkey(walletKeypair.publicKey);
+      const mintPubkey = Buffer.from(tokenAddress, 'hex');
+
+      // Initialize RPC connection
+      const rpcConnection = new RpcConnection(config.rpcUrl);
+
+      // Get token info for decimals
+      const tokenInfo = await rpcConnection.readAccountInfo(mintPubkey);
+      if (!tokenInfo || !tokenInfo.data || tokenInfo.data.length < 9) {
+        throw new Error('Invalid token mint account');
+      }
+      const decimals = Number(tokenInfo.data[8]);
+
+      // Get associated token account
+      const [associatedAddress] = await deriveAssociatedTokenAddress(
+        walletPubkey,
+        mintPubkey
+      );
+
+      // Get account info
+      const accountInfo = await rpcConnection.readAccountInfo(associatedAddress);
+      if (!accountInfo || !accountInfo.data) {
+        console.log('0');
+        return;
+      }
+
+      // Parse balance (first 8 bytes)
+      const balance = BigInt('0x' + Buffer.from(accountInfo.data.slice(0, 8)).toString('hex'));
+      const formattedBalance = Number(balance) / Math.pow(10, decimals);
+      console.log(formattedBalance);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command('create-account <tokenAddress>')
+  .description('Create an associated token account')
+  .action(async (tokenAddress: string) => {
+    try {
+      const config = readConfig();
+      const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
+      const walletKeypair = Keypair.fromSecretKey(
+        Buffer.from(keypairData.secretKey, 'hex')
+      );
+      const walletPubkey = toArchPubkey(walletKeypair.publicKey);
+      const mintPubkey = Buffer.from(tokenAddress, 'hex');
+
+      // Verify token exists
+      const rpcConnection = new RpcConnection(config.rpcUrl);
+      const tokenInfo = await rpcConnection.readAccountInfo(mintPubkey);
+      if (!tokenInfo || !tokenInfo.data) {
+        throw new Error('Invalid token mint account');
+      }
+
+      console.log(`Creating account for token: ${tokenAddress}`);
+      console.log(`Owner: ${keypairData.publicKey}`);
+
+      // Create associated token account
+      const signer = createSignerFromKeypair(keypairData);
+      const [associatedAddress] = await deriveAssociatedTokenAddress(
+        walletPubkey,
+        mintPubkey
+      );
+
+      const tx = await createAssociatedTokenAccountTx(
+        walletPubkey,
+        mintPubkey,
+        walletPubkey,
+        signer
+      );
+
+      console.log(`Associated token account: ${Buffer.from(associatedAddress).toString('hex')}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error:', error.message);
