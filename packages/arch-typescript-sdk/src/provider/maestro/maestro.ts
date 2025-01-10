@@ -2,14 +2,14 @@ import {
   deserializeWithUint8Array,
   SerializeUint8Array,
   serializeWithUint8Array,
-} from '../../serde/uint8array';
-import { AccountInfoResult } from '../../struct/account';
-import { Block } from '../../struct/block';
-import { ProcessedTransaction } from '../../struct/processed-transaction';
-import { AccountFilter, ProgramAccount } from '../../struct/program-account';
-import { Pubkey } from '../../struct/pubkey';
-import { RuntimeTransaction } from '../../struct/runtime-transaction';
-import { Provider } from '../provider';
+} from '../../serde/uint8array.js';
+import { AccountInfoResult } from '../../struct/account.js';
+import { Block } from '../../struct/block.js';
+import { ProcessedTransaction } from '../../struct/processed-transaction.js';
+import { AccountFilter, ProgramAccount } from '../../struct/program-account.js';
+import { Pubkey } from '../../struct/pubkey.js';
+import { RuntimeTransaction } from '../../struct/runtime-transaction.js';
+import { Provider } from '../provider.js';
 import {
   AccountAddressResponse,
   AccountInfoResponse,

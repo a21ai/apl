@@ -1,8 +1,8 @@
 import { it, describe, expect } from 'vitest';
-import { Message } from '../struct/message';
-import { systemProgram } from '../serde/pubkey';
-import { serialize as serializeMessage } from '../serde/message';
-import { Instruction } from '../struct/instruction';
+import { Message } from '../struct/message.js';
+import { systemProgram } from '../serde/pubkey.js';
+import { serialize as serializeMessage } from '../serde/message.js';
+import { Instruction } from '../struct/instruction.js';
 
 describe('assert that message struct serializes as expected', () => {
   it('checks borsh serialization matches', () => {

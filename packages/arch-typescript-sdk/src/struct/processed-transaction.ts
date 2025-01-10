@@ -1,4 +1,4 @@
-import { RuntimeTransaction } from './runtime-transaction';
+import { RuntimeTransaction } from './runtime-transaction.js';
 
 export type ProcessedTransactionStatus = 'Processing' | 'Processed' | { Failed: string };
 

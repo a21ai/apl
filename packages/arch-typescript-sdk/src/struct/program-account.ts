@@ -1,5 +1,5 @@
-import { Pubkey } from './pubkey';
-import { AccountInfoResult } from './account';
+import { Pubkey } from './pubkey.js';
+import { AccountInfoResult } from './account.js';
 
 export interface AccountFilter {
   memcmp?: {

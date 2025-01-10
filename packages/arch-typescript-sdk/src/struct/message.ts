@@ -1,6 +1,6 @@
 import { Schema } from 'borsh';
-import { Instruction, InstructionSchema } from './instruction';
-import { Pubkey, PubkeySchema } from './pubkey';
+import { Instruction, InstructionSchema } from './instruction.js';
+import { Pubkey, PubkeySchema } from './pubkey.js';
 
 export interface Message {
   signers: Array<Pubkey>;

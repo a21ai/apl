@@ -1,6 +1,6 @@
 import { Schema } from 'borsh';
-import { AccountMeta, AccountMetaSchema } from './account';
-import { Pubkey, PubkeySchema } from './pubkey';
+import { AccountMeta, AccountMetaSchema } from './account.js';
+import { Pubkey, PubkeySchema } from './pubkey.js';
 
 export interface Instruction {
   program_id: Pubkey;

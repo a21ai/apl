@@ -1,18 +1,18 @@
-import { Action } from '../constants';
-import { AccountInfoResult } from '../struct/account';
-import { Block } from '../struct/block';
-import { ProcessedTransaction } from '../struct/processed-transaction';
-import { Pubkey } from '../struct/pubkey';
-import { RuntimeTransaction } from '../struct/runtime-transaction';
-import { ProgramAccount, AccountFilter } from '../struct/program-account';
-import { ArchRpcError, postData, processResult } from '../utils';
+import { Action } from '../constants.js';
+import { AccountInfoResult } from '../struct/account.js';
+import { Block } from '../struct/block.js';
+import { ProcessedTransaction } from '../struct/processed-transaction.js';
+import { Pubkey } from '../struct/pubkey.js';
+import { RuntimeTransaction } from '../struct/runtime-transaction.js';
+import { ProgramAccount, AccountFilter } from '../struct/program-account.js';
+import { ArchRpcError, postData, processResult } from '../utils.js';
 
 import {
   deserializeWithUint8Array,
   SerializeUint8Array,
   serializeWithUint8Array,
-} from '../serde/uint8array';
-import { Provider } from './provider';
+} from '../serde/uint8array.js';
+import { Provider } from './provider.js';
 
 const NOT_FOUND = 404;
 

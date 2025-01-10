@@ -1,6 +1,6 @@
 import { Schema } from 'borsh';
-import { Pubkey, PubkeySchema } from './pubkey';
-import { UtxoMeta } from './utxo';
+import { Pubkey, PubkeySchema } from './pubkey.js';
+import { UtxoMeta } from './utxo.js';
 
 export interface AccountInfo {
   key: Pubkey;

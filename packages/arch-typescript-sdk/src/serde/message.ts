@@ -1,8 +1,8 @@
 import { sha256 } from '@noble/hashes/sha256';
-import { Message } from '../struct/message';
-import { serialize as serializeInstruction } from './instruction';
+import { Message } from '../struct/message.js';
+import { serialize as serializeInstruction } from './instruction.js';
 import { hex } from '@scure/base';
-import { InstructionUtil } from '..';
+import { InstructionUtil } from '../index.js';
 
 export const serialize = (message: Message) => {
   const signersCount = new Uint8Array([message.signers.length]);

@@ -1,4 +1,4 @@
-import { Message } from './message';
+import { Message } from './message.js';
 
 // 64 bytes
 export type Signature = Uint8Array;

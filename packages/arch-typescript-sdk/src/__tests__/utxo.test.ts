@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fromHex } from '../serde/utxo';
+import { fromHex } from '../serde/utxo.js';
 
 describe('assert that utxo meta serializes as expected', () => {
   it('matches the output of the borsh serializer in Rust', () => {

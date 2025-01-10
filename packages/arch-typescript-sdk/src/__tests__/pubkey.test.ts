@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { localPubkey } from './fixtures';
+import { localPubkey } from './fixtures.js';
 import { serialize } from 'borsh';
-import { PubkeySchema } from '../struct/pubkey';
-import { systemProgram } from '../serde/pubkey';
+import { PubkeySchema } from '../struct/pubkey.js';
+import { systemProgram } from '../serde/pubkey.js';
 
 describe('assert that pubkey serializes as expected', () => {
   it('matches the output of the borsh serializer in Rust', () => {

@@ -1,32 +1,32 @@
-export { RpcConnection } from './provider/rpc';
-export { Maestro } from './provider/maestro/maestro';
-export type { Arch } from './arch';
-export { ArchConnection } from './arch';
-export { Action } from './constants';
+export { RpcConnection } from './provider/rpc.js';
+export { Maestro } from './provider/maestro/maestro.js';
+export type { Arch } from './arch.js';
+export { ArchConnection } from './arch.js';
+export { Action } from './constants.js';
 export type {
   AccountInfo,
   AccountMeta,
   AccountInfoResult,
   CreatedAccount,
-} from './struct/account';
-export type { Instruction } from './struct/instruction';
-export { InstructionSchema } from './struct/instruction';
-export type { Message } from './struct/message';
-export { MessageSchema } from './struct/message';
-export type { Pubkey } from './struct/pubkey';
-export { PubkeySchema } from './struct/pubkey';
-export type { RuntimeTransaction } from './struct/runtime-transaction';
-export type { UtxoMeta, UtxoMetaData } from './struct/utxo';
-export { UtxoMetaSchema } from './struct/utxo';
-export type { Block } from './struct/block';
-export * as MessageUtil from './serde/message';
-export * as PubkeyUtil from './serde/pubkey';
-export * as InstructionUtil from './serde/instruction';
-export * as AccountUtil from './serde/account';
-export * as UtxoMetaUtil from './serde/utxo';
-export * as TransactionUtil from './serde/transaction';
+} from './struct/account.js';
+export type { Instruction } from './struct/instruction.js';
+export { InstructionSchema } from './struct/instruction.js';
+export type { Message } from './struct/message.js';
+export { MessageSchema } from './struct/message.js';
+export type { Pubkey } from './struct/pubkey.js';
+export { PubkeySchema } from './struct/pubkey.js';
+export type { RuntimeTransaction } from './struct/runtime-transaction.js';
+export type { UtxoMeta, UtxoMetaData } from './struct/utxo.js';
+export { UtxoMetaSchema } from './struct/utxo.js';
+export type { Block } from './struct/block.js';
+export * as MessageUtil from './serde/message.js';
+export * as PubkeyUtil from './serde/pubkey.js';
+export * as InstructionUtil from './serde/instruction.js';
+export * as AccountUtil from './serde/account.js';
+export * as UtxoMetaUtil from './serde/utxo.js';
+export * as TransactionUtil from './serde/transaction.js';
 export type {
   ProcessedTransaction,
   ProcessedTransactionStatus,
-} from './struct/processed-transaction';
-export * as SignatureUtil from './signatures';
+} from './struct/processed-transaction.js';
+export * as SignatureUtil from './signatures.js';

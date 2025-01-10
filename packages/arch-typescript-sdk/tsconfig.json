@@ -14,7 +14,7 @@
     "noImplicitOverride": true,
 
     "moduleResolution": "NodeNext",
-    "module": "ESNext",
+    "module": "NodeNext",
     "outDir": "dist",
     "declaration": true,
     "sourceMap": true,

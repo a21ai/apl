@@ -1,8 +1,8 @@
 import { it, describe, expect } from 'vitest';
-import { systemProgram } from '../serde/pubkey';
-import { Instruction } from '../struct/instruction';
-import { AccountMeta } from '../struct/account';
-import { serialize } from '../serde/account';
+import { systemProgram } from '../serde/pubkey.js';
+import { Instruction } from '../struct/instruction.js';
+import { AccountMeta } from '../struct/account.js';
+import { serialize } from '../serde/account.js';
 
 describe('assert that account struct serializes as expected', () => {
   it('checks borsh serialization matches', () => {

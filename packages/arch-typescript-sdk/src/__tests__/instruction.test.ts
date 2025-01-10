@@ -1,7 +1,7 @@
 import { it, describe, expect } from 'vitest';
-import { systemProgram } from '../serde/pubkey';
-import { Instruction } from '../struct/instruction';
-import { serialize as serializeInstruction } from '../serde/instruction';
+import { systemProgram } from '../serde/pubkey.js';
+import { Instruction } from '../struct/instruction.js';
+import { serialize as serializeInstruction } from '../serde/instruction.js';
 
 describe('assert that instruction struct serializes as expected', () => {
   it('checks borsh serialization matches', () => {

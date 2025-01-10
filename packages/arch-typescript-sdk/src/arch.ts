@@ -1,7 +1,7 @@
-import { Provider } from './provider/provider';
+import { Provider } from './provider/provider.js';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
-import { CreatedAccount } from './struct/account';
+import { CreatedAccount } from './struct/account.js';
 
 export interface Arch extends Provider {
   createNewAccount: () => Promise<CreatedAccount>;
