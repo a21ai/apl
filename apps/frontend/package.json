@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@noble/hashes": "^1.7.0",
-    "@omnisat/lasereyes": "^0.0.132",
+    "@omnisat/lasereyes": "^0.0.133",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-navigation-menu": "^1.2.1",
     "@radix-ui/react-progress": "^1.1.0",
