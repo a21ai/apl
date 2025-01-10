@@ -236,8 +236,8 @@ token
   });
 
 token
-  .command('mint-more')
-  .description('Mint additional tokens to an existing token (requires mint authority)')
+  .command('mint')
+  .description('Mint tokens to a recipient (requires mint authority)')
   .requiredOption('-k, --keypair <path>', 'mint authority keypair file path')
   .requiredOption('-m, --mint <address>', 'mint address')
   .requiredOption('-t, --to <address>', 'recipient address')
@@ -254,7 +254,7 @@ token
       const recipientPubkey = Buffer.from(options.to, 'hex');
       const amount = BigInt(options.amount);
 
-      console.log('Creating mint-more transaction...');
+      console.log('Creating mint transaction...');
       console.log(`Authority: ${keypairData.publicKey}`);
       console.log(`Mint address: ${options.mint}`);
       console.log(`To address: ${options.to}`);

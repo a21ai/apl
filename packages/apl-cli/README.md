@@ -87,9 +87,9 @@ The deploy command will:
 4. Create an associated token account for the authority
 5. Output the mint address for future operations
 
-Mint additional tokens (requires mint authority):
+Mint tokens (requires mint authority):
 ```bash
-apl-cli token mint-more \
+apl-cli token mint \
   -k ./authority-keypair.json \
   -m mint-address \
   -t recipient-address \
