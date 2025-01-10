@@ -5,5 +5,5 @@ This SDK aims to simplify the development of typescript applications that intera
 ## Installation
 
 ```bash
-npm install @saturnbtcio/arch-sdk
+npm install @repo/arch-sdk
 ```

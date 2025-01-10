@@ -1,5 +1,5 @@
 {
-  "name": "@repo/arch-typescript-sdk",
+  "name": "@repo/arch-sdk",
   "version": "0.0.1",
   "description": "Arch SDK",
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/a21ai/archway/issues"
   },
-  "homepage": "https://github.com/a21ai/archway/tree/main/packages/arch-typescript-sdk#readme",
+  "homepage": "https://github.com/a21ai/archway/tree/main/packages/arch-sdk#readme",
   "keywords": [
     "saturn",
     "arch",

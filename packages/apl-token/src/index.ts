@@ -5,7 +5,7 @@ import {
   Message,
   Instruction,
   AccountMeta
-} from "@repo/arch-typescript-sdk";
+} from "@repo/arch-sdk";
 import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
 import { sha256 } from '@noble/hashes/sha2';
