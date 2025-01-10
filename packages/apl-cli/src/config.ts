@@ -8,7 +8,7 @@ export interface CliConfig {
 
 const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(os.homedir(), '.apl-sdk', 'id.json'),
-  rpcUrl: 'http://localhost:8899'
+  rpcUrl: 'http://localhost:9002'
 };
 
 const CONFIG_DIR = path.join(os.homedir(), '.apl-sdk');
