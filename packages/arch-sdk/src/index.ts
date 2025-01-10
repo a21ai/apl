@@ -30,5 +30,3 @@ export type {
   ProcessedTransactionStatus,
 } from './struct/processed-transaction.js';
 export * as SignatureUtil from './signatures.js';
-export * as SignerUtil from './serde/signer.js';
-export type { SignerCallback } from './serde/signer.js';

@@ -10,6 +10,7 @@ import { Keypair } from "@solana/web3.js"; // Keep only for test key generation
 import { Buffer } from 'buffer';
 import { sha256 } from '@noble/hashes/sha2';
 import Borsh from "borsh";
+import { SignerCallback } from './signer.ts.js';
 
 // Type for converting Solana PublicKey to Arch Pubkey
 type SolanaToArchPubkey = (solanaKey: Keypair['publicKey']) => Pubkey;
@@ -134,32 +135,8 @@ export async function createAssociatedTokenAccountTx(
  * @param transaction - The RuntimeTransaction to sign
  * @returns Promise<RuntimeTransaction> - The signed transaction
  */
-export type SignerCallback = (transaction: RuntimeTransaction) => Promise<RuntimeTransaction>;
-
-/**
- * Mock signer for testing purposes.
- * In real usage, implement this with actual signing logic:
- * - For Node.js: Use private key to generate signatures
- * - For Web3: Use wallet.signTransaction or similar
- */
-/**
- * Mock signer for testing purposes.
- * In real usage, implement this with actual signing logic:
- * - For Node.js: Use private key to generate signatures
- * - For Web3: Use wallet.signTransaction or similar
- */
-export const mockSigner: SignerCallback = async (tx: RuntimeTransaction): Promise<RuntimeTransaction> => {
-  // Preserve the original transaction structure
-  const signedTx: RuntimeTransaction = {
-    version: tx.version,
-    message: {
-      signers: [], // In real impl, add actual signers
-      instructions: tx.message.instructions
-    },
-    signatures: [] // In real impl, add actual Uint8Array signatures
-  };
-  return signedTx;
-};
+export type { SignerCallback } from './signer.ts.js';
+export { createSignerFromSecretKey, mockSigner } from './signer.ts.js';
 
 // Instruction data layouts
 export interface InitializeMintData {
