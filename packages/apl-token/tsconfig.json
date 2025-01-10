@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "moduleResolution": "NodeNext",
-    "module": "ESNext",
+    "module": "NodeNext",
     "esModuleInterop": true,
     "allowJs": true,
     "types": ["jest", "node"],
