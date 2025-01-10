@@ -22,7 +22,7 @@ import {
   RecentTransactionsResponse,
   SendTransactionResponse,
   SendTransactionsResponse,
-} from './maestro.dto';
+} from './maestro.dto.js';
 
 export class Maestro implements Provider {
   url: string;
