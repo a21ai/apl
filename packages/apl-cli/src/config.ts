@@ -67,25 +67,26 @@ export function writeConfig(config: Partial<CliConfig>): void {
   }
 }
 
-export function getConfig(): void {
+export async function getConfig(): Promise<void> {
   const config = readConfig();
   console.log('Config File:', CONFIG_FILE);
   console.log('RPC URL:', config.rpcUrl);
   console.log('Keypair Path:', config.keypair);
 }
 
-export function setConfig(options: Partial<CliConfig>): void {
+export async function setConfig(options: Partial<CliConfig>): Promise<void> {
   if (!options.keypair && !options.rpcUrl) {
-    console.error('Error: Please provide at least one option to set');
-    process.exit(1);
+    throw new Error('Please provide at least one option to set');
   }
 
   try {
     writeConfig(options);
+    const config = readConfig();
     console.log('Config updated successfully');
-    getConfig();
+    console.log('Config File:', CONFIG_FILE);
+    console.log('RPC URL:', config.rpcUrl);
+    console.log('Keypair Path:', config.keypair);
   } catch (error) {
-    console.error('Failed to update config:', error);
-    process.exit(1);
+    throw error;
   }
 }

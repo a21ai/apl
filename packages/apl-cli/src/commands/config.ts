@@ -10,11 +10,12 @@ export default function configCommand(program: Command) {
   config
     .command('get')
     .description('Get current configuration')
-    .action(() => {
+    .action(async () => {
       try {
-        getConfig();
+        await getConfig();
       } catch (error) {
-        handleError(error);
+        console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
+        process.exitCode = 1;
       }
     });
 
@@ -23,14 +24,15 @@ export default function configCommand(program: Command) {
     .description('Update configuration')
     .option('-u, --url <url>', 'RPC endpoint URL')
     .option('-k, --keypair <path>', 'keypair file path')
-    .action((options) => {
+    .action(async (options) => {
       try {
         const config: { rpcUrl?: string; keypair?: string } = {};
         if (options.url) config.rpcUrl = options.url;
         if (options.keypair) config.keypair = options.keypair;
-        setConfig(config);
+        await setConfig(config);
       } catch (error) {
-        handleError(error);
+        console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
+        process.exitCode = 1;
       }
     });
 }
