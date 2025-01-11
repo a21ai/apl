@@ -1,22 +1,27 @@
-import { Command } from 'commander';
-import { loadKeypairWithPubkey, createSignerFromKeypair, handleError } from '../utils.js';
-import { PubkeyUtil } from '@repo/arch-sdk';
+import { Command } from "commander";
+import {
+  loadKeypairWithPubkey,
+  createSignerFromKeypair,
+  handleError,
+} from "../utils.js";
+import { PubkeyUtil, UtxoMetaData } from "@repo/arch-sdk";
+import { initializeMintTx } from "@repo/apl-token";
 
 export default function createTokenCommand(program: Command) {
   program
-    .command('create-token')
-    .description('Create a new token')
-    .option('-d, --decimals <number>', 'number of decimals', '9')
-    .option('-f, --freeze-authority <pubkey>', 'optional freeze authority')
+    .command("create-token")
+    .description("Create a new token")
+    .option("-d, --decimals <number>", "number of decimals", "9")
+    .option("-f, --freeze-authority <pubkey>", "optional freeze authority")
     .action(async (options) => {
       try {
-        const { keypairData, pubkey } = loadKeypairWithPubkey();
+        const keypairData = loadKeypairWithPubkey();
         const decimals = parseInt(options.decimals);
-        const freezeAuthority = options.freezeAuthority 
+        const freezeAuthority = options.freezeAuthority
           ? PubkeyUtil.fromHex(options.freezeAuthority)
           : null;
 
-        console.log('Creating new token...');
+        console.log("Creating new token...");
         console.log(`Mint Authority: ${keypairData.publicKey}`);
         console.log(`Decimals: ${decimals}`);
         if (freezeAuthority) {
@@ -25,14 +30,20 @@ export default function createTokenCommand(program: Command) {
 
         // Create and send initialize mint transaction (stubbed)
         const signer = createSignerFromKeypair(keypairData);
-        // const tx = await initializeMintTx(
-        //   pubkey,
-        //   decimals,
-        //   pubkey,
-        //   freezeAuthority,
-        //   signer
-        // );
-        console.log('Transaction created (stub)');
+
+        const utxo: UtxoMetaData = {
+          txid: "0000000000000000000000000000000000000000000000000000000000000000",
+          vout: 0,
+        };
+
+        const tx = await initializeMintTx(
+          utxo,
+          decimals,
+          keypairData.pubkey,
+          freezeAuthority,
+          signer
+        );
+        console.log("tx: ", tx);
       } catch (error) {
         handleError(error);
       }

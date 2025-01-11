@@ -1,12 +1,15 @@
-import fs from 'fs';
-import { Keypair } from '@solana/web3.js';
-import { RpcConnection, RuntimeTransaction, PubkeyUtil, Pubkey } from '@repo/arch-sdk';
-import { readConfig } from './config.js';
-
-/**
- * Callback function for signing transactions
- */
-type SignerCallback = (transaction: RuntimeTransaction) => Promise<RuntimeTransaction>;
+import fs from "fs";
+import {
+  RpcConnection,
+  RuntimeTransaction,
+  PubkeyUtil,
+  Pubkey,
+} from "@repo/arch-sdk";
+import { readConfig } from "./config.js";
+import * as btc from "@scure/btc-signer";
+import { Signer } from "bip322-js";
+import { SignerCallback, Keypair } from "@repo/apl-token";
+import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 /**
  * Load keypair from config file
@@ -16,13 +19,15 @@ type SignerCallback = (transaction: RuntimeTransaction) => Promise<RuntimeTransa
 export function loadKeypair(): Keypair {
   const config = readConfig();
   try {
-    const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
-    return Keypair.fromSecretKey(Buffer.from(keypairData.secretKey, 'hex'));
+    const keypairData: Keypair = JSON.parse(
+      fs.readFileSync(config.keypair, "utf8")
+    );
+    return keypairData;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to load keypair: ${error.message}`);
     }
-    throw new Error('Failed to load keypair: Unknown error');
+    throw new Error("Failed to load keypair: Unknown error");
   }
 }
 
@@ -36,22 +41,34 @@ export function createRpcConnection(): RpcConnection {
 }
 
 /**
- * Create a signer callback that uses the keypair's secret key
- * @param keypairData Keypair data with secretKey
+ * Get taproot address from keypair
+ * @param keypair {publicKey: string, secretKey: string}
+ * @returns {address: string}
+ */
+export function getTaprootAddress(keypair: {
+  publicKey: string;
+  secretKey: string;
+}): string {
+  const { address } = btc.p2tr(Buffer.from(keypair.publicKey, "hex"));
+  return address!;
+}
+
+/**
+ * Create a signer callback that uses a Solana keypair
+ * @param keypair {publicKey: string, secretKey: string}
  * @returns SignerCallback function
  */
-export function createSignerFromKeypair(keypairData: { secretKey: string }): SignerCallback {
-  return async (transaction: RuntimeTransaction): Promise<RuntimeTransaction> => {
-    // In a real implementation, we would:
-    // 1. Convert hex secret key back to Uint8Array
-    // 2. Create a Keypair from the secret key
-    // 3. Sign the transaction with the keypair
-    // 4. Return the signed transaction
-    const secretKey = Buffer.from(keypairData.secretKey, 'hex');
-    const keypair = Keypair.fromSecretKey(new Uint8Array(secretKey));
-    
-    // For now, just return the transaction as is (stub)
-    return transaction;
+export function createSignerFromKeypair(keypair: {
+  publicKey: string;
+  secretKey: string;
+}): SignerCallback {
+  const privkey = keypair.secretKey;
+  const address = getTaprootAddress(keypair);
+  const wif = btc.WIF().encode(Buffer.from(privkey, "hex"));
+
+  return async (message: string): Promise<string> => {
+    const sig = Signer.sign(wif, address!, message) as string;
+    return sig;
   };
 }
 
@@ -61,9 +78,9 @@ export function createSignerFromKeypair(keypairData: { secretKey: string }): Sig
  */
 export function handleError(error: unknown): never {
   if (error instanceof Error) {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
   } else {
-    console.error('An unknown error occurred');
+    console.error("An unknown error occurred");
   }
   process.exit(1);
 }
@@ -74,8 +91,9 @@ export function handleError(error: unknown): never {
  */
 export function loadKeypairWithPubkey() {
   const config = readConfig();
-  const keypairData = JSON.parse(fs.readFileSync(config.keypair, 'utf8'));
-  const keypair = Keypair.fromSecretKey(Buffer.from(keypairData.secretKey, 'hex'));
-  const pubkey = PubkeyUtil.fromHex(Buffer.from(keypair.publicKey.toBytes()).toString('hex'));
-  return { keypairData, keypair, pubkey };
+  const keypairData = JSON.parse(fs.readFileSync(config.keypair, "utf8"));
+  return {
+    ...keypairData,
+    pubkey: PubkeyUtil.fromHex(keypairData.publicKey),
+  };
 }

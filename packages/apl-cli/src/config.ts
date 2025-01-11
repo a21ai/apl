@@ -1,18 +1,20 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-export interface CliConfig {
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+interface CliConfig {
   keypair: string;
   rpcUrl: string;
 }
 
-const DEFAULT_CONFIG: CliConfig = {
-  keypair: path.join(os.homedir(), '.apl-sdk', 'id.json'),
-  rpcUrl: 'http://localhost:9002'
+const CONFIG_DIR = path.join(os.homedir(), ".apl-cli");
+
+export const DEFAULT_CONFIG: CliConfig = {
+  keypair: path.join(CONFIG_DIR, "keypair.json"),
+  rpcUrl: "http://localhost:9002",
 };
 
-const CONFIG_DIR = path.join(os.homedir(), '.apl-sdk');
-const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
+const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
 export function ensureConfigDirExists(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
@@ -22,7 +24,7 @@ export function ensureConfigDirExists(): void {
 
 export function readConfig(): CliConfig {
   ensureConfigDirExists();
-  
+
   try {
     if (!fs.existsSync(CONFIG_FILE)) {
       // Write default config directly without using writeConfig
@@ -30,62 +32,62 @@ export function readConfig(): CliConfig {
       return DEFAULT_CONFIG;
     }
 
-    const configStr = fs.readFileSync(CONFIG_FILE, 'utf8');
+    const configStr = fs.readFileSync(CONFIG_FILE, "utf8");
     const config = JSON.parse(configStr);
-    
+
     // Ensure all required fields exist
     return {
       ...DEFAULT_CONFIG,
-      ...config
+      ...config,
     };
   } catch (error) {
-    console.error('Error reading config:', error);
+    console.error("Error reading config:", error);
     return DEFAULT_CONFIG;
   }
 }
 
 export function writeConfig(config: Partial<CliConfig>): void {
   ensureConfigDirExists();
-  
+
   try {
     // Read existing config directly from file
     let currentConfig = DEFAULT_CONFIG;
     if (fs.existsSync(CONFIG_FILE)) {
-      const configStr = fs.readFileSync(CONFIG_FILE, 'utf8');
+      const configStr = fs.readFileSync(CONFIG_FILE, "utf8");
       currentConfig = {
         ...DEFAULT_CONFIG,
-        ...JSON.parse(configStr)
+        ...JSON.parse(configStr),
       };
     }
-    
+
     // Merge and write new config
     const newConfig = { ...currentConfig, ...config };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
   } catch (error) {
-    console.error('Error writing config:', error);
+    console.error("Error writing config:", error);
     throw error;
   }
 }
 
 export async function getConfig(): Promise<void> {
   const config = readConfig();
-  console.log('Config File:', CONFIG_FILE);
-  console.log('RPC URL:', config.rpcUrl);
-  console.log('Keypair Path:', config.keypair);
+  console.log("Config File:", CONFIG_FILE);
+  console.log("RPC URL:", config.rpcUrl);
+  console.log("Keypair Path:", config.keypair);
 }
 
 export async function setConfig(options: Partial<CliConfig>): Promise<void> {
   if (!options.keypair && !options.rpcUrl) {
-    throw new Error('Please provide at least one option to set');
+    throw new Error("Please provide at least one option to set");
   }
 
   try {
     writeConfig(options);
     const config = readConfig();
-    console.log('Config updated successfully');
-    console.log('Config File:', CONFIG_FILE);
-    console.log('RPC URL:', config.rpcUrl);
-    console.log('Keypair Path:', config.keypair);
+    console.log("Config updated successfully");
+    console.log("Config File:", CONFIG_FILE);
+    console.log("RPC URL:", config.rpcUrl);
+    console.log("Keypair Path:", config.keypair);
   } catch (error) {
     throw error;
   }
