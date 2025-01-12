@@ -6,10 +6,10 @@ import {
   handleError,
 } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import {
-  deriveAssociatedTokenAddress,
-  createAssociatedTokenAccountTx,
-} from "@repo/apl-token";
+// import {
+//   deriveAssociatedTokenAddress,
+//   createAssociatedTokenAccountTx,
+// } from "@repo/apl-token";
 
 export default function createAccountCommand(program: Command) {
   program
@@ -33,21 +33,21 @@ export default function createAccountCommand(program: Command) {
 
         // Create associated token account
         const signer = createSignerFromKeypair(keypairData);
-        const [associatedAddress] = await deriveAssociatedTokenAddress(
-          pubkey,
-          mintPubkey
-        );
+        // const [associatedAddress] = await deriveAssociatedTokenAddress(
+        //   pubkey,
+        //   mintPubkey
+        // );
 
-        const tx = await createAssociatedTokenAccountTx(
-          pubkey,
-          mintPubkey,
-          pubkey,
-          signer
-        );
+        // const tx = await createAssociatedTokenAccountTx(
+        //   pubkey,
+        //   mintPubkey,
+        //   pubkey,
+        //   signer
+        // );
 
-        console.log(
-          `Associated token account: ${Buffer.from(associatedAddress).toString("hex")}`
-        );
+        // console.log(
+        //   `Associated token account: ${Buffer.from(associatedAddress).toString("hex")}`
+        // );
       } catch (error) {
         handleError(error);
       }

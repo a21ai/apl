@@ -1,0 +1,294 @@
+import {
+  Pubkey,
+  Instruction,
+  RuntimeTransaction,
+  Message,
+  MessageUtil,
+  SignatureUtil,
+} from "@repo/arch-sdk";
+import { PublicKey } from "@solana/web3.js";
+
+// Instruction data layouts
+export interface InitializeMintData {
+  instruction: TokenInstruction.InitializeMint;
+  decimals: number;
+  mintAuthority: Pubkey;
+  freezeAuthority: Pubkey | null;
+}
+
+export interface TransferData {
+  instruction: TokenInstruction.Transfer;
+  amount: bigint;
+}
+
+export interface ApproveData {
+  instruction: TokenInstruction.Approve;
+  amount: bigint;
+}
+
+export interface MintToData {
+  instruction: TokenInstruction.MintTo;
+  amount: bigint;
+}
+
+export interface BurnData {
+  instruction: TokenInstruction.Burn;
+  amount: bigint;
+}
+
+// Instruction data interfaces
+export interface SetAuthorityData {
+  instruction: TokenInstruction.SetAuthority;
+  authorityType: AuthorityType;
+  newAuthority: Pubkey | null;
+}
+
+export interface InitializeAccountData {
+  instruction: TokenInstruction.InitializeAccount;
+}
+
+export interface CloseAccountData {
+  instruction: TokenInstruction.CloseAccount;
+}
+
+export interface FreezeAccountData {
+  instruction: TokenInstruction.FreezeAccount;
+}
+
+export interface ThawAccountData {
+  instruction: TokenInstruction.ThawAccount;
+}
+
+export interface TransferCheckedData {
+  instruction: TokenInstruction.TransferChecked;
+  amount: bigint;
+  decimals: number;
+}
+
+export interface ApproveCheckedData {
+  instruction: TokenInstruction.ApproveChecked;
+  amount: bigint;
+  decimals: number;
+}
+
+export interface MintToCheckedData {
+  instruction: TokenInstruction.MintToChecked;
+  amount: bigint;
+  decimals: number;
+}
+
+export interface BurnCheckedData {
+  instruction: TokenInstruction.BurnChecked;
+  amount: bigint;
+  decimals: number;
+}
+
+export interface InitializeMultisigData {
+  instruction: TokenInstruction.InitializeMultisig;
+  m: number;
+}
+
+// Instruction Types (matching Rust enum)
+// Verified against Rust token program's instruction.rs
+export enum TokenInstruction {
+  InitializeMint = 0, // [0, decimals(1), mint_authority(32), freeze_authority_option(1 + 32)]
+  InitializeAccount = 1, // [1]
+  InitializeMultisig = 2, // [2, m(1)]
+  Transfer = 3, // [3, amount(8)]
+  Approve = 4, // [4, amount(8)]
+  Revoke = 5, // [5]
+  SetAuthority = 6, // [6, authority_type(1), new_authority_option(1 + 32)]
+  MintTo = 7, // [7, amount(8)]
+  Burn = 8, // [8, amount(8)]
+  CloseAccount = 9, // [9]
+  FreezeAccount = 10, // [10]
+  ThawAccount = 11, // [11]
+  TransferChecked = 12, // [12, amount(8), decimals(1)]
+  ApproveChecked = 13, // [13, amount(8), decimals(1)]
+  MintToChecked = 14, // [14, amount(8), decimals(1)]
+  BurnChecked = 15, // [15, amount(8), decimals(1)]
+  InitializeAccount2 = 16, // [16, owner(32)]
+  InitializeAccount3 = 17, // [17, owner(32)]
+  InitializeMint2 = 18, // [18, decimals(1), mint_authority(32), freeze_authority_option(1 + 32)]
+  GetAccountDataSize = 19, // [19]
+  InitializeImmutableOwner = 20, // [20]
+  AmountToUiAmount = 21, // [21, amount(8)]
+  UiAmountToAmount = 22, // [22, ui_amount_string(len + string_bytes)]
+}
+
+// Authority Types (matching Rust enum)
+export enum AuthorityType {
+  MintTokens = 0,
+  FreezeAccount = 1,
+  AccountOwner = 2,
+  CloseAccount = 3,
+}
+
+// Account State (matching Rust enum)
+export enum AccountState {
+  Uninitialized = 0,
+  Initialized = 1,
+  Frozen = 2,
+}
+// Helper functions for instruction creation and serialization
+// Serialization utilities that match Rust token program's byte-level patterns
+export function serializeU64LE(value: number | bigint): Buffer {
+  const buf = Buffer.alloc(8);
+  // Convert to BigInt to handle both number and bigint inputs
+  const bigIntValue = BigInt(value);
+  // Write as little-endian u64, matching Rust's byte pattern
+  for (let i = 0; i < 8; i++) {
+    buf[i] = Number((bigIntValue >> BigInt(i * 8)) & BigInt(0xff));
+  }
+  return buf;
+}
+
+/**
+ * Serialize a public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
+ * @param pubkey - The public key to serialize
+ * @returns Buffer containing the 32-byte public key
+ */
+export function serializePubkey(pubkey: Pubkey | PublicKey): Buffer {
+  if (pubkey instanceof PublicKey) {
+    return Buffer.from(pubkey.toBytes());
+  }
+  return Buffer.from(pubkey);
+}
+
+/**
+ * Serialize an optional public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
+ * @param pubkey - The public key to serialize, or null
+ * @returns Buffer containing the serialized optional public key
+ */
+export function serializeOptionPubkey(
+  pubkey: Pubkey | PublicKey | null
+): Buffer {
+  // Always allocate 36 bytes (4 for tag + 32 for key)
+  const result = Buffer.alloc(36, 0);
+
+  if (pubkey === null) {
+    // None case - first 4 bytes are [0,0,0,0], rest are already 0
+    result.set([0, 0, 0, 0], 0);
+  } else {
+    // Some case - first 4 bytes are [1,0,0,0], followed by pubkey
+    result.set([1, 0, 0, 0], 0);
+    result.set(serializePubkey(pubkey), 4);
+  }
+
+  return result;
+}
+// to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
+
+// Main serialization function that matches Rust's pack() implementation
+export function serializeInstruction(
+  instruction: TokenInstruction,
+  data: any
+): Buffer {
+  const buffers: Buffer[] = [];
+
+  // Add instruction tag
+  buffers.push(Buffer.from([instruction]));
+
+  // Add instruction-specific data
+  switch (instruction) {
+    case TokenInstruction.InitializeMultisig: {
+      const { m } = data;
+      buffers.push(Buffer.from([m]));
+      break;
+    }
+    case TokenInstruction.InitializeMint:
+    case TokenInstruction.InitializeMint2: {
+      const { decimals, mint_authority, freeze_authority } = data;
+      const mintBuf = Buffer.alloc(69, 0);
+      mintBuf.writeUInt8(decimals, 0);
+      mintBuf.set(serializePubkey(mint_authority), 1);
+      mintBuf.set(serializeOptionPubkey(freeze_authority), 33);
+      buffers.push(mintBuf);
+      break;
+
+      // Total buffer size: 82 bytes
+      // Layout:
+      // Total buffer size: 82 bytes
+      // Layout:
+      // - mint_authority: 36 bytes (4 byte tag + 32 byte pubkey)
+      // - supply: 8 bytes (always 0 for initialization)
+      // - decimals: 1 byte (little-endian u8)
+      // - is_initialized: 1 byte (always 0 for initialization)
+      // - freeze_authority: 36 bytes (4 byte tag + 32 byte pubkey)
+      // const mintBuf = Buffer.alloc(82, 0);
+
+      // Write mint authority
+      mintBuf.set(serializeOptionPubkey(mint_authority), 0);
+
+      // Write supply (8 bytes of 0 for initialization)
+      // Already zeroed by Buffer.alloc
+
+      // Write decimals as little-endian u8
+      mintBuf.writeUInt8(decimals, 44);
+
+      // Write is_initialized (0 for initialization)
+      // Already zeroed by Buffer.alloc
+
+      // Write freeze authority
+      mintBuf.set(serializeOptionPubkey(freeze_authority), 46);
+
+      buffers.push(mintBuf);
+      break;
+    }
+    case TokenInstruction.Transfer:
+    case TokenInstruction.Approve:
+    case TokenInstruction.MintTo:
+    case TokenInstruction.Burn:
+    case TokenInstruction.AmountToUiAmount: {
+      const { amount } = data;
+      // Ensure exact byte pattern: [tag, amount(8 bytes LE)]
+      const amountBuf = Buffer.alloc(8);
+      amountBuf.writeBigUInt64LE(BigInt(amount));
+      buffers.push(amountBuf);
+      break;
+    }
+    case TokenInstruction.TransferChecked:
+    case TokenInstruction.ApproveChecked:
+    case TokenInstruction.MintToChecked:
+    case TokenInstruction.BurnChecked: {
+      const { amount, decimals } = data;
+      // Ensure exact byte pattern: [tag, amount(8 bytes LE), decimals(1)]
+      const amountBuf = Buffer.alloc(8);
+      amountBuf.writeBigUInt64LE(BigInt(amount));
+      buffers.push(amountBuf);
+      buffers.push(Buffer.from([decimals]));
+      break;
+    }
+    case TokenInstruction.SetAuthority: {
+      const { authority_type, new_authority } = data;
+      buffers.push(Buffer.from([authority_type]));
+      buffers.push(serializeOptionPubkey(new_authority));
+      break;
+    }
+    case TokenInstruction.InitializeAccount2:
+    case TokenInstruction.InitializeAccount3: {
+      const { owner } = data;
+      buffers.push(serializePubkey(owner));
+      break;
+    }
+    case TokenInstruction.UiAmountToAmount: {
+      const { ui_amount } = data;
+      // Convert string to UTF-8 bytes without length prefix
+      buffers.push(Buffer.from(ui_amount, "utf8"));
+      break;
+    }
+    // Simple instructions with just a tag
+    case TokenInstruction.InitializeAccount:
+    case TokenInstruction.Revoke:
+    case TokenInstruction.CloseAccount:
+    case TokenInstruction.FreezeAccount:
+    case TokenInstruction.ThawAccount:
+    case TokenInstruction.GetAccountDataSize:
+    case TokenInstruction.InitializeImmutableOwner:
+      break;
+    default:
+      throw new Error(`Unknown instruction: ${instruction}`);
+  }
+
+  return Buffer.concat(buffers);
+}

@@ -1,7 +1,6 @@
 import { Command } from "commander";
 import fs from "fs";
 import path from "path";
-import { Keypair } from "@solana/web3.js";
 import { handleError } from "../utils.js";
 import { DEFAULT_CONFIG } from "../config.js";
 import { randomPrivateKeyBytes } from "@scure/btc-signer/utils";
