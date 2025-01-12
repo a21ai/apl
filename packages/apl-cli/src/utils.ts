@@ -12,26 +12,6 @@ import { SignerCallback, Keypair } from "@repo/apl-token";
 import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 /**
- * Load keypair from config file
- * @returns {Keypair} Loaded keypair
- * @throws {Error} If keypair file cannot be read or is invalid
- */
-export function loadKeypair(): Keypair {
-  const config = readConfig();
-  try {
-    const keypairData: Keypair = JSON.parse(
-      fs.readFileSync(config.keypair, "utf8")
-    );
-    return keypairData;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to load keypair: ${error.message}`);
-    }
-    throw new Error("Failed to load keypair: Unknown error");
-  }
-}
-
-/**
  * Create RPC connection from config
  * @returns {RpcConnection} Configured RPC connection
  */
@@ -45,11 +25,8 @@ export function createRpcConnection(): RpcConnection {
  * @param keypair {publicKey: string, secretKey: string}
  * @returns {address: string}
  */
-export function getTaprootAddress(keypair: {
-  publicKey: string;
-  secretKey: string;
-}): string {
-  const { address } = btc.p2tr(Buffer.from(keypair.publicKey, "hex"));
+export function getTaprootAddress(keypair: Keypair): string {
+  const { address } = btc.p2tr(keypair.publicKey);
   return address!;
 }
 
@@ -58,13 +35,10 @@ export function getTaprootAddress(keypair: {
  * @param keypair {publicKey: string, secretKey: string}
  * @returns SignerCallback function
  */
-export function createSignerFromKeypair(keypair: {
-  publicKey: string;
-  secretKey: string;
-}): SignerCallback {
+export function createSignerFromKeypair(keypair: Keypair): SignerCallback {
   const privkey = keypair.secretKey;
   const address = getTaprootAddress(keypair);
-  const wif = btc.WIF().encode(Buffer.from(privkey, "hex"));
+  const wif = btc.WIF().encode(privkey);
 
   return async (message: string): Promise<string> => {
     const sig = Signer.sign(wif, address!, message) as string;
@@ -89,11 +63,12 @@ export function handleError(error: unknown): never {
  * Load keypair data and convert public key to Arch format
  * @returns {Object} Object containing keypair data and Arch pubkey
  */
-export function loadKeypairWithPubkey() {
+export function loadKeypair(): Keypair {
   const config = readConfig();
   const keypairData = JSON.parse(fs.readFileSync(config.keypair, "utf8"));
+
   return {
-    ...keypairData,
-    pubkey: PubkeyUtil.fromHex(keypairData.publicKey),
+    publicKey: PubkeyUtil.fromHex(keypairData.publicKey),
+    secretKey: PubkeyUtil.fromHex(keypairData.secretKey),
   };
 }

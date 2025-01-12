@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import {
-  loadKeypairWithPubkey,
+  loadKeypair,
   createRpcConnection,
   handleError,
   getTaprootAddress,
@@ -16,7 +16,7 @@ export default function balanceCommand(program: Command) {
       try {
         // Read config for keypair and RPC URL
         const config = readConfig();
-        const keypairData = loadKeypairWithPubkey();
+        const keypairData = loadKeypair();
         const rpcConnection = createRpcConnection();
 
         const paymentAddress = getTaprootAddress(keypairData);
