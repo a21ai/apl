@@ -60,7 +60,7 @@ describe("pubkey serialization", () => {
       ]);
       const result = deserializeOptionPubkey(serialized);
       expect(result).not.toBeNull();
-      expect(Buffer.compare(result as Buffer, Buffer.from(testPubkey))).toBe(0);
+      expect(Uint8Array.from(result as Buffer)).toEqual(testPubkey);
     });
 
     it("should throw error for invalid tag", () => {
