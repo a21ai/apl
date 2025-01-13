@@ -11,7 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@repo/apl-token": "*",
+    "@repo/apl-sdk": "*",
     "@repo/arch-sdk": "*",
     "@solana/web3.js": "^1.95.4",
     "bitcoinjs-lib": "^6.1.7",

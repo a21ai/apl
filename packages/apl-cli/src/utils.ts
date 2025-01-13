@@ -8,7 +8,7 @@ import {
 import { readConfig } from "./config.js";
 import * as btc from "@scure/btc-signer";
 import { Signer } from "bip322-js";
-import { SignerCallback, Keypair } from "@repo/apl-token";
+import { SignerCallback, Keypair } from "@repo/apl-sdk";
 import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 /**

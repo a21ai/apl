@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { TOKEN_PROGRAM_ID } from "@repo/apl-token";
-import { MintUtil } from "@repo/apl-token";
+import { TOKEN_PROGRAM_ID } from "@repo/apl-sdk";
+import { MintUtil } from "@repo/apl-sdk";
 
 export default function accountsCommand(program: Command) {
   program
