@@ -1,12 +1,5 @@
-import {
-  Pubkey,
-  Instruction,
-  RuntimeTransaction,
-  Message,
-  MessageUtil,
-  SignatureUtil,
-} from "@repo/arch-sdk";
-import { PublicKey } from "@solana/web3.js";
+import { Pubkey } from "@repo/arch-sdk";
+import { serializePubkey, serializeOptionPubkey } from "./pubkey.js";
 
 // Instruction data layouts
 export interface InitializeMintData {
@@ -143,47 +136,10 @@ export function serializeU64LE(value: number | bigint): Buffer {
   return buf;
 }
 
-/**
- * Serialize a public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
- * @param pubkey - The public key to serialize
- * @returns Buffer containing the 32-byte public key
- */
-export function serializePubkey(pubkey: Pubkey | PublicKey): Buffer {
-  if (pubkey instanceof PublicKey) {
-    return Buffer.from(pubkey.toBytes());
-  }
-  return Buffer.from(pubkey);
-}
-
-/**
- * Serialize an optional public key to a Buffer, handling both Solana PublicKey and Arch Pubkey
- * @param pubkey - The public key to serialize, or null
- * @returns Buffer containing the serialized optional public key
- */
-export function serializeOptionPubkey(
-  pubkey: Pubkey | PublicKey | null
-): Buffer {
-  // Always allocate 36 bytes (4 for tag + 32 for key)
-  const result = Buffer.alloc(36, 0);
-
-  if (pubkey === null) {
-    // None case - first 4 bytes are [0,0,0,0], rest are already 0
-    result.set([0, 0, 0, 0], 0);
-  } else {
-    // Some case - first 4 bytes are [1,0,0,0], followed by pubkey
-    result.set([1, 0, 0, 0], 0);
-    result.set(serializePubkey(pubkey), 4);
-  }
-
-  return result;
-}
-// to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
+/// to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
 
 // Main serialization function that matches Rust's pack() implementation
-export function serializeInstruction(
-  instruction: TokenInstruction,
-  data: any
-): Buffer {
+export function serialize(instruction: TokenInstruction, data: any): Buffer {
   const buffers: Buffer[] = [];
 
   // Add instruction tag
@@ -203,35 +159,6 @@ export function serializeInstruction(
       mintBuf.writeUInt8(decimals, 0);
       mintBuf.set(serializePubkey(mint_authority), 1);
       mintBuf.set(serializeOptionPubkey(freeze_authority), 33);
-      buffers.push(mintBuf);
-      break;
-
-      // Total buffer size: 82 bytes
-      // Layout:
-      // Total buffer size: 82 bytes
-      // Layout:
-      // - mint_authority: 36 bytes (4 byte tag + 32 byte pubkey)
-      // - supply: 8 bytes (always 0 for initialization)
-      // - decimals: 1 byte (little-endian u8)
-      // - is_initialized: 1 byte (always 0 for initialization)
-      // - freeze_authority: 36 bytes (4 byte tag + 32 byte pubkey)
-      // const mintBuf = Buffer.alloc(82, 0);
-
-      // Write mint authority
-      mintBuf.set(serializeOptionPubkey(mint_authority), 0);
-
-      // Write supply (8 bytes of 0 for initialization)
-      // Already zeroed by Buffer.alloc
-
-      // Write decimals as little-endian u8
-      mintBuf.writeUInt8(decimals, 44);
-
-      // Write is_initialized (0 for initialization)
-      // Already zeroed by Buffer.alloc
-
-      // Write freeze authority
-      mintBuf.set(serializeOptionPubkey(freeze_authority), 46);
-
       buffers.push(mintBuf);
       break;
     }

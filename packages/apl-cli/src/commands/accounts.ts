@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
+import { TOKEN_PROGRAM_ID } from "@repo/apl-token";
+import { MintUtil } from "@repo/apl-token";
 
 export default function accountsCommand(program: Command) {
   program
@@ -9,24 +11,36 @@ export default function accountsCommand(program: Command) {
     .option("-v, --verbose", "Show detailed token information")
     .action(async (options) => {
       try {
-        const keypairData = loadKeypair();
         const rpcConnection = createRpcConnection();
-
         console.log("Fetching token accounts...");
-        console.log(`Owner: ${keypairData.publicKey}`);
-        if (options.verbose) {
-          console.log("Verbose mode enabled - will show detailed information");
-        }
 
-        // Stub: In real implementation, we would:
-        // 1. Use rpcConnection to fetch all token accounts for owner
-        // 2. For each account:
-        //    - Get mint info
-        //    - Get account balance
-        //    - Format based on verbose flag
-        console.log(
-          "Token accounts: Stub - Will implement actual account listing"
-        );
+        const accounts =
+          await rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
+
+        accounts.forEach((account) => {
+          const mint = MintUtil.deserialize(Buffer.from(account.account.data));
+          console.log(
+            "\nToken Account:",
+            Buffer.from(account.pubkey).toString("hex")
+          );
+          console.log("----------------------------------------");
+          console.log(
+            "Mint Authority:",
+            mint.mint_authority
+              ? Buffer.from(mint.mint_authority).toString("hex")
+              : "null"
+          );
+          console.log("Supply:", mint.supply.toString());
+          console.log("Decimals:", mint.decimals);
+          console.log("Is Initialized:", mint.is_initialized);
+          console.log(
+            "Freeze Authority:",
+            mint.freeze_authority
+              ? Buffer.from(mint.freeze_authority).toString("hex")
+              : "null"
+          );
+          console.log("----------------------------------------");
+        });
       } catch (error) {
         handleError(error);
       }
