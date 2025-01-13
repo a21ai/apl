@@ -154,11 +154,11 @@ export function serialize(instruction: TokenInstruction, data: any): Buffer {
     }
     case TokenInstruction.InitializeMint:
     case TokenInstruction.InitializeMint2: {
-      const { decimals, mint_authority, freeze_authority } = data;
+      const { decimals, mintAuthority, freezeAuthority } = data;
       const mintBuf = Buffer.alloc(69, 0);
       mintBuf.writeUInt8(decimals, 0);
-      mintBuf.set(serializePubkey(mint_authority), 1);
-      mintBuf.set(serializeOptionPubkey(freeze_authority), 33);
+      mintBuf.set(serializePubkey(mintAuthority), 1);
+      mintBuf.set(serializeOptionPubkey(freezeAuthority), 33);
       buffers.push(mintBuf);
       break;
     }
@@ -187,9 +187,9 @@ export function serialize(instruction: TokenInstruction, data: any): Buffer {
       break;
     }
     case TokenInstruction.SetAuthority: {
-      const { authority_type, new_authority } = data;
-      buffers.push(Buffer.from([authority_type]));
-      buffers.push(serializeOptionPubkey(new_authority));
+      const { authorityType, newAuthority } = data;
+      buffers.push(Buffer.from([authorityType]));
+      buffers.push(serializeOptionPubkey(newAuthority));
       break;
     }
     case TokenInstruction.InitializeAccount2:

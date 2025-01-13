@@ -5,8 +5,21 @@ import { Pubkey } from "@repo/arch-sdk";
  * @param pubkey - The public key to serialize
  * @returns Buffer containing the 32-byte public key
  */
-export function serializePubkey(pubkey: Pubkey): Buffer {
-  return Buffer.from(pubkey);
+// Type for objects that are Buffer-like (have a data array)
+type BufferLike = {
+  data: number[];
+  type: string;
+};
+
+export function serializePubkey(pubkey: Pubkey | BufferLike | null): Buffer {
+  if (!pubkey) throw new Error('Pubkey cannot be undefined or null');
+  if (pubkey instanceof Buffer) return pubkey;
+  if (pubkey instanceof Uint8Array) return Buffer.from(pubkey);
+  // Handle case where pubkey is a Buffer-like object
+  if (typeof pubkey === 'object' && 'data' in pubkey && Array.isArray(pubkey.data)) {
+    return Buffer.from(pubkey.data);
+  }
+  throw new Error('Invalid pubkey format');
 }
 
 /**
@@ -38,7 +51,7 @@ export function deserializeOptionPubkey(buffer: Buffer): Pubkey | null {
   if (tag === 0) {
     return null;
   } else if (tag === 1) {
-    return buffer.slice(4, 36);
+    return Uint8Array.from(buffer.slice(4, 36));
   }
   throw new Error(`Invalid option tag: ${tag}`);
 }

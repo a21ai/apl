@@ -51,7 +51,7 @@ describe("token instruction serialization", () => {
 
       expect(result[0]).toBe(TokenInstruction.InitializeMint);
       expect(result[1]).toBe(9); // decimals
-      expect(result.slice(2, 34)).toEqual(Buffer.from(testPubkey)); // mint authority
+      expect(Buffer.from(result.slice(2, 34))).toEqual(Buffer.from(testPubkey)); // mint authority
       expect(result.slice(34, 38)).toEqual(Buffer.from([0, 0, 0, 0])); // None tag for freeze authority
     });
 
@@ -77,7 +77,7 @@ describe("token instruction serialization", () => {
       expect(result[0]).toBe(TokenInstruction.SetAuthority);
       expect(result[1]).toBe(AuthorityType.MintTokens);
       expect(result.slice(2, 6)).toEqual(Buffer.from([1, 0, 0, 0])); // Some tag
-      expect(result.slice(6, 38)).toEqual(Buffer.from(testPubkey));
+      expect(Buffer.from(result.slice(6, 38))).toEqual(Buffer.from(testPubkey));
     });
 
     it("should serialize InitializeMultisig instruction", () => {

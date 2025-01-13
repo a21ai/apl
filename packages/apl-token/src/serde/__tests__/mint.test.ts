@@ -74,11 +74,11 @@ describe("mint serialization", () => {
       const serialized = serialize(mint);
       const result = deserialize(serialized);
 
-      expect(result.mint_authority).toEqual(testMintAuthority);
+      expect(result.mint_authority ? Buffer.from(result.mint_authority) : null).toEqual(Buffer.from(testMintAuthority));
       expect(result.supply).toBe(BigInt(1000));
       expect(result.decimals).toBe(9);
       expect(result.is_initialized).toBe(true);
-      expect(result.freeze_authority).toEqual(testFreezeAuthority);
+      expect(result.freeze_authority ? Buffer.from(result.freeze_authority) : null).toEqual(Buffer.from(testFreezeAuthority));
     });
 
     it("should correctly deserialize a mint with null authorities", () => {
