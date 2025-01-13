@@ -11,15 +11,17 @@ describe("pubkey serialization", () => {
   const testPriv = randomPrivateKeyBytes();
   const testPubkey = pubSchnorr(testPriv) as Pubkey;
 
-  const emptyPriv = new Uint8Array(32); // All zeros private key
-  const emptyPubkey = pubSchnorr(emptyPriv) as Pubkey;
+  // Use a valid private key for testing (1 in this case)
+  const testPriv2 = new Uint8Array(32);
+  testPriv2[31] = 1; // Set last byte to 1 for a valid private key
+  const testPubkey2 = pubSchnorr(testPriv2) as Pubkey;
 
   describe("serializePubkey", () => {
     it("should correctly serialize a pubkey", () => {
       const result = serializePubkey(testPubkey);
       expect(Buffer.isBuffer(result)).toBe(true);
       expect(result.length).toBe(32);
-      expect(result).toEqual(Buffer.from(testPubkey));
+      expect(Buffer.from(result)).toEqual(Buffer.from(testPubkey));
     });
   });
 
@@ -57,7 +59,8 @@ describe("pubkey serialization", () => {
         Buffer.from(testPubkey),
       ]);
       const result = deserializeOptionPubkey(serialized);
-      expect(result).toEqual(testPubkey);
+      expect(result).not.toBeNull();
+      expect(Uint8Array.from(result as Buffer)).toEqual(testPubkey);
     });
 
     it("should throw error for invalid tag", () => {
