@@ -1,15 +1,7 @@
 import { Command } from "commander";
-import {
-  loadKeypair,
-  createSignerFromKeypair,
-  createRpcConnection,
-  handleError,
-} from "../utils.js";
+import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-// import {
-//   deriveAssociatedTokenAddress,
-//   createAssociatedTokenAccountTx,
-// } from "@repo/apl-token";
+import { createSignerFromKeypair } from "@repo/apl-token";
 
 export default function createAccountCommand(program: Command) {
   program
@@ -17,22 +9,22 @@ export default function createAccountCommand(program: Command) {
     .description("Create an associated token account")
     .action(async (tokenAddress: string) => {
       try {
-        const keypairData = loadKeypair();
-        const pubkey = keypairData.publicKey;
+        const keypair = loadKeypair();
         const mintPubkey = PubkeyUtil.fromHex(tokenAddress);
         const rpcConnection = createRpcConnection();
 
         // Verify token exists
         const tokenInfo = await rpcConnection.readAccountInfo(mintPubkey);
+
         if (!tokenInfo || !tokenInfo.data) {
           throw new Error("Invalid token mint account");
         }
 
         console.log(`Creating account for token: ${tokenAddress}`);
-        console.log(`Owner: ${keypairData.publicKey}`);
+        console.log(`Owner: ${keypair.publicKey}`);
 
         // Create associated token account
-        const signer = createSignerFromKeypair(keypairData);
+        const signer = createSignerFromKeypair(keypair);
         // const [associatedAddress] = await deriveAssociatedTokenAddress(
         //   pubkey,
         //   mintPubkey

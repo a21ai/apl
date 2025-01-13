@@ -1,17 +1,12 @@
 import { Command } from "commander";
-import {
-  loadKeypair,
-  createSignerFromKeypair,
-  handleError,
-  createRpcConnection,
-} from "../utils.js";
-
-import { PubkeyUtil, UtxoMetaData } from "@repo/arch-sdk";
+import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
+import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createKeypair,
   initializeMintTx,
   sendCoins,
   RPCConfig,
+  createSignerFromKeypair,
 } from "@repo/apl-token";
 
 export default function createTokenCommand(program: Command) {

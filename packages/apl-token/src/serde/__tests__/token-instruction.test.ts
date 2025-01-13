@@ -7,15 +7,9 @@ import {
   serializeU64LE,
   InitializeMintData,
   TransferData,
-  ApproveData,
-  MintToData,
-  BurnData,
   SetAuthorityData,
   InitializeMultisigData,
   TransferCheckedData,
-  ApproveCheckedData,
-  MintToCheckedData,
-  BurnCheckedData,
 } from "../token-instruction.js";
 
 describe("token instruction serialization", () => {

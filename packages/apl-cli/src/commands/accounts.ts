@@ -1,8 +1,10 @@
 import { Command } from "commander";
-import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
-import { PubkeyUtil } from "@repo/arch-sdk";
-import { TOKEN_PROGRAM_ID } from "@repo/apl-token";
-import { MintUtil } from "@repo/apl-token";
+import { createRpcConnection, handleError } from "../utils.js";
+import {
+  MintUtil,
+  TOKEN_PROGRAM_ID,
+  getTaprootAddressFromPubkey,
+} from "@repo/apl-token";
 
 export default function accountsCommand(program: Command) {
   program
@@ -21,7 +23,8 @@ export default function accountsCommand(program: Command) {
           const mint = MintUtil.deserialize(Buffer.from(account.account.data));
           console.log(
             "\nToken Account:",
-            Buffer.from(account.pubkey).toString("hex")
+            Buffer.from(account.pubkey).toString("hex"),
+            getTaprootAddressFromPubkey(account.pubkey)
           );
           console.log("----------------------------------------");
           console.log(

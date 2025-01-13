@@ -1,6 +1,7 @@
 import { Command } from "commander";
-import { loadKeypair, createSignerFromKeypair, handleError } from "../utils.js";
+import { loadKeypair, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
+import { createSignerFromKeypair } from "@repo/apl-token";
 
 export default function sendCommand(program: Command) {
   program

@@ -1,15 +1,7 @@
 import fs from "fs";
-import {
-  RpcConnection,
-  RuntimeTransaction,
-  PubkeyUtil,
-  Pubkey,
-} from "@repo/arch-sdk";
+import { RpcConnection, PubkeyUtil } from "@repo/arch-sdk";
 import { readConfig } from "./config.js";
-import * as btc from "@scure/btc-signer";
-import { Signer } from "bip322-js";
-import { SignerCallback, Keypair } from "@repo/apl-token";
-import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
+import { Keypair } from "@repo/apl-token";
 
 /**
  * Create RPC connection from config
@@ -18,32 +10,6 @@ import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 export function createRpcConnection(): RpcConnection {
   const config = readConfig();
   return new RpcConnection(config.rpcUrl);
-}
-
-/**
- * Get taproot address from keypair
- * @param keypair {publicKey: string, secretKey: string}
- * @returns {address: string}
- */
-export function getTaprootAddress(keypair: Keypair): string {
-  const { address } = btc.p2tr(keypair.publicKey);
-  return address!;
-}
-
-/**
- * Create a signer callback that uses a Solana keypair
- * @param keypair {publicKey: string, secretKey: string}
- * @returns SignerCallback function
- */
-export function createSignerFromKeypair(keypair: Keypair): SignerCallback {
-  const privkey = keypair.secretKey;
-  const address = getTaprootAddress(keypair);
-  const wif = btc.WIF().encode(privkey);
-
-  return async (message: string): Promise<string> => {
-    const sig = Signer.sign(wif, address!, message) as string;
-    return sig;
-  };
 }
 
 /**

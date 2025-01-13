@@ -1,12 +1,8 @@
 import { Command } from "commander";
-import {
-  loadKeypair,
-  createRpcConnection,
-  handleError,
-  getTaprootAddress,
-} from "../utils.js";
+import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { readConfig } from "../config.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
+import { getTaprootAddress } from "@repo/apl-token";
 
 export default function balanceCommand(program: Command) {
   program
@@ -16,10 +12,10 @@ export default function balanceCommand(program: Command) {
       try {
         // Read config for keypair and RPC URL
         const config = readConfig();
-        const keypairData = loadKeypair();
+        const keypair = loadKeypair();
         const rpcConnection = createRpcConnection();
 
-        const paymentAddress = getTaprootAddress(keypairData);
+        const paymentAddress = getTaprootAddress(keypair);
 
         console.log("Payment Address:", paymentAddress);
 

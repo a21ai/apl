@@ -9,9 +9,10 @@ import {
   SignatureUtil,
 } from "@repo/arch-sdk";
 import { SYSTEM_PROGRAM_ID } from "./constants.js";
-
+import * as btc from "@scure/btc-signer";
 import { randomPrivateKeyBytes } from "@scure/btc-signer/utils";
 import { pubSchnorr } from "@scure/btc-signer/utils";
+import { Signer as Bip322Signer } from "bip322-js";
 
 export function createAccountInstruction(
   utxo: UtxoMetaData,
@@ -145,4 +146,37 @@ export async function createAndSignTransaction(
 
   // Pass to signer callback for signature population
   return tx;
+}
+
+/**
+ * Get taproot address from keypair
+ * @param keypair {publicKey: string, secretKey: string}
+ * @returns {address: string}
+ */
+export function getTaprootAddress(keypair: Keypair): string {
+  return getTaprootAddressFromPubkey(keypair.publicKey);
+}
+
+/**
+ * Get taproot address from pubkey
+ * @param publicKey {Pubkey}
+ * @returns {address: string}
+ */
+export function getTaprootAddressFromPubkey(publicKey: Pubkey): string {
+  const { address } = btc.p2tr(publicKey);
+  return address!;
+}
+/**
+ * Create a signer callback that uses a Solana keypair
+ * @param keypair {publicKey: string, secretKey: string}
+ * @returns SignerCallback function
+ */
+export function createSignerFromKeypair(keypair: Keypair): SignerCallback {
+  const address = getTaprootAddress(keypair);
+  const wif = btc.WIF().encode(keypair.secretKey);
+
+  return async (message: string): Promise<string> => {
+    const sig = Bip322Signer.sign(wif, address!, message) as string;
+    return sig;
+  };
 }
