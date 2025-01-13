@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { loadKeypair, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair } from "@repo/apl-token";
+import { createSignerFromKeypair } from "@repo/apl-sdk";
 
 export default function mintCommand(program: Command) {
   program

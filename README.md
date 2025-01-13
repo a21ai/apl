@@ -38,7 +38,7 @@ This monorepo is built with Turborepo and includes the following components:
 ### Core Components
 
 - `token-program`: Rust implementation of the token program (upcoming)
-- `packages/apl-token`: TypeScript SDK for token operations
+- `packages/apl-sdk`: TypeScript SDK for token operations
 - `apps/frontend`: Main Next.js application for token management
 - `apps/web`: Additional Next.js application
 - `packages/ui`: Shared React component library

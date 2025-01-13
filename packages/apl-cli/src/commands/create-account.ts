@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair } from "@repo/apl-token";
+import { createSignerFromKeypair } from "@repo/apl-sdk";
 
 export default function createAccountCommand(program: Command) {
   program

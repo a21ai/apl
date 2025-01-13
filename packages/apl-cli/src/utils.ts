@@ -1,7 +1,7 @@
 import fs from "fs";
 import { RpcConnection, PubkeyUtil } from "@repo/arch-sdk";
 import { readConfig } from "./config.js";
-import { Keypair } from "@repo/apl-token";
+import { Keypair } from "@repo/apl-sdk";
 
 /**
  * Create RPC connection from config

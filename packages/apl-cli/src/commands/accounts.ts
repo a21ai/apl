@@ -4,7 +4,7 @@ import {
   MintUtil,
   TOKEN_PROGRAM_ID,
   getTaprootAddressFromPubkey,
-} from "@repo/apl-token";
+} from "@repo/apl-sdk";
 
 export default function accountsCommand(program: Command) {
   program

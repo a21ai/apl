@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { readConfig } from "../config.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { getTaprootAddress } from "@repo/apl-token";
+import { getTaprootAddress } from "@repo/apl-sdk";
 
 export default function balanceCommand(program: Command) {
   program
