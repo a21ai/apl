@@ -38,7 +38,7 @@ export function deserializeOptionPubkey(buffer: Buffer): Pubkey | null {
   if (tag === 0) {
     return null;
   } else if (tag === 1) {
-    return Uint8Array.from(buffer.slice(4, 36));
+    return buffer.slice(4, 36);
   }
   throw new Error(`Invalid option tag: ${tag}`);
 }
