@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-yarn add @repo/apl-token
+yarn add @repo/apl-sdk
 ```
 
 ## Overview
@@ -25,7 +25,7 @@ The APL Token library provides a JavaScript interface for creating and signing A
 ### Creating a New Token
 
 ```typescript
-import { createMint, SignerCallback } from '@repo/apl-token';
+import { createMint, SignerCallback } from '@repo/apl-sdk';
 import { RuntimeTransaction } from '@repo/arch-sdk';
 
 // Example signer callback for Node.js
@@ -52,7 +52,7 @@ const mint = await createMint(
 ### Transferring Tokens
 
 ```typescript
-import { transfer } from '@repo/apl-token';
+import { transfer } from '@repo/apl-sdk';
 
 // Transfer 100 tokens
 await transfer(
@@ -70,7 +70,7 @@ await transfer(
 import { 
   createAssociatedTokenAccountTx,
   deriveAssociatedTokenAddress 
-} from '@repo/apl-token';
+} from '@repo/apl-sdk';
 
 // Derive associated token account address
 const [associatedAddress] = await deriveAssociatedTokenAddress(
@@ -90,7 +90,7 @@ const tx = await createAssociatedTokenAccountTx(
 ### Managing Token Authorities
 
 ```typescript
-import { setAuthority, AuthorityType } from '@repo/apl-token';
+import { setAuthority, AuthorityType } from '@repo/apl-sdk';
 
 // Transfer mint authority
 await setAuthority(

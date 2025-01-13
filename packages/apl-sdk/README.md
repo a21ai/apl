@@ -19,13 +19,13 @@ For detailed usage instructions and API reference, see the [APL Token Documentat
 ## Installation
 
 ```bash
-yarn add @repo/apl-token
+yarn add @repo/apl-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { createMint, transfer } from '@repo/apl-token';
+import { createMint, transfer } from '@repo/apl-sdk';
 import { RuntimeTransaction } from '@repo/arch-sdk';
 
 // Example: Create a new token

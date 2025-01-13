@@ -199,9 +199,9 @@ export function serialize(instruction: TokenInstruction, data: any): Buffer {
       break;
     }
     case TokenInstruction.UiAmountToAmount: {
-      const { ui_amount } = data;
+      const { uiAmount } = data;
       // Convert string to UTF-8 bytes without length prefix
-      buffers.push(Buffer.from(ui_amount, "utf8"));
+      buffers.push(Buffer.from(uiAmount, "utf8"));
       break;
     }
     // Simple instructions with just a tag

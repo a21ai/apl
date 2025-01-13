@@ -12,7 +12,7 @@ import {
   initializeMintTx,
   sendCoins,
   RPCConfig,
-} from "@repo/apl-token";
+} from "@repo/apl-sdk";
 
 export default function createTokenCommand(program: Command) {
   program

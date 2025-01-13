@@ -9,7 +9,7 @@ import { PubkeyUtil } from "@repo/arch-sdk";
 // import {
 //   deriveAssociatedTokenAddress,
 //   createAssociatedTokenAccountTx,
-// } from "@repo/apl-token";
+// } from "@repo/apl-sdk";
 
 export default function createAccountCommand(program: Command) {
   program

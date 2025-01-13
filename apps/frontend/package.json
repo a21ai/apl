@@ -15,7 +15,7 @@
     "@radix-ui/react-navigation-menu": "^1.2.1",
     "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
-    "@repo/apl-token": "*",
+    "@repo/apl-sdk": "*",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.0",
