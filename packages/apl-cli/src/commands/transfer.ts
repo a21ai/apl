@@ -7,14 +7,14 @@ export default function transferCommand(program: Command) {
   program
     .command("transfer")
     .description("Transfer tokens from your account to another account")
-    .requiredOption("-d, --destination <address>", "destination wallet address")
+    .requiredOption("-t, --to <address>", "recipient wallet address")
     .requiredOption("-m, --mint <address>", "token mint address")
     .requiredOption("-a, --amount <number>", "amount to transfer")
     .action(async (options) => {
       try {
         const rpcConnection = createRpcConnection();
         const keypairData = loadKeypair();
-        const destinationMainPubkey = PubkeyUtil.fromHex(options.destination);
+        const recipientMainPubkey = PubkeyUtil.fromHex(options.to);
         const mintPubkey = PubkeyUtil.fromHex(options.mint);
         const amount = BigInt(options.amount);
 
@@ -24,9 +24,9 @@ export default function transferCommand(program: Command) {
           keypairData.publicKey,
           true
         );
-        const destinationTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+        const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
           mintPubkey,
-          destinationMainPubkey,
+          recipientMainPubkey,
           true
         );
 
@@ -37,9 +37,9 @@ export default function transferCommand(program: Command) {
           throw new Error(`Source token account ${Buffer.from(sourceTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
         }
 
-        const destinationTokenInfo = await rpcConnection.readAccountInfo(destinationTokenPubkey);
-        if (!destinationTokenInfo?.data) {
-          throw new Error(`Destination token account ${Buffer.from(destinationTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
+        const recipientTokenInfo = await rpcConnection.readAccountInfo(recipientTokenPubkey);
+        if (!recipientTokenInfo?.data) {
+          throw new Error(`Recipient token account ${Buffer.from(recipientTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
         }
         console.log("Token accounts verified successfully.");
 
@@ -53,7 +53,7 @@ export default function transferCommand(program: Command) {
 
         console.log("Creating transfer transaction...");
         console.log(`Source Wallet: ${Buffer.from(keypairData.publicKey).toString("hex")}`);
-        console.log(`Destination Wallet: ${options.destination}`);
+        console.log(`Recipient Wallet: ${options.to}`);
         console.log(`Mint Address: ${options.mint}`);
         console.log(`Amount: ${options.amount}`);
         console.log(`Decimals: ${decimals} (from mint)`);
@@ -63,7 +63,7 @@ export default function transferCommand(program: Command) {
         const tx = await transferTx(
           sourceTokenPubkey,
           mintPubkey,
-          destinationTokenPubkey,
+          recipientTokenPubkey,
           keypairData.publicKey,
           amount,
           decimals,

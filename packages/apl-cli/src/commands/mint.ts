@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair, mintToTx, MintUtil } from "@repo/apl-sdk";
+import { createSignerFromKeypair, mintToTx, MintUtil, AssociatedTokenUtil } from "@repo/apl-sdk";
 
 export default function mintCommand(program: Command) {
   program
@@ -14,9 +14,24 @@ export default function mintCommand(program: Command) {
       try {
         const keypairData = loadKeypair();
         const mintPubkey = PubkeyUtil.fromHex(options.mint);
-        const recipientPubkey = PubkeyUtil.fromHex(options.to);
+        const recipientMainPubkey = PubkeyUtil.fromHex(options.to);
         const amount = BigInt(options.amount);
         const rpcConnection = createRpcConnection();
+
+        // Derive recipient's associated token account
+        const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+          mintPubkey,
+          recipientMainPubkey,
+          true
+        );
+
+        // Verify recipient's token account exists
+        console.log("Verifying recipient's token account...");
+        const recipientTokenInfo = await rpcConnection.readAccountInfo(recipientTokenPubkey);
+        if (!recipientTokenInfo?.data) {
+          throw new Error(`Recipient token account ${Buffer.from(recipientTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
+        }
+        console.log("Token account verified successfully.");
 
         // Fetch and validate mint account data
         const mintInfo = await rpcConnection.readAccountInfo(mintPubkey);
@@ -47,7 +62,7 @@ export default function mintCommand(program: Command) {
         const signer = createSignerFromKeypair(keypairData);
         const tx = await mintToTx(
           mintPubkey,
-          recipientPubkey,
+          recipientTokenPubkey,
           amount,
           keypairData.publicKey,
           signer
