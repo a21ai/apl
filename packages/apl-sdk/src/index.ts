@@ -2,6 +2,7 @@ export * from "./rpc.js";
 export * from "./utils.js";
 export * from "./actions/initialize-mint.js";
 export * from "./actions/associated-token.js";
+export * from "./actions/mint-to.js";
 export * from "./constants.js";
 
 export * as AssociatedTokenUtil from "./serde/associated-token.js";

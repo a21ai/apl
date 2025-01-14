@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { loadKeypair, handleError } from "../utils.js";
+import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair } from "@repo/apl-sdk";
+import { createSignerFromKeypair, mintToTx } from "@repo/apl-sdk";
 
 export default function mintCommand(program: Command) {
   program
@@ -22,16 +22,19 @@ export default function mintCommand(program: Command) {
         console.log(`To Address: ${options.to}`);
         console.log(`Amount: ${options.amount}`);
 
-        // Create and send mint transaction (stubbed)
+        // Create and send mint transaction
         const signer = createSignerFromKeypair(keypairData);
-        // const tx = await mintToTx(
-        //   mintPubkey,
-        //   recipientPubkey,
-        //   amount,
-        //   pubkey,
-        //   signer
-        // );
-        console.log("Transaction created (stub)");
+        const tx = await mintToTx(
+          mintPubkey,
+          recipientPubkey,
+          amount,
+          keypairData.publicKey,
+          signer
+        );
+
+        const rpcConnection = createRpcConnection();
+        const result = await rpcConnection.sendTransaction(tx);
+        console.log("Transaction sent successfully!", result);
       } catch (error) {
         handleError(error);
       }
