@@ -21,13 +21,11 @@ export default function transferCommand(program: Command) {
         // Derive associated token accounts for source and destination
         const sourceTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
           mintPubkey,
-          keypairData.publicKey,
-          true
+          keypairData.publicKey
         );
         const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
           mintPubkey,
-          recipientMainPubkey,
-          true
+          recipientMainPubkey
         );
 
         // Verify both token accounts exist

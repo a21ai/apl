@@ -21,8 +21,7 @@ export default function mintCommand(program: Command) {
         // Derive recipient's associated token account
         const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
           mintPubkey,
-          recipientMainPubkey,
-          true
+          recipientMainPubkey
         );
 
         // Verify recipient's token account exists
