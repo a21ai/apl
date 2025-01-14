@@ -56,8 +56,8 @@ export async function initializeMintTx(
     ],
     data: TokenInstructionUtil.serialize(TokenInstruction.InitializeMint2, {
       decimals,
-      mint_authority: mintAuthority,
-      freeze_authority: freezeAuthority,
+      mintAuthority: mintAuthority,
+      freezeAuthority: freezeAuthority,
     }),
   };
 

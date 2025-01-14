@@ -5,9 +5,9 @@ import {
   createKeypair,
   initializeMintTx,
   sendCoins,
-  RPCConfig,
   createSignerFromKeypair,
 } from "@repo/apl-sdk";
+import { rpcConfig } from "../config.js";
 
 export default function createTokenCommand(program: Command) {
   program
@@ -21,16 +21,13 @@ export default function createTokenCommand(program: Command) {
         const mintKeypair = createKeypair();
         const walletKeypair = loadKeypair();
 
-        const rpcConfig: RPCConfig = {
-          url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18443",
-          username: "bitcoin",
-          password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
-        };
-
         const contractAddress = await rpcConnection.getAccountAddress(
           mintKeypair.publicKey
         );
-        console.log("Contract Address:", contractAddress);
+        console.log(
+          "Contract Address:",
+          Buffer.from(mintKeypair.publicKey).toString("hex")
+        );
         const utxo = await sendCoins(rpcConfig, contractAddress, 3000);
 
         const decimals = parseInt(options.decimals);
@@ -60,7 +57,6 @@ export default function createTokenCommand(program: Command) {
           freezeAuthority,
           signer
         );
-        console.log("tx: ", JSON.stringify(tx));
 
         const result = await rpcConnection.sendTransaction(tx);
         console.log("Transaction sent successfully!", result);

@@ -1,7 +1,13 @@
 import { Command } from "commander";
 import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair } from "@repo/apl-sdk";
+import {
+  createSignerFromKeypair,
+  AssociatedTokenUtil,
+  associatedTokenTx,
+  sendCoins,
+} from "@repo/apl-sdk";
+import { rpcConfig } from "../config.js";
 
 export default function createAccountCommand(program: Command) {
   program
@@ -21,25 +27,47 @@ export default function createAccountCommand(program: Command) {
         }
 
         console.log(`Creating account for token: ${tokenAddress}`);
-        console.log(`Owner: ${keypair.publicKey}`);
+        console.log(`Owner: ${Buffer.from(keypair.publicKey).toString("hex")}`);
 
-        // Create associated token account
-        const signer = createSignerFromKeypair(keypair);
-        // const [associatedAddress] = await deriveAssociatedTokenAddress(
-        //   pubkey,
-        //   mintPubkey
-        // );
+        const associatedTokenPubkey =
+          AssociatedTokenUtil.getAssociatedTokenAddress(
+            mintPubkey,
+            keypair.publicKey,
+            true
+          );
 
-        // const tx = await createAssociatedTokenAccountTx(
-        //   pubkey,
-        //   mintPubkey,
-        //   pubkey,
-        //   signer
-        // );
+        console.log(
+          `AssociatedTokenAccount: ${Buffer.from(associatedTokenPubkey).toString("hex")}`
+        );
 
-        // console.log(
-        //   `Associated token account: ${Buffer.from(associatedAddress).toString("hex")}`
-        // );
+        try {
+          const associatedTokenInfo = await rpcConnection.readAccountInfo(
+            associatedTokenPubkey
+          );
+          console.log(`Associated token info: ${associatedTokenInfo}`);
+        } catch (e) {
+          console.log(`Associated token account does not exist. Creating...`);
+
+          // Create associated token account
+          const signer = createSignerFromKeypair(keypair);
+
+          const associatedTokenAddress = await rpcConnection.getAccountAddress(
+            associatedTokenPubkey
+          );
+
+          const utxo = await sendCoins(rpcConfig, associatedTokenAddress, 3000);
+
+          const tx = await associatedTokenTx(
+            utxo,
+            associatedTokenPubkey,
+            keypair.publicKey,
+            mintPubkey,
+            signer
+          );
+
+          const result = await rpcConnection.sendTransaction(tx);
+          console.log("Transaction sent successfully!", result);
+        }
       } catch (error) {
         handleError(error);
       }

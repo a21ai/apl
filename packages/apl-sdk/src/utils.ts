@@ -16,7 +16,8 @@ import { Signer as Bip322Signer } from "bip322-js";
 
 export function createAccountInstruction(
   utxo: UtxoMetaData,
-  owner: Pubkey
+  owner: Pubkey,
+  is_signer: boolean = true
 ): Instruction {
   // Create instruction data by concatenating:
   // 1. Instruction tag [0] (1 byte)
@@ -29,7 +30,7 @@ export function createAccountInstruction(
 
   const instruction: Instruction = {
     program_id: SYSTEM_PROGRAM_ID,
-    accounts: [{ pubkey: owner, is_signer: true, is_writable: true }],
+    accounts: [{ pubkey: owner, is_signer, is_writable: true }],
     data,
   };
   return instruction;
@@ -129,18 +130,19 @@ export async function createAndSignTransaction(
     instructions: actualInstructions,
   };
 
-  const messageHash = Buffer.from(MessageUtil.hash(message)).toString("hex");
-
-  const signature = await signer(messageHash);
-
-  const signatureBytes = SignatureUtil.adjustSignature(
-    new Uint8Array(Buffer.from(signature, "base64"))
-  );
+  let signatureBytes: Uint8Array = new Uint8Array();
+  if (signers.length > 0) {
+    const messageHash = Buffer.from(MessageUtil.hash(message)).toString("hex");
+    const signature = await signer(messageHash);
+    signatureBytes = SignatureUtil.adjustSignature(
+      new Uint8Array(Buffer.from(signature, "base64"))
+    );
+  }
 
   // Create RuntimeTransaction with version 1
   const tx: RuntimeTransaction = {
     version: 0,
-    signatures: [signatureBytes], // Will be populated by signer callback
+    signatures: signers.length > 0 ? [signatureBytes] : [], // Will be populated by signer callback
     message,
   };
 

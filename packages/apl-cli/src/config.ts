@@ -1,6 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { RPCConfig } from "@repo/apl-sdk";
 
 interface CliConfig {
   keypair: string;
@@ -8,6 +9,12 @@ interface CliConfig {
 }
 
 const CONFIG_DIR = path.join(os.homedir(), ".apl-cli");
+
+export const rpcConfig: RPCConfig = {
+  url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18443",
+  username: "bitcoin",
+  password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+};
 
 export const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(CONFIG_DIR, "keypair.json"),
