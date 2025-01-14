@@ -1,24 +1,47 @@
 import { Command } from "commander";
 import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
-import { createSignerFromKeypair, transferTx, MintUtil } from "@repo/apl-sdk";
+import { createSignerFromKeypair, transferTx, MintUtil, AssociatedTokenUtil } from "@repo/apl-sdk";
 
 export default function transferCommand(program: Command) {
   program
     .command("transfer")
-    .description("Transfer tokens to another account")
-    .requiredOption("-s, --source <address>", "source token account address")
-    .requiredOption("-d, --destination <address>", "destination token account address")
+    .description("Transfer tokens from your account to another account")
+    .requiredOption("-d, --destination <address>", "destination wallet address")
     .requiredOption("-m, --mint <address>", "token mint address")
     .requiredOption("-a, --amount <number>", "amount to transfer")
     .action(async (options) => {
       try {
         const rpcConnection = createRpcConnection();
         const keypairData = loadKeypair();
-        const sourcePubkey = PubkeyUtil.fromHex(options.source);
-        const destinationPubkey = PubkeyUtil.fromHex(options.destination);
+        const destinationMainPubkey = PubkeyUtil.fromHex(options.destination);
         const mintPubkey = PubkeyUtil.fromHex(options.mint);
         const amount = BigInt(options.amount);
+
+        // Derive associated token accounts for source and destination
+        const sourceTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+          mintPubkey,
+          keypairData.publicKey,
+          true
+        );
+        const destinationTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+          mintPubkey,
+          destinationMainPubkey,
+          true
+        );
+
+        // Verify both token accounts exist
+        console.log("Verifying token accounts...");
+        const sourceTokenInfo = await rpcConnection.readAccountInfo(sourceTokenPubkey);
+        if (!sourceTokenInfo?.data) {
+          throw new Error(`Source token account ${Buffer.from(sourceTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
+        }
+
+        const destinationTokenInfo = await rpcConnection.readAccountInfo(destinationTokenPubkey);
+        if (!destinationTokenInfo?.data) {
+          throw new Error(`Destination token account ${Buffer.from(destinationTokenPubkey).toString("hex")} does not exist. Please create it first using 'create-account ${options.mint}'`);
+        }
+        console.log("Token accounts verified successfully.");
 
         // Fetch mint data to get decimals
         const accountInfo = await rpcConnection.readAccountInfo(mintPubkey);
@@ -29,8 +52,8 @@ export default function transferCommand(program: Command) {
         const decimals = mintData.decimals;
 
         console.log("Creating transfer transaction...");
-        console.log(`Source Address: ${options.source}`);
-        console.log(`Destination Address: ${options.destination}`);
+        console.log(`Source Wallet: ${Buffer.from(keypairData.publicKey).toString("hex")}`);
+        console.log(`Destination Wallet: ${options.destination}`);
         console.log(`Mint Address: ${options.mint}`);
         console.log(`Amount: ${options.amount}`);
         console.log(`Decimals: ${decimals} (from mint)`);
@@ -38,9 +61,9 @@ export default function transferCommand(program: Command) {
 
         const signer = createSignerFromKeypair(keypairData);
         const tx = await transferTx(
-          sourcePubkey,
+          sourceTokenPubkey,
           mintPubkey,
-          destinationPubkey,
+          destinationTokenPubkey,
           keypairData.publicKey,
           amount,
           decimals,
