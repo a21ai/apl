@@ -10,6 +10,8 @@ import supplyCommand from './commands/supply.js';
 import accountsCommand from './commands/accounts.js';
 import createAccountCommand from './commands/create-account.js';
 import configCommand from './commands/config.js';
+import transferCommand from './commands/transfer.js';
+import tokensCommand from './commands/tokens.js';
 
 const program = new Command();
 
@@ -26,7 +28,9 @@ createTokenCommand(program);
 mintCommand(program);
 supplyCommand(program);
 accountsCommand(program);
+tokensCommand(program);
 createAccountCommand(program);
 configCommand(program);
+transferCommand(program);
 
 program.parseAsync(process.argv);
