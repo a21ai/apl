@@ -27,14 +27,34 @@ yarn add @repo/apl-cli
 The CLI uses a JSON configuration file located at `~/.apl-sdk/config.json`:
 
 ```bash
-# View current config
-apl-cli config get
+### Configuration Commands
 
+View current configuration:
+```bash
+apl-cli config get
+```
+Shows the current RPC URL and keypair path settings.
+
+Update configuration:
+```bash
+apl-cli config set [options]
+```
+
+Options:
+- `--url <url>` - Set RPC endpoint URL
+- `--keypair <path>` - Set default keypair file path
+
+Examples:
+```bash
 # Set RPC URL
 apl-cli config set --url <url>
 
 # Set default keypair
 apl-cli config set --keypair <path>
+
+# Set both URL and keypair
+apl-cli config set --url <url> --keypair <path>
+```
 ```
 
 The config file stores:
@@ -47,10 +67,12 @@ The config file stores:
 
 Create a new keypair:
 ```bash
-apl-cli create-keypair
-# or specify output location
-apl-cli create-keypair -o ./my-keypair.json
+apl-cli create-keypair [options]
 ```
+
+Options:
+- `-o, --output <path>` - Output file path (defaults to config keypair path)
+- `-f, --force` - Force overwrite if file exists
 
 The keypair file is stored in JSON format:
 ```json
@@ -61,14 +83,6 @@ The keypair file is stored in JSON format:
 ```
 
 ### Commands
-
-List all token accounts:
-```bash
-apl-cli accounts [-v]
-```
-
-Options:
-- `-v, --verbose` - Show detailed token information including mint authority and decimals
 
 List all token mints:
 ```bash
@@ -83,10 +97,18 @@ Create token account:
 apl-cli create-account <token_address>
 ```
 
+Arguments:
+- `<token_address>` - Public key of the token mint account to create an associated token account for
+
+Note: Creates an Associated Token Account (ATA) for the specified token mint. Uses keypair from config file.
+
 Check token balance:
 ```bash
-apl-cli balance
+apl-cli balance [-v]
 ```
+
+Options:
+- `-v, --verbose` - Show detailed token information including decimals, total supply, token state, and delegation details
 
 Note: Uses keypair and RPC URL from config file
 
@@ -113,15 +135,7 @@ Options:
 
 Note: Uses keypair path from config file. Set with `apl-cli config set --keypair <path>`
 
-Get token supply:
-```bash
-apl-cli supply <token_address>
-```
-
-Arguments:
-- `<token_address>` - Public key of token mint account
-
-The deploy command will:
+The create-token command will:
 1. Create a new mint account
 2. Initialize the token with specified decimals
 3. Set up mint and freeze authorities
