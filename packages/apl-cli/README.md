@@ -250,7 +250,7 @@ Examples:
 apl-cli create-token
 
 # Create token with custom decimals
-apl-cli create-token --decimals 6
+apl-cli create-token --decimals 9  # Default value
 
 # Create token with freeze authority
 apl-cli create-token --freeze-authority deadbeef...

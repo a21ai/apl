@@ -6,79 +6,6 @@ The APL Token library provides a JavaScript interface for creating and managing 
 
 ## Core Features
 
-- Token Creation and Management (requires UTXO for account creation)
-- Associated Token Accounts (requires UTXO for account creation)
-- Transaction Signing (Node.js and Web)
-- Error Handling
-
-## Token Operations
-
-The APL SDK provides core token operations. Each operation that creates new accounts requires a valid UTXO with sufficient funds.
-
-### Creating Tokens
-```typescript
-import { Pubkey } from '@repo/arch-sdk';
-import { initializeMintTx, Keypair, UtxoMetaData, SignerCallback } from '@repo/apl-sdk';
-
-const tx = await initializeMintTx(
-  mintKeypair: Keypair,
-  utxo: UtxoMetaData,  // Required for account creation
-  decimals: number,
-  mintAuthority: Pubkey,
-  freezeAuthority: Pubkey | null,
-  signer: SignerCallback
-);
-```
-
-### Creating Associated Token Accounts
-```typescript
-import { Pubkey } from '@repo/arch-sdk';
-import { associatedTokenTx, UtxoMetaData, SignerCallback } from '@repo/apl-sdk';
-
-const tx = await associatedTokenTx(
-  utxo: UtxoMetaData,  // Required for account creation
-  associatedToken: Pubkey,
-  owner: Pubkey,
-  mint: Pubkey,
-  signer: SignerCallback
-);
-```
-
-### Minting Tokens
-```typescript
-import { Pubkey } from '@repo/arch-sdk';
-import { mintToTx, SignerCallback } from '@repo/apl-sdk';
-
-const tx = await mintToTx(
-  mint: Pubkey,
-  recipient: Pubkey,
-  amount: bigint,
-  mintAuthority: Pubkey,  // Must be valid mint authority
-  signer: SignerCallback
-);
-```
-
-### Transferring Tokens
-```typescript
-import { Pubkey } from '@repo/arch-sdk';
-import { transferTx, SignerCallback } from '@repo/apl-sdk';
-
-const tx = await transferTx(
-  source: Pubkey,
-  mint: Pubkey,
-  destination: Pubkey,
-  owner: Pubkey,
-  amount: bigint,
-  decimals: number,
-  signer: SignerCallback
-);
-
-## Overview
-
-The APL Token library provides a JavaScript interface for creating and managing tokens on the Arch network.
-
-## Key Features
-
 - Create and manage tokens (requires UTXO for account creation)
 - Transfer tokens between accounts
 - Mint and burn tokens (requires mint authority)
@@ -91,49 +18,81 @@ The APL SDK provides core token operations with minimal setup required. Each ope
 
 ### Creating Tokens
 ```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { initializeMintTx, Keypair } from '@repo/apl-sdk';
+
 const tx = await initializeMintTx(
-  mintKeypair,
-  utxo,  // UTXO is required
-  decimals,
-  mintAuthority,
-  freezeAuthority,
-  signer
+  mintKeypair,      // Keypair for the new mint account
+  utxo,             // UTXO for account creation
+  9,                // Decimals (default)
+  mintAuthority,    // Mint authority public key
+  null,             // Optional freeze authority
+  signer           // Transaction signing callback
 );
 ```
 
 ### Creating Associated Token Accounts
 ```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { associatedTokenTx } from '@repo/apl-sdk';
+
 const tx = await associatedTokenTx(
-  utxo,  // Must specify UTXO for new ATA
-  associatedTokenPubkey,
-  owner,
-  mintPubkey,
-  signer
+  utxo,               // UTXO for account creation
+  associatedToken,    // Associated token account pubkey
+  ownerPubkey,       // Owner's public key
+  mintPubkey,        // Token mint address
+  signer            // Transaction signing callback
 );
 ```
 
 ### Minting Tokens
 ```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { mintToTx } from '@repo/apl-sdk';
+
 const tx = await mintToTx(
-  mintPubkey,
-  recipientPubkey,
-  amount,
-  mintAuthority,  // Must be valid mint authority
-  signer
+  mintPubkey,         // Token mint address
+  recipientPubkey,    // Recipient token account
+  amount,             // Amount to mint
+  mintAuthority,      // Mint authority public key
+  signer             // Transaction signing callback
 );
 ```
 
 ### Transferring Tokens
 ```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { transferTx } from '@repo/apl-sdk';
+
 const tx = await transferTx(
-  sourcePubkey,
-  mintPubkey,
-  destinationPubkey,
-  owner,
-  amount,
-  decimals,
-  signer
+  sourceTokenPubkey,    // Source token account
+  mintPubkey,          // Token mint address
+  destinationPubkey,   // Destination token account
+  ownerPubkey,        // Owner of source account
+  amount,             // Amount to transfer
+  9,                 // Decimals (default)
+  signer            // Transaction signing callback
 );
+
+## Error Handling
+
+The library throws descriptive errors for common issues:
+
+```typescript
+try {
+  const tx = await transferTx(
+    sourceTokenPubkey,
+    mintPubkey,
+    destinationPubkey,
+    ownerPubkey,
+    amount,
+    9,
+    signer
+  );
+} catch (error) {
+  // Handle specific error cases
+  console.error('Operation failed:', error);
+}
 ```
 
 ## Error Handling
@@ -160,37 +119,37 @@ Creates a new token mint. Requires a UTXO with sufficient funds for account crea
 - `utxo`: UTXO metadata for account creation (must have sufficient funds)
 - `decimals`: Number of decimals for token precision (default: 9)
 - `mintAuthority`: Public key authorized to mint tokens
-- `freezeAuthority`: Optional public key authorized to freeze accounts
-- `signer`: Callback function for transaction signing
+- `freezeAuthority`: Optional public key authorized to freeze accounts (null for fixed supply)
+- `signer`: Transaction signing callback
 
 #### `mintToTx(mint: Pubkey, recipient: Pubkey, amount: bigint, mintAuthority: Pubkey, signer: SignerCallback): Promise<RuntimeTransaction>`
-Mints new tokens to a recipient account.
+Mints new tokens to a recipient account. Requires mint authority.
 
 - `mint`: Token mint address
-- `recipient`: Recipient token account
-- `amount`: Amount to mint (BigInt)
-- `mintAuthority`: Authority to mint new tokens
-- `signer`: Signing callback
+- `recipient`: Recipient token account (must be initialized)
+- `amount`: Amount to mint as BigInt
+- `mintAuthority`: Public key with mint authority
+- `signer`: Transaction signing callback
 
 #### `transferTx(source: Pubkey, mint: Pubkey, destination: Pubkey, owner: Pubkey, amount: bigint, decimals: number, signer: SignerCallback): Promise<RuntimeTransaction>`
-Transfers tokens between accounts.
+Transfers tokens between accounts. Both accounts must exist.
 
 - `source`: Source token account
 - `mint`: Token mint address
 - `destination`: Destination token account
 - `owner`: Owner of the source account
-- `amount`: Amount to transfer (BigInt)
-- `decimals`: Token decimals
-- `signer`: Signing callback
+- `amount`: Amount to transfer as BigInt
+- `decimals`: Token decimals (default: 9)
+- `signer`: Transaction signing callback
 
 #### `associatedTokenTx(utxo: UtxoMetaData, associatedToken: Pubkey, owner: Pubkey, mint: Pubkey, signer: SignerCallback): Promise<RuntimeTransaction>`
-Creates an associated token account. Requires a UTXO with sufficient funds for account creation.
+Creates an associated token account. Requires a UTXO with sufficient funds.
 
-- `utxo`: UTXO metadata for account creation (must have sufficient funds)
+- `utxo`: UTXO metadata for account creation
 - `associatedToken`: Associated token account public key
 - `owner`: Owner's public key
 - `mint`: Token mint address
-- `signer`: Signing callback
+- `signer`: Transaction signing callback
 
 ## Error Handling
 
@@ -198,7 +157,15 @@ The library throws descriptive errors for common issues:
 
 ```typescript
 try {
-  await transfer(source, destination, owner, amount, signer);
+  const tx = await transferTx(
+    sourceTokenPubkey,
+    mintPubkey,
+    destinationPubkey,
+    ownerPubkey,
+    amount,
+    9,
+    signer
+  );
 } catch (error) {
   if (error.message.includes('insufficient funds')) {
     // Handle insufficient balance
