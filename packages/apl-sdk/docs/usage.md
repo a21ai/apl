@@ -1,85 +1,44 @@
 # APL Token Library Documentation
 
-## Table of Contents
-1. [Installation](#installation)
-2. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [RPC Configuration](#rpc-configuration)
-   - [Signing Setup](#signing-setup)
-3. [Token Creation Tutorial](#token-creation-tutorial)
-   - [Environment Setup](#step-1-set-up-your-environment)
-   - [Keypair Preparation](#step-2-prepare-your-keypair)
-   - [Creating Tokens](#step-4-create-the-token)
-   - [Verification](#step-5-verify-token-creation)
-4. [Usage Examples](#usage-examples)
-   - [Transferring Tokens](#transferring-tokens)
-   - [Managing Authorities](#managing-token-authorities)
-   - [Associated Token Accounts](#creating-associated-token-account)
-5. [Error Handling](#error-handling-guide)
-   - [Common Scenarios](#common-error-scenarios)
-   - [Best Practices](#best-practices-for-error-handling)
-   - [Prevention Tips](#error-prevention-tips)
-6. [API Reference](#api-reference)
-   - [Token Instructions](#token-instructions)
-   - [Associated Token Account](#associated-token-account)
+## Core Features
 
-## Installation
+- Token Creation and Management
+- Associated Token Accounts
+- Transaction Signing (Node.js and Web)
+- Error Handling
 
-```bash
-yarn add @repo/apl-sdk
+## Token Operations
+
+### Creating Tokens
+
+```typescript
+import { createMint } from '@repo/apl-sdk';
+
+const mint = await createMint(authority, null, 6, signer);
 ```
 
-## Getting Started
+### Transferring Tokens
 
-### Prerequisites
-1. **Environment Setup**
-   - Node.js >= 18
-   - Yarn or npm package manager
-   - Access to an Arch network RPC endpoint
+```typescript
+import { transfer } from '@repo/apl-sdk';
 
-2. **RPC Configuration**
-   ```typescript
-   import { createRpcConnection } from '@repo/apl-sdk';
-   
-   const rpcConfig = {
-     url: "YOUR_RPC_URL",
-     username: "YOUR_USERNAME", // Optional
-     password: "YOUR_PASSWORD"  // Optional
-   };
-   
-   const connection = createRpcConnection(rpcConfig);
-   ```
+await transfer(source, destination, owner, amount, signer);
+```
 
-3. **Signing Setup**
-   The SDK requires a signing callback for transaction authorization. This can be implemented differently based on your environment:
+### Managing Token Accounts
 
-   ```typescript
-   // Node.js environment (using private key)
-   const nodeSigner = async (tx) => {
-     const privateKey = loadPrivateKey(); // Your key loading logic
-     return signWithPrivateKey(tx, privateKey);
-   };
+```typescript
+import { createAssociatedTokenAccount } from '@repo/apl-sdk';
 
-   // Web environment (using wallet)
-   const webSigner = async (tx) => {
-     const wallet = window.unisat; // Or your preferred web wallet
-     return await wallet.signTransaction(tx);
-   };
-   ```
+const ata = await createAssociatedTokenAccount(mint, owner, signer);
+```
 
-4. **Error Handling**
-   Implement proper error handling for common scenarios:
-   ```typescript
-   try {
-     await operation();
-   } catch (error) {
-     if (error.message.includes('insufficient funds')) {
-       // Handle balance issues
-     } else if (error.message.includes('invalid owner')) {
-       // Handle authorization issues
-     }
-   }
-   ```
+## Web Integration
+
+```typescript
+// Web wallet signing
+const webSigner = async (tx) => await wallet.signTransaction(tx);
+```
 
 ## Overview
 
