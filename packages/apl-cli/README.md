@@ -53,13 +53,13 @@ apl-cli config get
 
 The CLI uses a JSON configuration file located at `~/.apl-cli/config.json`:
 
-```bash
 ### Configuration Commands
 
 View current configuration:
 ```bash
 apl-cli config get
 ```
+
 Shows the current RPC URL and keypair path settings.
 
 Update configuration:
