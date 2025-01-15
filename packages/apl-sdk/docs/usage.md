@@ -1,157 +1,99 @@
 # APL Token Library Documentation
 
-## Installation
-
-```bash
-yarn add @repo/apl-sdk
-```
-
 ## Overview
 
-The APL Token library provides a JavaScript interface for creating and signing APL token transactions on the Arch network. It supports both Node.js and web environments, with flexible signing mechanisms to accommodate different wallet implementations.
+The APL Token library provides a JavaScript interface for creating and managing tokens on the Arch network.
 
-## Key Features
+## Core Features
 
-- Create and manage APL tokens
+- Create and manage tokens (requires UTXO for account creation)
 - Transfer tokens between accounts
-- Approve and revoke token delegations
-- Mint and burn tokens
-- Manage token authorities
-- Create associated token accounts
-- Support for both Node.js and web3 wallet environments
+- Mint and burn tokens (requires mint authority)
+- Create associated token accounts (requires UTXO)
+- Support for Node.js and web environments
 
-## Usage Examples
+## Token Operations
 
-### Creating a New Token
+The APL SDK provides core token operations with minimal setup required. Each operation that creates new accounts requires a valid UTXO with sufficient funds.
 
+### Creating Tokens
 ```typescript
-import { createMint, SignerCallback } from '@repo/apl-sdk';
-import { RuntimeTransaction } from '@repo/arch-sdk';
+import { Pubkey } from '@repo/arch-sdk';
+import { initializeMintTx, Keypair } from '@repo/apl-sdk';
 
-// Example signer callback for Node.js
-const nodeSigner: SignerCallback = async (tx: RuntimeTransaction) => {
-  // Sign transaction using private key
-  return signedTx;
-};
+const tx = await initializeMintTx(
+  mintKeypair,      // Keypair for the new mint account
+  utxo,             // UTXO for account creation
+  9,                // Decimals (default)
+  mintAuthority,    // Mint authority public key
+  null,             // Optional freeze authority
+  signer           // Transaction signing callback
+);
+```
 
-// Example signer callback for web3 wallet
-const webSigner: SignerCallback = async (tx: RuntimeTransaction) => {
-  // Sign using web3 wallet (e.g., UniSat)
-  return await wallet.signTransaction(tx);
-};
+### Creating Associated Token Accounts
+```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { associatedTokenTx } from '@repo/apl-sdk';
 
-// Create new token with 6 decimals
-const mint = await createMint(
-  mintAuthority,  // Public key of mint authority
-  null,           // Optional freeze authority
-  6,             // Decimals
-  signer         // Signing callback
+const tx = await associatedTokenTx(
+  utxo,               // UTXO for account creation
+  associatedToken,    // Associated token account pubkey
+  ownerPubkey,       // Owner's public key
+  mintPubkey,        // Token mint address
+  signer            // Transaction signing callback
+);
+```
+
+### Minting Tokens
+```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { mintToTx } from '@repo/apl-sdk';
+
+const tx = await mintToTx(
+  mintPubkey,         // Token mint address
+  recipientPubkey,    // Recipient token account
+  amount,             // Amount to mint
+  mintAuthority,      // Mint authority public key
+  signer             // Transaction signing callback
 );
 ```
 
 ### Transferring Tokens
+```typescript
+import { Pubkey } from '@repo/arch-sdk';
+import { transferTx } from '@repo/apl-sdk';
+
+const tx = await transferTx(
+  sourceTokenPubkey,    // Source token account
+  mintPubkey,          // Token mint address
+  destinationPubkey,   // Destination token account
+  ownerPubkey,        // Owner of source account
+  amount,             // Amount to transfer
+  9,                 // Decimals (default)
+  signer            // Transaction signing callback
+);
+
+## Error Handling
+
+The library throws descriptive errors for common issues:
 
 ```typescript
-import { transfer } from '@repo/apl-sdk';
-
-// Transfer 100 tokens
-await transfer(
-  source,       // Source account
-  destination,  // Destination account
-  owner,        // Token account owner
-  100n,         // Amount (as BigInt)
-  signer        // Signing callback
-);
+try {
+  const tx = await transferTx(
+    sourceTokenPubkey,
+    mintPubkey,
+    destinationPubkey,
+    ownerPubkey,
+    amount,
+    9,
+    signer
+  );
+} catch (error) {
+  // Handle specific error cases
+  console.error('Operation failed:', error);
+}
 ```
-
-### Creating Associated Token Account
-
-```typescript
-import { 
-  createAssociatedTokenAccountTx,
-  deriveAssociatedTokenAddress 
-} from '@repo/apl-sdk';
-
-// Derive associated token account address
-const [associatedAddress] = await deriveAssociatedTokenAddress(
-  walletAddress,  // Wallet public key
-  mintAddress     // Token mint address
-);
-
-// Create associated token account
-const tx = await createAssociatedTokenAccountTx(
-  walletAddress,  // Wallet public key
-  mintAddress,    // Token mint address
-  payer,          // Account paying for creation
-  signer          // Signing callback
-);
-```
-
-### Managing Token Authorities
-
-```typescript
-import { setAuthority, AuthorityType } from '@repo/apl-sdk';
-
-// Transfer mint authority
-await setAuthority(
-  mint,                    // Token mint address
-  newAuthority,           // New authority public key
-  AuthorityType.MintTokens,
-  currentAuthority,       // Current authority public key
-  signer                  // Signing callback
-);
-```
-
-## API Reference
-
-### Token Instructions
-
-#### `createMint(mintAuthority, freezeAuthority, decimals, signer)`
-Creates a new token mint.
-
-- `mintAuthority`: Public key authorized to mint tokens
-- `freezeAuthority`: Optional public key authorized to freeze accounts
-- `decimals`: Number of decimals for token precision
-- `signer`: Callback function for transaction signing
-- Returns: Promise<RuntimeTransaction>
-
-#### `transfer(source, destination, owner, amount, signer)`
-Transfers tokens between accounts.
-
-- `source`: Source token account
-- `destination`: Destination token account
-- `owner`: Owner of the source account
-- `amount`: Amount to transfer (BigInt)
-- `signer`: Signing callback
-- Returns: Promise<RuntimeTransaction>
-
-#### `approve(account, delegate, owner, amount, signer)`
-Approves token delegation.
-
-- `account`: Token account
-- `delegate`: Delegate's public key
-- `owner`: Account owner's public key
-- `amount`: Amount to approve (BigInt)
-- `signer`: Signing callback
-- Returns: Promise<RuntimeTransaction>
-
-### Associated Token Account
-
-#### `deriveAssociatedTokenAddress(wallet, mint)`
-Derives the associated token account address.
-
-- `wallet`: Wallet public key
-- `mint`: Token mint address
-- Returns: Promise<[Uint8Array, number]> (address and bump seed)
-
-#### `createAssociatedTokenAccountTx(wallet, mint, payer, signer)`
-Creates an associated token account.
-
-- `wallet`: Wallet public key
-- `mint`: Token mint address
-- `payer`: Account paying for creation
-- `signer`: Signing callback
-- Returns: Promise<RuntimeTransaction>
 
 ## Error Handling
 
@@ -160,6 +102,70 @@ The library throws descriptive errors for common issues:
 ```typescript
 try {
   await transfer(source, destination, owner, amount, signer);
+} catch (error) {
+  // Handle specific error cases
+  console.error('Operation failed:', error);
+}
+```
+
+## API Reference
+
+### Token Instructions
+
+#### `initializeMintTx(mintKeypair: Keypair, utxo: UtxoMetaData, decimals: number, mintAuthority: Pubkey, freezeAuthority: Pubkey | null, signer: SignerCallback): Promise<RuntimeTransaction>`
+Creates a new token mint. Requires a UTXO with sufficient funds for account creation.
+
+- `mintKeypair`: Keypair for the new mint account
+- `utxo`: UTXO metadata for account creation (must have sufficient funds)
+- `decimals`: Number of decimals for token precision (default: 9)
+- `mintAuthority`: Public key authorized to mint tokens
+- `freezeAuthority`: Optional public key authorized to freeze accounts (null for fixed supply)
+- `signer`: Transaction signing callback
+
+#### `mintToTx(mint: Pubkey, recipient: Pubkey, amount: bigint, mintAuthority: Pubkey, signer: SignerCallback): Promise<RuntimeTransaction>`
+Mints new tokens to a recipient account. Requires mint authority.
+
+- `mint`: Token mint address
+- `recipient`: Recipient token account (must be initialized)
+- `amount`: Amount to mint as BigInt
+- `mintAuthority`: Public key with mint authority
+- `signer`: Transaction signing callback
+
+#### `transferTx(source: Pubkey, mint: Pubkey, destination: Pubkey, owner: Pubkey, amount: bigint, decimals: number, signer: SignerCallback): Promise<RuntimeTransaction>`
+Transfers tokens between accounts. Both accounts must exist.
+
+- `source`: Source token account
+- `mint`: Token mint address
+- `destination`: Destination token account
+- `owner`: Owner of the source account
+- `amount`: Amount to transfer as BigInt
+- `decimals`: Token decimals (default: 9)
+- `signer`: Transaction signing callback
+
+#### `associatedTokenTx(utxo: UtxoMetaData, associatedToken: Pubkey, owner: Pubkey, mint: Pubkey, signer: SignerCallback): Promise<RuntimeTransaction>`
+Creates an associated token account. Requires a UTXO with sufficient funds.
+
+- `utxo`: UTXO metadata for account creation
+- `associatedToken`: Associated token account public key
+- `owner`: Owner's public key
+- `mint`: Token mint address
+- `signer`: Transaction signing callback
+
+## Error Handling
+
+The library throws descriptive errors for common issues:
+
+```typescript
+try {
+  const tx = await transferTx(
+    sourceTokenPubkey,
+    mintPubkey,
+    destinationPubkey,
+    ownerPubkey,
+    amount,
+    9,
+    signer
+  );
 } catch (error) {
   if (error.message.includes('insufficient funds')) {
     // Handle insufficient balance
