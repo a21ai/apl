@@ -18,10 +18,10 @@ const truncateAddress = (address: string) => {
 
 // Helper function to format token balance with decimals
 const formatTokenBalance = (balance: bigint, decimals: number): string => {
-  const balanceStr = balance.toString().padStart(decimals + 1, '0');
-  const integerPart = balanceStr.slice(0, -decimals) || '0';
+  const balanceStr = balance.toString().padStart(decimals + 1, "0");
+  const integerPart = balanceStr.slice(0, -decimals) || "0";
   const fractionalPart = balanceStr.slice(-decimals);
-  return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ''}`;
+  return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ""}`;
 };
 
 // Get SCAT token from first balance
@@ -34,7 +34,6 @@ export default function Home() {
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
-  const { address } = useArchAddress(publicKey);
   const { balances, isLoading, error } = useBalance(
     publicKey ? Buffer.from(publicKey).toString("hex") : undefined
   );
@@ -59,7 +58,7 @@ export default function Home() {
         <div>
           <p className="text-white/60 text-xs">Connected Address</p>
           <p className="text-white text-sm font-mono">
-            {address ? truncateAddress(address) : "..."}
+            {publicKey ? truncateAddress(publicKey) : "..."}
           </p>
         </div>
         <Power
@@ -96,7 +95,9 @@ export default function Home() {
           symbol="SCAT"
           amount={(() => {
             const scatToken = getScatToken(balances);
-            return scatToken ? formatTokenBalance(scatToken.balance, scatToken.decimals) : "0";
+            return scatToken
+              ? formatTokenBalance(scatToken.balance, scatToken.decimals)
+              : "0";
           })()}
           price="0.00"
           priceChange="0.00"
