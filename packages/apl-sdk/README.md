@@ -20,15 +20,16 @@ yarn add @repo/apl-sdk
 
 ```typescript
 import { Pubkey } from '@repo/arch-sdk';
-import { createMint } from '@repo/apl-sdk';
+import { initializeMintTx, Keypair } from '@repo/apl-sdk';
 
 // Create a new token (requires UTXO with sufficient funds)
-const mint = await createMint(
-  authority,     // Mint authority public key
-  null,          // Optional freeze authority
-  6,            // Decimals
-  utxo,         // UTXO for account creation
-  signer        // Transaction signing callback
+const tx = await initializeMintTx(
+  mintKeypair,     // Keypair for the new mint account
+  utxo,            // UTXO for account creation
+  9,               // Decimals
+  authority,       // Mint authority public key
+  null,            // Optional freeze authority
+  signer          // Transaction signing callback
 );
 ```
 
@@ -57,16 +58,17 @@ yarn add @repo/apl-sdk
 ## Quick Start
 
 ```typescript
-import { createMint, transfer } from '@repo/apl-sdk';
+import { initializeMintTx, transfer, Keypair } from '@repo/apl-sdk';
 import { RuntimeTransaction } from '@repo/arch-sdk';
 
 // Example: Create a new token (requires UTXO with sufficient funds)
-const mint = await createMint(
-  mintAuthority,  // Public key of mint authority
-  null,           // Optional freeze authority
-  6,             // Decimals
-  utxo,          // UTXO for account creation (must have sufficient funds)
-  signer         // Signing callback
+const tx = await initializeMintTx(
+  mintKeypair,      // Keypair for the new mint account
+  utxo,             // UTXO for account creation (must have sufficient funds)
+  9,                // Decimals
+  mintAuthority,    // Mint authority public key
+  null,             // Optional freeze authority
+  signer           // Transaction signing callback
 );
 
 // Example: Transfer tokens

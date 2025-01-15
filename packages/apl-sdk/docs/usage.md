@@ -158,7 +158,7 @@ Creates a new token mint. Requires a UTXO with sufficient funds for account crea
 
 - `mintKeypair`: Keypair for the new mint account
 - `utxo`: UTXO metadata for account creation (must have sufficient funds)
-- `decimals`: Number of decimals for token precision
+- `decimals`: Number of decimals for token precision (default: 9)
 - `mintAuthority`: Public key authorized to mint tokens
 - `freezeAuthority`: Optional public key authorized to freeze accounts
 - `signer`: Callback function for transaction signing
