@@ -8,6 +8,7 @@ import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
 import { ActionButton } from "@/components/action-button";
 import { TokenItem } from "@/components/token-item";
+import { useRouter } from "next/navigation";
 
 // Helper function to truncate addresses for display
 const truncateAddress = (address: string) => {
@@ -15,6 +16,7 @@ const truncateAddress = (address: string) => {
 };
 
 export default function Home() {
+  const router = useRouter();
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
@@ -70,6 +72,7 @@ export default function Home() {
           price="0.20"
           priceChange="0.01"
           logo="/btc.png"
+          onClick={() => router.push("/BTC")}
         />
         <TokenItem
           name="Stoner Cat"
@@ -78,6 +81,7 @@ export default function Home() {
           price="0.00"
           priceChange="0.00"
           logo="/stoned-cat.gif"
+          onClick={() => router.push("/SCAT")}
         />
       </div>
     </Layout>
