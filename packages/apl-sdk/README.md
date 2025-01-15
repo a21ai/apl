@@ -19,10 +19,16 @@ yarn add @repo/apl-sdk
 ## Quick Start
 
 ```typescript
-import { createMint, createRpcConnection } from '@repo/apl-sdk';
+import { createMint } from '@repo/apl-sdk';
 
-// Create a new token
-const mint = await createMint(authority, null, 6, signer);
+// Create a new token (requires UTXO with sufficient funds)
+const mint = await createMint(
+  authority,     // Mint authority public key
+  null,          // Optional freeze authority
+  6,            // Decimals
+  utxo,         // UTXO for account creation
+  signer        // Transaction signing callback
+);
 ```
 
 For detailed examples and API reference, see the [usage guide](./docs/usage.md).
@@ -53,11 +59,12 @@ yarn add @repo/apl-sdk
 import { createMint, transfer } from '@repo/apl-sdk';
 import { RuntimeTransaction } from '@repo/arch-sdk';
 
-// Example: Create a new token
+// Example: Create a new token (requires UTXO with sufficient funds)
 const mint = await createMint(
   mintAuthority,  // Public key of mint authority
   null,           // Optional freeze authority
   6,             // Decimals
+  utxo,          // UTXO for account creation (must have sufficient funds)
   signer         // Signing callback
 );
 
