@@ -68,7 +68,15 @@ apl-cli accounts [-v]
 ```
 
 Options:
-- `-v, --verbose` - Show detailed token information
+- `-v, --verbose` - Show detailed token information including mint authority and decimals
+
+List all token mints:
+```bash
+apl-cli tokens [-v]
+```
+
+Options:
+- `-v, --verbose` - Show detailed token mint information
 
 Create token account:
 ```bash
@@ -82,16 +90,17 @@ apl-cli balance
 
 Note: Uses keypair and RPC URL from config file
 
-Send tokens:
+Transfer tokens:
 ```bash
-apl-cli send -t <recipient-address> -a <amount>
+apl-cli transfer -t <recipient-address> -a <amount> --mint <token-mint>
 ```
 
 Options:
 - `-t, --to <address>` - Recipient's address (required)
-- `-a, --amount <number>` - Amount to send (required)
+- `-a, --amount <number>` - Amount to transfer (required)
+- `-m, --mint <address>` - Token mint address (required)
 
-Note: Uses keypair from config file
+Note: Uses keypair from config file. Associated Token Accounts are automatically derived and created if needed.
 
 Create a new token:
 ```bash
@@ -129,7 +138,7 @@ Options:
 - `-t, --to <address>` - Recipient address (required)
 - `-a, --amount <number>` - Amount to mint (required)
 
-Note: Uses keypair from config file. Must be mint authority.
+Note: Uses keypair from config file. Must be mint authority. The command will validate mint authority before attempting to mint tokens. Associated Token Accounts are automatically derived and created for recipients if needed.
 
 Note: The CLI automatically creates associated token accounts for recipients if they don't exist. This ensures tokens can be received without manual account setup.
 
