@@ -4,6 +4,7 @@ import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { useBalance, TokenBalance } from "@/lib/hooks/useBalance";
+import { toast } from "@/components/ui/use-toast";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
@@ -34,7 +35,9 @@ export default function Home() {
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
-  const { balances } = useBalance(publicKey ? publicKey : undefined);
+  const hexPublicKey = publicKey ? Buffer.from(publicKey).toString("hex") : undefined;
+  const { address } = useArchAddress(hexPublicKey || "");
+  const { balances } = useBalance(hexPublicKey);
 
   if (!isConnected) {
     return (
@@ -57,8 +60,19 @@ export default function Home() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-white/60 text-xs">Connected Address</p>
-          <p className="text-white text-sm font-mono">
-            {publicKey ? truncateAddress(publicKey) : "..."}
+          <p 
+            onClick={() => {
+              if (hexPublicKey) {
+                navigator.clipboard.writeText(hexPublicKey);
+                toast({
+                  title: "Copied!",
+                  description: "Your address has been copied to the clipboard",
+                });
+              }
+            }}
+            className="text-white text-sm font-mono hover:text-white/80 cursor-pointer transition-colors"
+          >
+            {hexPublicKey ? truncateAddress(hexPublicKey) : "..."}
           </p>
         </div>
         <Power
@@ -76,7 +90,24 @@ export default function Home() {
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <ActionButton icon={QrCode} label="Receive" />
+        <ActionButton 
+          icon={QrCode} 
+          label="Receive" 
+          onClick={() => {
+            if (address) {
+              navigator.clipboard.writeText(address);
+              toast({
+                title: "Copied!",
+                description: "Your address has been copied to the clipboard",
+              });
+            } else {
+              toast({
+                title: "Error",
+                description: "Address not available",
+              });
+            }
+          }}
+        />
         <ActionButton icon={Send} label="Send" />
       </div>
 
