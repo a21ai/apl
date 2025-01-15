@@ -1,5 +1,6 @@
 import { Pubkey } from "@repo/arch-sdk";
 import { serializePubkey, serializeOptionPubkey } from "./pubkey.js";
+import { readUInt64LE } from "../utils.js";
 
 // Instruction data layouts
 export interface InitializeMintData {

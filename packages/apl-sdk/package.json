@@ -26,7 +26,9 @@
     "@repo/arch-sdk": "*",
     "@scure/btc-signer": "^1.5.0",
     "@solana/web3.js": "^1.95.4",
+    "bech32": "^2.0.0",
     "bip322-js": "^2.0.0",
+    "bitcore-lib-inquisition": "^10.3.1",
     "borsh": "^2.0.0"
   }
 }

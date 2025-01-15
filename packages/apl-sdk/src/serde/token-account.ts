@@ -1,4 +1,5 @@
 import { deserializeOptionPubkey, serializeOptionPubkey } from "./pubkey.js";
+import { readUInt64LE } from "../utils.js";
 
 /**
  * Token account data structure that represents a token account.
@@ -57,7 +58,7 @@ export function deserialize(buffer: Buffer): TokenAccount {
   if (buffer.length < 72) {
     throw new Error("Buffer too short for amount");
   }
-  const amount = buffer.readBigUInt64LE(64);
+  const amount = readUInt64LE(buffer, 64);
 
   // Extract delegate (36 bytes: 4 byte tag + 32 byte pubkey)
   if (buffer.length < 108) {
@@ -78,7 +79,7 @@ export function deserialize(buffer: Buffer): TokenAccount {
   if (buffer.length < 117) {
     throw new Error("Buffer too short for delegated amount");
   }
-  const delegated_amount = buffer.readBigUInt64LE(109);
+  const delegated_amount = readUInt64LE(buffer, 109);
 
   // Extract close authority (36 bytes: 4 byte tag + 32 byte pubkey)
   if (buffer.length < 153) {

@@ -13,6 +13,8 @@ import * as btc from "@scure/btc-signer";
 import { randomPrivateKeyBytes } from "@scure/btc-signer/utils";
 import { pubSchnorr } from "@scure/btc-signer/utils";
 import { Signer as Bip322Signer } from "bip322-js";
+import { bech32m } from "bech32";
+// const bitcore = require("bitcore-lib-inquisition");
 
 export function createAccountInstruction(
   utxo: UtxoMetaData,
@@ -168,6 +170,39 @@ export function getTaprootAddressFromPubkey(publicKey: Pubkey): string {
   const { address } = btc.p2tr(publicKey);
   return address!;
 }
+
+/**
+ * Extract the public key from a taproot address by decoding the bech32m format
+ * @param address The taproot address (starts with bc1p)
+ * @returns The x-only public key used in the taproot address
+ */
+export function getPubkeyFromTaprootAddress(address: string): Pubkey {
+  try {
+    // const a = new bitcore.Address(address);
+    // console.log("Address:", a.toString());
+
+    // Decode the Bech32m address
+    const decoded = bech32m.decode(address);
+
+    // Extract witness version and program
+    const witnessVersion = decoded.words[0]; // Should be 1 for Taproot
+    const program = bech32m.fromWords(decoded.words.slice(1));
+
+    // For taproot addresses, witness version should be 1 and program length should be 32 bytes
+    if (witnessVersion !== 1 || program.length !== 32) {
+      throw new Error(
+        "Invalid Taproot address: incorrect witness version or program length"
+      );
+    }
+
+    // The program is the x-only public key for Taproot
+    return new Uint8Array(program);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    throw new Error(`Invalid taproot address: ${message}`);
+  }
+}
+
 /**
  * Create a signer callback that uses a Solana keypair
  * @param keypair {publicKey: string, secretKey: string}
@@ -181,4 +216,25 @@ export function createSignerFromKeypair(keypair: Keypair): SignerCallback {
     const sig = Bip322Signer.sign(wif, address!, message) as string;
     return sig;
   };
+}
+
+/**
+ * Read a 64-bit unsigned integer from a buffer in little-endian format
+ * Browser-compatible version that works with both Buffer and Uint8Array
+ */
+export function readUInt64LE(
+  buffer: Buffer | Uint8Array,
+  offset: number
+): bigint {
+  const view = new DataView(
+    buffer instanceof Buffer
+      ? buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.length
+        )
+      : buffer.buffer
+  );
+  const low = view.getUint32(offset, true);
+  const high = view.getUint32(offset + 4, true);
+  return (BigInt(high) << 32n) | BigInt(low);
 }
