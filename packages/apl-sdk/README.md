@@ -19,6 +19,7 @@ yarn add @repo/apl-sdk
 ## Quick Start
 
 ```typescript
+import { Pubkey } from '@repo/arch-sdk';
 import { createMint } from '@repo/apl-sdk';
 
 // Create a new token (requires UTXO with sufficient funds)

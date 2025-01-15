@@ -17,7 +17,8 @@ The APL SDK provides core token operations. Each operation that creates new acco
 
 ### Creating Tokens
 ```typescript
-import { initializeMintTx, Keypair, UtxoMetaData, Pubkey, SignerCallback } from '@repo/apl-sdk';
+import { Pubkey } from '@repo/arch-sdk';
+import { initializeMintTx, Keypair, UtxoMetaData, SignerCallback } from '@repo/apl-sdk';
 
 const tx = await initializeMintTx(
   mintKeypair: Keypair,
@@ -31,7 +32,8 @@ const tx = await initializeMintTx(
 
 ### Creating Associated Token Accounts
 ```typescript
-import { associatedTokenTx, UtxoMetaData, Pubkey, SignerCallback } from '@repo/apl-sdk';
+import { Pubkey } from '@repo/arch-sdk';
+import { associatedTokenTx, UtxoMetaData, SignerCallback } from '@repo/apl-sdk';
 
 const tx = await associatedTokenTx(
   utxo: UtxoMetaData,  // Required for account creation
@@ -44,7 +46,8 @@ const tx = await associatedTokenTx(
 
 ### Minting Tokens
 ```typescript
-import { mintToTx, Pubkey, SignerCallback } from '@repo/apl-sdk';
+import { Pubkey } from '@repo/arch-sdk';
+import { mintToTx, SignerCallback } from '@repo/apl-sdk';
 
 const tx = await mintToTx(
   mint: Pubkey,
@@ -57,7 +60,8 @@ const tx = await mintToTx(
 
 ### Transferring Tokens
 ```typescript
-import { transferTx, Pubkey, SignerCallback } from '@repo/apl-sdk';
+import { Pubkey } from '@repo/arch-sdk';
+import { transferTx, SignerCallback } from '@repo/apl-sdk';
 
 const tx = await transferTx(
   source: Pubkey,
