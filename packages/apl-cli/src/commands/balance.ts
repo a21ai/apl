@@ -6,6 +6,7 @@ import {
   getTaprootAddressFromPubkey,
   AssociatedTokenUtil,
   TokenAccountUtil,
+  getPubkeyFromTaprootAddress,
 } from "@repo/apl-sdk";
 
 export default function balanceCommand(program: Command) {
@@ -23,6 +24,23 @@ export default function balanceCommand(program: Command) {
           "\nMy Public Key:",
           Buffer.from(keypair.publicKey).toString("hex")
         );
+        console.log(
+          "\nMy Public Key (Parsed):",
+          Buffer.from(
+            getPubkeyFromTaprootAddress(
+              getTaprootAddressFromPubkey(keypair.publicKey)
+            )
+          ).toString("hex")
+        );
+
+        const q = getTaprootAddressFromPubkey(
+          getPubkeyFromTaprootAddress(
+            getTaprootAddressFromPubkey(keypair.publicKey)
+          )
+        );
+
+        console.log("Q:", q);
+
         console.log(
           "My Address:",
           getTaprootAddressFromPubkey(keypair.publicKey)

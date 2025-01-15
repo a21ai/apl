@@ -13,11 +13,20 @@ export default function createAccountCommand(program: Command) {
   program
     .command("create-account <tokenAddress>")
     .description("Create an associated token account")
-    .action(async (tokenAddress: string) => {
+    .option(
+      "-o, --owner <ownerAddress>",
+      "Optional owner address (hex encoded public key)"
+    )
+    .action(async (tokenAddress: string, options: { owner?: string }) => {
       try {
         const keypair = loadKeypair();
         const mintPubkey = PubkeyUtil.fromHex(tokenAddress);
         const rpcConnection = createRpcConnection();
+
+        // Determine owner - use provided owner address if available, otherwise use keypair
+        const ownerPubkey = options.owner
+          ? PubkeyUtil.fromHex(options.owner)
+          : keypair.publicKey;
 
         // Verify token exists
         const tokenInfo = await rpcConnection.readAccountInfo(mintPubkey);
@@ -27,12 +36,12 @@ export default function createAccountCommand(program: Command) {
         }
 
         console.log(`Creating account for token: ${tokenAddress}`);
-        console.log(`Owner: ${Buffer.from(keypair.publicKey).toString("hex")}`);
+        console.log(`Owner: ${Buffer.from(ownerPubkey).toString("hex")}`);
 
         const associatedTokenPubkey =
           AssociatedTokenUtil.getAssociatedTokenAddress(
             mintPubkey,
-            keypair.publicKey,
+            ownerPubkey,
             true
           );
 
@@ -60,7 +69,7 @@ export default function createAccountCommand(program: Command) {
           const tx = await associatedTokenTx(
             utxo,
             associatedTokenPubkey,
-            keypair.publicKey,
+            ownerPubkey, // Use the determined owner pubkey
             mintPubkey,
             signer
           );
