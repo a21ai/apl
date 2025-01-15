@@ -3,6 +3,7 @@
 import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
+import { useBalance, TokenBalance } from "@/lib/hooks/useBalance";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
@@ -15,12 +16,28 @@ const truncateAddress = (address: string) => {
   return `${address.slice(0, 5)}...${address.slice(-5)}`;
 };
 
+// Helper function to format token balance with decimals
+const formatTokenBalance = (balance: bigint, decimals: number): string => {
+  const balanceStr = balance.toString().padStart(decimals + 1, '0');
+  const integerPart = balanceStr.slice(0, -decimals) || '0';
+  const fractionalPart = balanceStr.slice(-decimals);
+  return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ''}`;
+};
+
+// Get SCAT token from first balance
+const getScatToken = (balances?: TokenBalance[]) => {
+  return balances && balances.length > 0 ? balances[0] : null;
+};
+
 export default function Home() {
   const router = useRouter();
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
   const { address } = useArchAddress(publicKey);
+  const { balances, isLoading, error } = useBalance(
+    publicKey ? Buffer.from(publicKey).toString("hex") : undefined
+  );
 
   if (!isConnected) {
     return (
@@ -77,7 +94,10 @@ export default function Home() {
         <TokenItem
           name="Stoner Cat"
           symbol="SCAT"
-          amount="218"
+          amount={(() => {
+            const scatToken = getScatToken(balances);
+            return scatToken ? formatTokenBalance(scatToken.balance, scatToken.decimals) : "0";
+          })()}
           price="0.00"
           priceChange="0.00"
           logo="/stoned-cat.gif"
