@@ -18,13 +18,40 @@ npm install @repo/apl-cli
 yarn add @repo/apl-cli
 ```
 
-## Prerequisites
-- Node.js >= 18
-- Access to an Arch network RPC endpoint
+## Prerequisites and Setup
+
+Before using any token-related commands, you must:
+
+1. Install required software:
+   - Node.js >= 18
+   - Access to an Arch network RPC endpoint
+
+2. Create a keypair (required for most operations):
+   ```bash
+   # Create keypair at default location (~/.apl-cli/keypair.json)
+   apl-cli create-keypair
+
+   # Or specify custom location
+   apl-cli create-keypair -o /path/to/keypair.json
+   ```
+
+3. Configure RPC endpoint:
+   ```bash
+   # Set RPC URL (required for network operations)
+   apl-cli config set --url <your-rpc-url>
+
+   # Optionally set custom keypair location
+   apl-cli config set --keypair /path/to/keypair.json
+   ```
+
+You can verify your setup at any time:
+```bash
+apl-cli config get
+```
 
 ## Configuration
 
-The CLI uses a JSON configuration file located at `~/.apl-sdk/config.json`:
+The CLI uses a JSON configuration file located at `~/.apl-cli/config.json`:
 
 ```bash
 ### Configuration Commands
@@ -84,25 +111,69 @@ The keypair file is stored in JSON format:
 
 ### Commands
 
-List all token mints:
+### tokens
+
+Description:
+List all token mints and their details.
+
+Prerequisites:
+- RPC URL must be configured (see "Setup" section)
+
+Usage:
 ```bash
 apl-cli tokens [-v]
 ```
 
 Options:
-- `-v, --verbose` - Show detailed token mint information
+- `-v, --verbose` - Show detailed token information including initialization status
 
-Create token account:
+Examples:
+```bash
+# List basic token information
+apl-cli tokens
+
+# Show detailed token information
+apl-cli tokens -v
+```
+
+### create-account
+
+Description:
+Create an Associated Token Account (ATA) for a specific token mint.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Token mint must exist
+- RPC URL must be configured
+
+Usage:
 ```bash
 apl-cli create-account <token_address>
 ```
 
 Arguments:
-- `<token_address>` - Public key of the token mint account to create an associated token account for
+- `<token_address>` (Required) - Public key of the token mint account
 
-Note: Creates an Associated Token Account (ATA) for the specified token mint. Uses keypair from config file.
+Examples:
+```bash
+apl-cli create-account deadbeef...  # Replace with actual token mint address
+```
 
-Check token balance:
+Notes:
+- Creates an ATA for your keypair and the specified token mint
+- Fails if token mint doesn't exist
+- Uses keypair from config file
+
+### balance
+
+Description:
+Show token balances for all your token accounts.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- RPC URL must be configured
+
+Usage:
 ```bash
 apl-cli balance [-v]
 ```
@@ -110,51 +181,123 @@ apl-cli balance [-v]
 Options:
 - `-v, --verbose` - Show detailed token information including decimals, total supply, token state, and delegation details
 
-Note: Uses keypair and RPC URL from config file
-
-Transfer tokens:
+Examples:
 ```bash
-apl-cli transfer -t <recipient-address> -a <amount> --mint <token-mint>
+# Show non-zero balances
+apl-cli balance
+
+# Show all token accounts with details
+apl-cli balance -v
+```
+
+Notes:
+- Only shows non-zero balances by default
+- Shows all token accounts in verbose mode
+- Uses keypair from config file
+
+### transfer
+
+Description:
+Transfer tokens from your account to another account.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Source and destination token accounts must exist
+- RPC URL must be configured
+
+Usage:
+```bash
+apl-cli transfer -t <recipient-address> -m <token-mint> -a <amount>
 ```
 
 Options:
-- `-t, --to <address>` - Recipient's address (required)
-- `-a, --amount <number>` - Amount to transfer (required)
-- `-m, --mint <address>` - Token mint address (required)
+- `-t, --to <address>` (Required) - Recipient's wallet address
+- `-m, --mint <address>` (Required) - Token mint address
+- `-a, --amount <number>` (Required) - Amount to transfer
 
-Note: Uses keypair from config file. Associated Token Accounts are automatically derived and created if needed.
+Examples:
+```bash
+apl-cli transfer --to deadbeef... --mint cafe... --amount 100
+```
 
-Create a new token:
+Notes:
+- Both source and destination token accounts must exist
+- Source account is derived from your config keypair
+- Amount must be within your balance
+- Fails if token accounts don't exist
+
+### create-token
+
+Description:
+Create a new token mint with specified parameters.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- RPC URL must be configured
+
+Usage:
 ```bash
 apl-cli create-token [--decimals <n>] [--freeze-authority <pubkey>]
 ```
 
 Options:
 - `--decimals <n>` - Number of decimals (default: 9)
-- `--freeze-authority <pubkey>` - Optional freeze authority
+- `--freeze-authority <pubkey>` - Optional freeze authority public key
 
-Note: Uses keypair path from config file. Set with `apl-cli config set --keypair <path>`
+Examples:
+```bash
+# Create token with default settings
+apl-cli create-token
 
-The create-token command will:
-1. Create a new mint account
-2. Initialize the token with specified decimals
-3. Set up mint and freeze authorities
-4. Create an associated token account for the authority
-5. Output the mint address for future operations
+# Create token with custom decimals
+apl-cli create-token --decimals 6
 
-Mint tokens (requires mint authority):
+# Create token with freeze authority
+apl-cli create-token --freeze-authority deadbeef...
+```
+
+Notes:
+- Creates new mint account
+- Sets your keypair as mint authority
+- Initializes token with specified decimals
+- Creates an ATA for the authority
+- Outputs mint address for future use
+
+### mint
+
+Description:
+Mint new tokens to a recipient account (requires mint authority).
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Must be the mint authority
+- Recipient's token account must exist
+- RPC URL must be configured
+
+Usage:
 ```bash
 apl-cli mint -m <mint-address> -t <recipient-address> -a <amount>
 ```
 
 Options:
-- `-m, --mint <address>` - Token mint address (required)
-- `-t, --to <address>` - Recipient address (required)
-- `-a, --amount <number>` - Amount to mint (required)
+- `-m, --mint <address>` (Required) - Token mint address
+- `-t, --to <address>` (Required) - Recipient wallet address
+- `-a, --amount <number>` (Required) - Amount to mint
 
-Note: Uses keypair from config file. Must be mint authority. The command will validate mint authority before attempting to mint tokens. Associated Token Accounts are automatically derived and created for recipients if needed.
+Examples:
+```bash
+# Mint tokens to an address
+apl-cli mint --mint cafe... --to deadbeef... --amount 1000
 
-Note: The CLI automatically creates associated token accounts for recipients if they don't exist. This ensures tokens can be received without manual account setup.
+# Mint tokens to yourself (omit --to)
+apl-cli mint --mint cafe... --amount 1000
+```
+
+Notes:
+- Your keypair must be the mint authority
+- Validates mint authority before attempting to mint
+- Recipient's token account must exist
+- Amount must be a positive integer
 
 ## Development
 
