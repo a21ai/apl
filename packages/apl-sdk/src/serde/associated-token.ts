@@ -20,7 +20,7 @@ export const MAX_SEEDS = 16;
 export function getAssociatedTokenAddress(
   mint: Pubkey,
   owner: Pubkey,
-  allowOwnerOffCurve = false,
+  allowOwnerOffCurve = true,
   programId = TOKEN_PROGRAM_ID,
   associatedTokenProgramId = ASSOCIATED_TOKEN_PROGRAM_ID
 ): Pubkey {

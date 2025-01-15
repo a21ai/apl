@@ -16,38 +16,48 @@ export default function tokensCommand(program: Command) {
         const rpcConnection = createRpcConnection();
         console.log("Fetching tokens...");
 
-        const tokens =
-          await rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
+        const tokens = await rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
 
-        tokens.forEach((token: { account: { data: Uint8Array }; pubkey: Uint8Array }) => {
-          const mint = MintUtil.deserialize(Buffer.from(token.account.data));
-          if (mint.is_initialized) {
-            console.log(
-              "\nToken:",
-              Buffer.from(token.pubkey).toString("hex"),
-              getTaprootAddressFromPubkey(token.pubkey)
-            );
-            console.log("----------------------------------------");
-            console.log(
-              "Mint Authority:",
-              mint.mint_authority
-                ? Buffer.from(mint.mint_authority).toString("hex")
-                : "null"
-            );
-            console.log("Supply:", mint.supply.toString());
-            console.log("Decimals:", mint.decimals);
-            console.log(
-              "Freeze Authority:",
-              mint.freeze_authority
-                ? Buffer.from(mint.freeze_authority).toString("hex")
-                : "null"
-            );
-            if (options.verbose) {
-              console.log("Is Initialized:", mint.is_initialized);
+        tokens.forEach(
+          (token: { account: { data: Uint8Array }; pubkey: Uint8Array }) => {
+            try {
+              const mint = MintUtil.deserialize(
+                Buffer.from(token.account.data)
+              );
+              if (mint.is_initialized) {
+                console.log(
+                  "\nToken Pubkey:",
+                  Buffer.from(token.pubkey).toString("hex")
+                );
+                console.log(
+                  "Token Address:",
+                  getTaprootAddressFromPubkey(token.pubkey)
+                );
+                console.log("----------------------------------------");
+                console.log(
+                  "Mint Authority:",
+                  mint.mint_authority
+                    ? Buffer.from(mint.mint_authority).toString("hex")
+                    : "null"
+                );
+                console.log("Supply:", mint.supply.toString());
+                console.log("Decimals:", mint.decimals);
+                console.log(
+                  "Freeze Authority:",
+                  mint.freeze_authority
+                    ? Buffer.from(mint.freeze_authority).toString("hex")
+                    : "null"
+                );
+                if (options.verbose) {
+                  console.log("Is Initialized:", mint.is_initialized);
+                }
+                console.log("----------------------------------------");
+              }
+            } catch (error) {
+              // Skip invalid mints
             }
-            console.log("----------------------------------------");
           }
-        });
+        );
       } catch (error) {
         handleError(error);
       }

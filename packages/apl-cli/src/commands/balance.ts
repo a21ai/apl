@@ -1,37 +1,105 @@
 import { Command } from "commander";
-import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
-import { readConfig } from "../config.js";
-import { PubkeyUtil } from "@repo/arch-sdk";
-import { getTaprootAddress } from "@repo/apl-sdk";
+import { createRpcConnection, handleError, loadKeypair } from "../utils.js";
+import {
+  MintUtil,
+  TOKEN_PROGRAM_ID,
+  getTaprootAddressFromPubkey,
+  AssociatedTokenUtil,
+  TokenAccountUtil,
+} from "@repo/apl-sdk";
 
 export default function balanceCommand(program: Command) {
   program
     .command("balance")
-    .description("Get wallet balance on Arch network")
-    .action(async () => {
+    .description("Show token balances for all accounts")
+    .option("-v, --verbose", "Show detailed token information")
+    .action(async (options) => {
       try {
-        // Read config for keypair and RPC URL
-        const config = readConfig();
-        const keypair = loadKeypair();
         const rpcConnection = createRpcConnection();
+        const keypair = loadKeypair();
 
-        const paymentAddress = getTaprootAddress(keypair);
-
-        console.log("Payment Address:", paymentAddress);
-
-        const archAdress = await rpcConnection.getAccountAddress(
-          PubkeyUtil.fromHex(paymentAddress)
+        // Display user's public key and address
+        console.log(
+          "\nMy Public Key:",
+          Buffer.from(keypair.publicKey).toString("hex")
         );
+        console.log(
+          "My Address:",
+          getTaprootAddressFromPubkey(keypair.publicKey)
+        );
+        console.log("\nFetching token balances...");
 
-        console.log("Arch Address:", archAdress);
+        // Get all token mints
+        const mints = await rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
 
-        console.log("Fetching wallet balance...");
+        for (const mint of mints) {
+          try {
+            const mintData = MintUtil.deserialize(
+              Buffer.from(mint.account.data as Uint8Array)
+            );
+            if (!mintData.is_initialized) continue;
 
-        // Stub: In real implementation, we would:
-        // 1. Use rpcConnection to fetch account info
-        // 2. Parse account data to get balance
-        // 3. Display formatted balance
-        console.log("Balance: Stub - Will implement actual balance check");
+            // Derive associated token account for this mint
+            const associatedTokenPubkey =
+              AssociatedTokenUtil.getAssociatedTokenAddress(
+                mint.pubkey,
+                keypair.publicKey
+              );
+
+            // Try to fetch the associated token account
+            try {
+              const tokenAccountInfo = await rpcConnection.readAccountInfo(
+                associatedTokenPubkey
+              );
+
+              if (tokenAccountInfo?.data) {
+                const tokenAccount = TokenAccountUtil.deserialize(
+                  Buffer.from(tokenAccountInfo.data)
+                );
+
+                // Only show tokens with non-zero balance unless verbose mode
+                if (tokenAccount.amount > 0n || options.verbose) {
+                  console.log(
+                    "\nToken Pubkey:",
+                    Buffer.from(mint.pubkey).toString("hex")
+                  );
+                  console.log(
+                    "Token Address:",
+                    getTaprootAddressFromPubkey(mint.pubkey)
+                  );
+                  console.log("Balance:", tokenAccount.amount.toString());
+
+                  if (options.verbose) {
+                    console.log("Decimals:", mintData.decimals);
+                    console.log("Total Supply:", mintData.supply.toString());
+                    console.log(
+                      "State:",
+                      ["Uninitialized", "Initialized", "Frozen"][
+                        tokenAccount.state
+                      ]
+                    );
+                    if (tokenAccount.delegate) {
+                      console.log(
+                        "Delegated Amount:",
+                        tokenAccount.delegated_amount.toString()
+                      );
+                    }
+                  }
+                  console.log("----------------------------------------");
+                }
+              }
+            } catch (error) {
+              if (options.verbose) {
+                console.log(
+                  "\nToken:",
+                  getTaprootAddressFromPubkey(mint.pubkey)
+                );
+                console.log("No associated token account found");
+                console.log("----------------------------------------");
+              }
+            }
+          } catch (error) {}
+        }
       } catch (error) {
         handleError(error);
       }
