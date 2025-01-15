@@ -25,12 +25,19 @@ export function useBalance(publicKey?: string) {
   const fetcher = async (key: string) => {
     // Remove the prefix before processing
     const actualKey = key.replace("balance:", "");
-    if (!actualKey) return [];
+    // Handle 66-char strings by removing leading '02' and taking last 64 chars
+    const cleanKey =
+      actualKey.length === 66 && actualKey.startsWith("02")
+        ? actualKey.slice(2)
+        : actualKey;
+    if (!cleanKey) return [];
 
     try {
       // Get all token mints
       const mints = await archConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
       const balances: TokenBalance[] = [];
+
+      console.log(mints, actualKey);
 
       for (const mint of mints) {
         try {
@@ -40,16 +47,19 @@ export function useBalance(publicKey?: string) {
           if (!mintData.is_initialized) continue;
 
           // Derive associated token account for this mint
-          const associatedTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
-            mint.pubkey,
-            Buffer.from(actualKey, "hex")
-          );
+          const associatedTokenPubkey =
+            AssociatedTokenUtil.getAssociatedTokenAddress(
+              mint.pubkey,
+              Buffer.from(cleanKey, "hex")
+            );
 
           // Try to fetch the associated token account
           try {
             const tokenAccountInfo = await archConnection.readAccountInfo(
               associatedTokenPubkey
             );
+
+            console.log(tokenAccountInfo);
 
             if (tokenAccountInfo?.data) {
               const tokenAccount = TokenAccountUtil.deserialize(
@@ -60,23 +70,28 @@ export function useBalance(publicKey?: string) {
               if (tokenAccount.amount > 0n) {
                 balances.push({
                   mintPubkeyHex: Buffer.from(mint.pubkey).toString("hex"),
-                  tokenAddressHex: Buffer.from(associatedTokenPubkey).toString("hex"),
+                  tokenAddressHex: Buffer.from(associatedTokenPubkey).toString(
+                    "hex"
+                  ),
                   balance: tokenAccount.amount,
                   decimals: mintData.decimals,
-                  state: (["Uninitialized", "Initialized", "Frozen"][tokenAccount.state]) as "Uninitialized" | "Initialized" | "Frozen",
+                  state: ["Uninitialized", "Initialized", "Frozen"][
+                    tokenAccount.state
+                  ] as "Uninitialized" | "Initialized" | "Frozen",
                 });
               }
             }
           } catch (err) {
             // Skip tokens without associated accounts
-            console.debug("No associated token account found for mint:", 
+            console.log(
+              "No associated token account found for mint:",
               Buffer.from(mint.pubkey).toString("hex"),
               err
             );
           }
         } catch (err) {
           // Skip invalid mint accounts
-          console.debug("Invalid mint account:", err);
+          console.log("Invalid mint account:", err);
         }
       }
 
@@ -89,11 +104,7 @@ export function useBalance(publicKey?: string) {
 
   const { data, error, isLoading } = useSWR(
     publicKey ? `balance:${publicKey}` : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
+    fetcher
   );
 
   return {

@@ -34,9 +34,7 @@ export default function Home() {
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
-  const { balances, isLoading, error } = useBalance(
-    publicKey ? Buffer.from(publicKey).toString("hex") : undefined
-  );
+  const { balances } = useBalance(publicKey ? publicKey : undefined);
 
   if (!isConnected) {
     return (
@@ -50,6 +48,8 @@ export default function Home() {
       </Layout>
     );
   }
+
+  console.log(publicKey);
 
   return (
     <Layout>
