@@ -1,13 +1,12 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+// import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 
 interface LayoutProps {
   children: React.ReactNode
-  className?: string
 }
 
-export function Layout({ children, className }: LayoutProps) {
+export function Layout({ children }: LayoutProps) {
   return (
     <>
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
