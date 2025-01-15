@@ -1,11 +1,13 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Power, Send, ArrowDownToLine } from 'lucide-react';
+import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { ConnectWallet } from "@/components/ConnectWallet";
+import { Layout } from "@/components/layout";
+import { BalanceDisplay } from "@/components/balance-display";
+import { ActionButton } from "@/components/action-button";
+import { TokenItem } from "@/components/token-item";
 
 // Helper function to truncate addresses for display
 const truncateAddress = (address: string) => {
@@ -18,78 +20,66 @@ export default function Home() {
   const { publicKey, disconnect } = laserEyes;
   const { address } = useArchAddress(publicKey);
 
+  if (!isConnected) {
+    return (
+      <Layout>
+        <div className="space-y-4">
+          <p className="text-white text-lg font-semibold text-center mb-4">
+            Connect a wallet
+          </p>
+          <ConnectWallet />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black p-4 md:p-8 relative overflow-hidden">
-      {/* Floating Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-20 h-20 bg-pink-500/30 rounded-full blur-xl animate-float" />
-        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-xl animate-float-delayed" />
-        <div className="absolute bottom-1/4 right-1/3 w-24 h-24 bg-purple-500/20 rounded-full blur-xl animate-float" />
+    <Layout>
+      {/* Header with address and disconnect */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <p className="text-white/60 text-xs">Connected Address</p>
+          <p className="text-white text-sm font-mono">
+            {address ? truncateAddress(address) : "..."}
+          </p>
+        </div>
+        <Power
+          className="w-5 h-5 text-white/60 hover:text-white cursor-pointer transition-colors"
+          onClick={() => disconnect()}
+        />
       </div>
 
-      <div className="max-w-md mx-auto space-y-4">
-        {/* Keep existing header card */}
+      <BalanceDisplay
+        balance="0.20"
+        change={{
+          amount: "0.0122",
+          percentage: "6.54",
+        }}
+      />
 
-
-        {!isConnected ? (
-          <Card className="p-4 w-full">
-            <p className="text-white text-lg font-semibold text-center mb-4">
-              Connect a wallet
-            </p>
-            <ConnectWallet />
-          </Card>
-        ) : (
-          <>
-            <Card className="backdrop-blur-md bg-white/10 border-white/20 p-6 rounded-3xl">
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between">
-                  <div>
-                    <p className="text-white/60 text-xs">Token Address</p>
-                    <p className="text-white text-sm font-mono">
-                      {address ? truncateAddress(address) : "..."}
-                    </p>
-                  </div>
-                  <Power
-                    className="w-5 h-5 text-gray-400 cursor-pointer transition-colors"
-                    onClick={() => disconnect()}
-                  />
-                </div>
-                {address && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
-                      <img 
-                        src="/stoned-cat.gif"
-                        alt="Stoned Cat Token" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-white uppercase font-bold">Stoner Cat</p>
-                      <p className="text-white/60 text-sm">218 SCAT</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-            {address && (
-              <div className="flex justify-center gap-4 mt-6">
-                <Button 
-                  variant="ghost"
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
-                >
-                  <Send className="mr-2 h-5 w-5" /> Send
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all duration-300 ease-in-out border border-white/20 rounded-full py-6"
-                >
-                  <ArrowDownToLine className="mr-2 h-5 w-5" /> Receive
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <ActionButton icon={QrCode} label="Receive" />
+        <ActionButton icon={Send} label="Send" />
       </div>
-    </div>
+
+      <div className="space-y-2">
+        <TokenItem
+          name="Bitcoin"
+          symbol="BTC"
+          amount="0.20"
+          price="0.20"
+          priceChange="0.01"
+          logo="/btc.png"
+        />
+        <TokenItem
+          name="Stoner Cat"
+          symbol="SCAT"
+          amount="218"
+          price="0.00"
+          priceChange="0.00"
+          logo="/stoned-cat.gif"
+        />
+      </div>
+    </Layout>
   );
 }
