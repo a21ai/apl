@@ -226,8 +226,8 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
     <Layout>
       <div className="flex flex-col h-full">
         <div className="flex-1 space-y-6">
-          {/* Header with back button and title */}
-          <div className="flex items-center">
+          {/* Page title and back button */}
+          <div className="flex items-center -mt-2">
             <Button
               variant="ghost"
               size="icon"
