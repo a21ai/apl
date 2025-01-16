@@ -2,31 +2,21 @@
 
 import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
-import { useArchAddress } from "@/lib/hooks/useArchAddress";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 import { useBalance } from "@/lib/hooks/useBalance";
-import { toast } from "@/components/ui/use-toast";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
 import { ActionButton } from "@/components/action-button";
 import { TokenItem } from "@/components/token-item";
+import { TokenSelectDrawer } from "@/components/token-select-drawer";
+import { ReceiveDrawer } from "@/components/receive-drawer";
 import { useRouter } from "next/navigation";
-
+import { useState } from "react";
+import { formatTokenBalance } from "@/lib/utils";
 // Helper function to truncate addresses for display
 const truncateAddress = (address: string) => {
   return `${address.slice(0, 5)}...${address.slice(-5)}`;
-};
-
-// Helper function to format token balance with decimals
-export const formatTokenBalance = (
-  balance: bigint,
-  decimals: number
-): string => {
-  const balanceStr = balance.toString().padStart(decimals + 1, "0");
-  const integerPart = balanceStr.slice(0, -decimals) || "0";
-  const fractionalPart = balanceStr.slice(-decimals);
-  return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ""}`;
 };
 
 export default function Home() {
@@ -36,6 +26,9 @@ export default function Home() {
   const { publicKey, disconnect } = laserEyes;
   const hexPublicKey = publicKey ? publicKey : undefined;
   const { balances, isLoading } = useBalance(hexPublicKey);
+  const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
+  const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
 
   if (!isConnected) {
     return (
@@ -50,6 +43,19 @@ export default function Home() {
     );
   }
 
+  const handleTokenSelect = (programId: string) => {
+    setSendDrawerOpen(false);
+    router.push(`/${programId}`);
+  };
+
+  const handleCopyAddress = () => {
+    if (hexPublicKey) {
+      navigator.clipboard.writeText(hexPublicKey);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    }
+  };
+
   console.log(publicKey);
 
   return (
@@ -59,18 +65,14 @@ export default function Home() {
         <div>
           <p className="text-white/60 text-xs">Connected Address</p>
           <p
-            onClick={() => {
-              if (hexPublicKey) {
-                navigator.clipboard.writeText(hexPublicKey);
-                toast({
-                  title: "Copied!",
-                  description: "Your address has been copied to the clipboard",
-                });
-              }
-            }}
+            onClick={handleCopyAddress}
             className="text-white text-sm font-mono hover:text-white/80 cursor-pointer transition-colors"
           >
-            {hexPublicKey ? truncateAddress(hexPublicKey) : "..."}
+            {showCopied
+              ? "Copied!"
+              : hexPublicKey
+                ? truncateAddress(hexPublicKey)
+                : "..."}
           </p>
         </div>
         <Power
@@ -91,23 +93,29 @@ export default function Home() {
         <ActionButton
           icon={QrCode}
           label="Receive"
-          onClick={() => {
-            if (hexPublicKey) {
-              navigator.clipboard.writeText(hexPublicKey);
-              toast({
-                title: "Copied!",
-                description: "Your address has been copied to the clipboard",
-              });
-            } else {
-              toast({
-                title: "Error",
-                description: "Address not available",
-              });
-            }
-          }}
+          onClick={() => setReceiveDrawerOpen(true)}
         />
-        <ActionButton icon={Send} label="Send" />
+        <ActionButton
+          icon={Send}
+          label="Send"
+          onClick={() => setSendDrawerOpen(true)}
+        />
       </div>
+
+      <TokenSelectDrawer
+        open={sendDrawerOpen}
+        onOpenChange={setSendDrawerOpen}
+        balances={balances}
+        onSelectToken={handleTokenSelect}
+      />
+
+      {hexPublicKey && (
+        <ReceiveDrawer
+          open={receiveDrawerOpen}
+          onOpenChange={setReceiveDrawerOpen}
+          address={hexPublicKey}
+        />
+      )}
 
       <div className="space-y-2">
         {isLoading ? (
@@ -131,7 +139,7 @@ export default function Home() {
                 price="0.00" // TODO: Implement price fetching
                 priceChange="0.00" // TODO: Implement price change tracking
                 logo={metadata.icon}
-                onClick={() => router.push(`/${metadata.ticker}`)}
+                onClick={() => router.push(`/${programId}`)}
               />
             );
           })

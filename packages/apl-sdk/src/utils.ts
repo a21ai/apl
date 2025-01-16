@@ -238,3 +238,30 @@ export function readUInt64LE(
   const high = view.getUint32(offset + 4, true);
   return (BigInt(high) << 32n) | BigInt(low);
 }
+
+/**
+ * Writes a 64-bit unsigned integer (BigInt) to the buffer in little-endian format.
+ *
+ * @param buffer - The buffer to write to.
+ * @param value - The BigInt value to write.
+ * @param offset - The offset in the buffer to start writing at.
+ */
+export function writeBigUint64LE(
+  buffer: Buffer,
+  value: bigint,
+  offset: number = 0
+): void {
+  if (typeof value !== "bigint") {
+    throw new TypeError("value must be a BigInt");
+  }
+
+  // Ensure the offset is within bounds
+  if (offset < 0 || offset + 8 > buffer.length) {
+    throw new RangeError("Index out of range");
+  }
+
+  for (let i = 0; i < 8; i++) {
+    buffer[offset + i] = Number(value & 0xffn); // Write the least significant byte
+    value >>= 8n; // Shift the value 8 bits to the right
+  }
+}

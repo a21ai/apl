@@ -1,6 +1,6 @@
 import { Pubkey } from "@repo/arch-sdk";
 import { serializeOptionPubkey, deserializeOptionPubkey } from "./pubkey.js";
-import { readUInt64LE } from "../utils.js";
+import { readUInt64LE, writeBigUint64LE } from "../utils.js";
 
 /**
  * Mint data structure that represents a token mint account.
@@ -78,7 +78,7 @@ export function serialize(mint: Mint): Buffer {
   buffer.set(serializeOptionPubkey(mint.mint_authority), 0);
 
   // Pack supply
-  buffer.writeBigUInt64LE(mint.supply, 36);
+  writeBigUint64LE(buffer, mint.supply, 36);
 
   // Pack decimals
   buffer.writeUInt8(mint.decimals, 44);

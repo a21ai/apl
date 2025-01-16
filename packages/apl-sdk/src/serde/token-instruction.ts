@@ -1,6 +1,6 @@
 import { Pubkey } from "@repo/arch-sdk";
 import { serializePubkey, serializeOptionPubkey } from "./pubkey.js";
-import { readUInt64LE } from "../utils.js";
+import { writeBigUint64LE } from "../utils.js";
 
 // Instruction data layouts
 export interface InitializeMintData {
@@ -171,7 +171,7 @@ export function serialize(instruction: TokenInstruction, data: any): Buffer {
       const { amount } = data;
       // Ensure exact byte pattern: [tag, amount(8 bytes LE)]
       const amountBuf = Buffer.alloc(8);
-      amountBuf.writeBigUInt64LE(BigInt(amount));
+      writeBigUint64LE(amountBuf, BigInt(amount), 0);
       buffers.push(amountBuf);
       break;
     }
@@ -182,7 +182,7 @@ export function serialize(instruction: TokenInstruction, data: any): Buffer {
       const { amount, decimals } = data;
       // Ensure exact byte pattern: [tag, amount(8 bytes LE), decimals(1)]
       const amountBuf = Buffer.alloc(8);
-      amountBuf.writeBigUInt64LE(BigInt(amount));
+      writeBigUint64LE(amountBuf, BigInt(amount), 0);
       buffers.push(amountBuf);
       buffers.push(Buffer.from([decimals]));
       break;

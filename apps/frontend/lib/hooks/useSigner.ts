@@ -15,8 +15,20 @@ export function useSigner(): SignerCallback {
         throw new Error("Wallet not connected");
       }
 
+      if (laserEyes.provider === "unisat") {
+        // @ts-ignore
+        const signature = await window.unisat.signMessage(
+          messageHash,
+          "bip322-simple"
+        );
+        return signature;
+      }
+
       // LaserEyes expects hex string for signMessage
       const signature = await laserEyes.signMessage(messageHash);
+
+      debugger;
+
       return signature;
     };
   }, [laserEyes]);

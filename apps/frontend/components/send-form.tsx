@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeft, AtSign } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
@@ -14,17 +14,7 @@ import { useSigner } from "../lib/hooks/useSigner";
 import { toast } from "./ui/use-toast";
 import { useState } from "react";
 import { archConnection } from "../lib/arch";
-import { 
-  AssociatedTokenUtil,
-  MintUtil,
-  transferTx,
-} from "@repo/apl-sdk";
-
-type TokenInfo = {
-  name: string;
-  ticker: string;
-  icon: string;
-};
+import { AssociatedTokenUtil, MintUtil, transferTx } from "@repo/apl-sdk";
 
 interface SendFormProps {
   token: string;
@@ -32,20 +22,27 @@ interface SendFormProps {
 
 export function SendForm({ token }: SendFormProps): React.ReactElement {
   const router = useRouter();
-  const upperToken = token.toUpperCase();
   const laserEyes = useLaserEyes();
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const signer = useSigner();
 
-  // Get token info from constants
-  const hexPublicKey = laserEyes.publicKey 
-    ? Buffer.from(laserEyes.publicKey).toString("hex")
-    : undefined;
+  // Get token info from constants based on mint public key
+  const hexPublicKey = laserEyes.publicKey || undefined;
   const { balances } = useBalance(hexPublicKey);
 
+  // Handle setting max amount
+  const handleMaxAmount = () => {
+    if (tokenBalance) {
+      const maxAmount =
+        Number(tokenBalance.balance) / Math.pow(10, tokenBalance.decimals);
+      setAmount(maxAmount.toString());
+    }
+  };
+
   const tokenProgram = Object.entries(TOKEN_PROGRAMS).find(
-    ([, info]: [string, TokenInfo]) => info.ticker === upperToken
+    ([programId]) => programId === token
   );
 
   if (!tokenProgram) {
@@ -58,12 +55,11 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
     );
   }
 
-  const [programId, tokenInfo] = tokenProgram as [string, TokenInfo];
+  const [programId, tokenInfo] = tokenProgram;
+  const upperToken = tokenInfo.ticker.toUpperCase();
 
   // Find token balance
-  const tokenBalance = balances?.find(
-    (b) => b.mintPubkeyHex === programId
-  );
+  const tokenBalance = balances?.find((b) => b.mintPubkeyHex === programId);
 
   const handleSubmit = async () => {
     if (!laserEyes.publicKey) {
@@ -85,7 +81,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       }
 
       // Convert hex public keys to Pubkey
-      const senderPubkey = Buffer.from(hexPublicKey!, "hex");
+      const senderPubkey = Buffer.from(hexPublicKey!.split("02")[1], "hex");
       const recipientPubkey = Buffer.from(recipient, "hex");
       const mintPubkey = Buffer.from(programId, "hex");
 
@@ -94,20 +90,27 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         mintPubkey,
         senderPubkey
       );
-      const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
-        mintPubkey,
-        recipientPubkey
-      );
+      const recipientTokenPubkey =
+        AssociatedTokenUtil.getAssociatedTokenAddress(
+          mintPubkey,
+          recipientPubkey
+        );
 
       // Verify both token accounts exist
-      const sourceTokenInfo = await archConnection.readAccountInfo(sourceTokenPubkey);
+      const sourceTokenInfo =
+        await archConnection.readAccountInfo(sourceTokenPubkey);
       if (!sourceTokenInfo?.data) {
-        throw new Error("Source token account does not exist. Please create it first.");
+        throw new Error(
+          "Source token account does not exist. Please create it first."
+        );
       }
 
-      const recipientTokenInfo = await archConnection.readAccountInfo(recipientTokenPubkey);
+      const recipientTokenInfo =
+        await archConnection.readAccountInfo(recipientTokenPubkey);
       if (!recipientTokenInfo?.data) {
-        throw new Error("Recipient token account does not exist. Please create it first.");
+        throw new Error(
+          "Recipient token account does not exist. Please create it first."
+        );
       }
 
       // Get decimals from mint
@@ -117,8 +120,28 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       }
       const mintData = MintUtil.deserialize(Buffer.from(mintInfo.data));
 
+      // Debug logging
+      console.log("=== Transaction Input Details ===");
+      console.log("Sender Public Key (hex):", hexPublicKey);
+      console.log("Recipient Public Key (hex):", recipient);
+      console.log("Mint Public Key (hex):", programId);
+      console.log("Amount Input:", amount);
+      console.log("Token Decimals:", mintData.decimals);
+      console.log(
+        "Calculated Amount (with decimals):",
+        Math.floor(amountValue * Math.pow(10, mintData.decimals))
+      );
+      console.log(
+        "Source Token Account:",
+        Buffer.from(sourceTokenPubkey).toString("hex")
+      );
+      console.log(
+        "Recipient Token Account:",
+        Buffer.from(recipientTokenPubkey).toString("hex")
+      );
+      console.log("=== End Transaction Input Details ===");
+
       // Create and send transfer transaction
-      const signer = useSigner();
       const tx = await transferTx(
         sourceTokenPubkey,
         mintPubkey,
@@ -140,7 +163,9 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       // Navigate back to home page after successful transfer
       router.push("/");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to transfer tokens";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to transfer tokens";
+      console.error(error);
       toast({
         title: "Error",
         description: errorMessage,
@@ -171,7 +196,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
 
         {/* Token logo display */}
         <div className="flex justify-center py-4">
-          <div className="bg-white rounded-full p-4 w-20 h-20">
+          <div className="bg-white rounded-full w-20 h-20 overflow-hidden">
             <Image
               src={tokenInfo.icon}
               alt={`${tokenInfo.name} logo`}
@@ -193,13 +218,6 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
               onChange={(e) => setRecipient(e.target.value)}
               disabled={isLoading}
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full hover:bg-white/10"
-            >
-              <AtSign className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Amount input with token symbol and max button */}
@@ -220,6 +238,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
                 variant="secondary"
                 size="sm"
                 className="h-8 bg-white/10 hover:bg-white/20 rounded-lg"
+                onClick={handleMaxAmount}
               >
                 Max
               </Button>
@@ -228,11 +247,17 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
 
           {/* USD value and available balance display */}
           <div className="flex justify-between text-sm py-2">
-            <div className="text-white/60">$0.00</div>
+            {/* <div className="text-white/60">$0.00</div> */}
+            <div className="text-white/60"></div>
             <div className="text-white/60">
-              Available: {tokenBalance 
-                ? (Number(tokenBalance.balance) / Math.pow(10, tokenBalance.decimals)).toFixed(tokenBalance.decimals) 
-                : "0"} {upperToken}
+              Available:{" "}
+              {tokenBalance
+                ? (
+                    Number(tokenBalance.balance) /
+                    Math.pow(10, tokenBalance.decimals)
+                  ).toFixed(tokenBalance.decimals)
+                : "0"}{" "}
+              {upperToken}
             </div>
           </div>
         </div>
@@ -246,8 +271,8 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
           >
             Cancel
           </Button>
-          <Button 
-            className="h-12 rounded-xl bg-white/10 hover:bg-white/20"
+          <Button
+            className="h-12 rounded-xl"
             onClick={handleSubmit}
             disabled={isLoading || !recipient || !amount}
           >

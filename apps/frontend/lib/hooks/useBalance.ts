@@ -37,8 +37,6 @@ export function useBalance(publicKey?: string) {
       const mints = await archConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
       const balances: TokenBalance[] = [];
 
-      console.log(mints, actualKey);
-
       for (const mint of mints) {
         try {
           const mintData = MintUtil.deserialize(
@@ -59,12 +57,13 @@ export function useBalance(publicKey?: string) {
               associatedTokenPubkey
             );
 
-            console.log(tokenAccountInfo);
-
             if (tokenAccountInfo?.data) {
               const tokenAccount = TokenAccountUtil.deserialize(
                 Buffer.from(tokenAccountInfo.data)
               );
+
+              console.log(tokenAccount);
+              console.log(Buffer.from(tokenAccount.owner).toString("hex"));
 
               // Only include tokens with non-zero balance
               if (tokenAccount.amount > 0n) {
@@ -83,7 +82,7 @@ export function useBalance(publicKey?: string) {
             }
           } catch (err) {
             // Skip tokens without associated accounts
-            console.log(
+            console.debug(
               "No associated token account found for mint:",
               Buffer.from(mint.pubkey).toString("hex"),
               err
@@ -91,7 +90,7 @@ export function useBalance(publicKey?: string) {
           }
         } catch (err) {
           // Skip invalid mint accounts
-          console.log("Invalid mint account:", err);
+          console.debug("Invalid mint account:", err);
         }
       }
 

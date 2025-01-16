@@ -1,5 +1,5 @@
 import { deserializeOptionPubkey, serializeOptionPubkey } from "./pubkey.js";
-import { readUInt64LE } from "../utils.js";
+import { readUInt64LE, writeBigUint64LE } from "../utils.js";
 
 /**
  * Token account data structure that represents a token account.
@@ -113,7 +113,7 @@ export function serialize(account: TokenAccount): Buffer {
   buffer.set(account.owner, 32);
 
   // Pack amount (8 bytes)
-  buffer.writeBigUInt64LE(account.amount, 64);
+  writeBigUint64LE(buffer, account.amount, 64);
 
   // Pack delegate (36 bytes: 4 byte tag + 32 byte pubkey)
   buffer.set(serializeOptionPubkey(account.delegate), 72);
@@ -122,7 +122,7 @@ export function serialize(account: TokenAccount): Buffer {
   buffer[108] = account.state;
 
   // Pack delegated amount (8 bytes)
-  buffer.writeBigUInt64LE(account.delegated_amount, 109);
+  writeBigUint64LE(buffer, account.delegated_amount, 109);
 
   // Pack close authority (36 bytes: 4 byte tag + 32 byte pubkey)
   buffer.set(serializeOptionPubkey(account.close_authority), 117);
