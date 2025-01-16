@@ -35,8 +35,7 @@ export default function Home() {
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey, disconnect } = laserEyes;
-  const hexPublicKey = publicKey ? Buffer.from(publicKey).toString("hex") : undefined;
-  const { address } = useArchAddress(hexPublicKey || "");
+  const hexPublicKey = publicKey ? publicKey : undefined;
   const { balances } = useBalance(hexPublicKey);
 
   if (!isConnected) {
@@ -60,7 +59,7 @@ export default function Home() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-white/60 text-xs">Connected Address</p>
-          <p 
+          <p
             onClick={() => {
               if (hexPublicKey) {
                 navigator.clipboard.writeText(hexPublicKey);
@@ -90,12 +89,12 @@ export default function Home() {
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <ActionButton 
-          icon={QrCode} 
-          label="Receive" 
+        <ActionButton
+          icon={QrCode}
+          label="Receive"
           onClick={() => {
-            if (address) {
-              navigator.clipboard.writeText(address);
+            if (hexPublicKey) {
+              navigator.clipboard.writeText(hexPublicKey);
               toast({
                 title: "Copied!",
                 description: "Your address has been copied to the clipboard",
