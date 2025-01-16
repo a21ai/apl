@@ -29,6 +29,7 @@
     "bech32": "^2.0.0",
     "bip322-js": "^2.0.0",
     "bitcore-lib-inquisition": "^10.3.1",
-    "borsh": "^2.0.0"
+    "borsh": "^2.0.0",
+    "bitcoinjs-lib": "^6.1.5"
   }
 }

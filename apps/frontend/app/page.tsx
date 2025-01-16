@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { QrCode, Send } from "lucide-react";
-import { useLaserEyes } from "@omnisat/lasereyes";
+import { useLaserEyes } from "@/lib/hooks/useLaserEyes";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 import { useBalance } from "@/lib/hooks/useBalance";
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 import { ConnectWalletDrawer } from "@/components/connect-wallet-drawer";
 import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
@@ -19,26 +21,68 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   const router = useRouter();
   const laserEyes = useLaserEyes();
+  const { price, percentChange24h } = useExchangeRate();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey } = laserEyes;
-  const hexPublicKey = publicKey ? publicKey : undefined;
-  const { balances, isLoading } = useBalance(hexPublicKey);
+  const { balances, isLoading, isInitialized, initializeWallet } =
+    useBalance(publicKey);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
   const [connectDrawerOpen, setConnectDrawerOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  // Find BTC token ID from TOKEN_PROGRAMS
+  const btcTokenId = Object.keys(TOKEN_PROGRAMS).find(
+    // @ts-ignore
+    (token) => TOKEN_PROGRAMS[token].ticker === "BTC"
+  );
+
+  // Find BTC balance from tokens list
+  const btcBalance = btcTokenId
+    ? balances.find((b) => b.mintPubkeyHex === btcTokenId)
+    : undefined;
+
+  // Calculate total USD value
+  const totalUsdValue =
+    btcBalance && price
+      ? Number(formatTokenBalance(btcBalance.balance, btcBalance.decimals)) *
+        price
+      : 0;
+
+  // Calculate dollar value change based on holdings
+  const totalDollarValueChange =
+    btcBalance && price && percentChange24h
+      ? Number(formatTokenBalance(btcBalance.balance, btcBalance.decimals)) *
+        price *
+        (percentChange24h / 100)
+      : 0;
 
   const handleTokenSelect = (programId: string) => {
     setSendDrawerOpen(false);
     router.push(`/${programId}`);
   };
 
+  const handleInitialize = async () => {
+    setIsInitializing(true);
+    try {
+      await initializeWallet();
+    } finally {
+      // isInitializing will be set to false by the useEffect when publicKey changes
+    }
+  };
+
+  // Reset isInitializing when publicKey changes
+  useEffect(() => {
+    setIsInitializing(false);
+  }, [publicKey]);
+
   return (
     <Layout>
       <BalanceDisplay
-        balance="0.00"
+        balance={totalUsdValue}
         change={{
-          amount: "0.00",
-          percentage: "0.00",
+          amount: totalDollarValueChange,
+          percentage: percentChange24h ?? 0,
         }}
       />
 
@@ -64,11 +108,11 @@ export default function Home() {
         onSelectToken={handleTokenSelect}
       />
 
-      {hexPublicKey && (
+      {publicKey && (
         <ReceiveDrawer
           open={receiveDrawerOpen}
           onOpenChange={setReceiveDrawerOpen}
-          address={hexPublicKey}
+          address={publicKey}
         />
       )}
 
@@ -89,22 +133,39 @@ export default function Home() {
           <div className="animate-pulse space-y-2">
             <div className="h-16 bg-white/10 rounded-2xl" />
             <div className="h-16 bg-white/10 rounded-2xl" />
+            <div className="h-16 bg-white/10 rounded-2xl" />
           </div>
+        ) : !isInitialized ? (
+          <Button
+            onClick={handleInitialize}
+            disabled={isInitializing}
+            className="w-full h-14 bg-white/10 hover:bg-white/20 text-white rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isInitializing ? "Initializing..." : "Initialize Account"}
+          </Button>
         ) : (
           Object.entries(TOKEN_PROGRAMS).map(([programId, metadata]) => {
             const token = balances?.find((b) => b.mintPubkeyHex === programId);
+            const tokenAmount = token
+              ? Number(formatTokenBalance(token.balance, token.decimals))
+              : 0;
+
+            // Calculate dollar value change for BTC based on holdings
+            const dollarValueChange =
+              metadata.ticker === "BTC" && price && percentChange24h
+                ? tokenAmount * price * (percentChange24h / 100)
+                : 0;
+
             return (
               <TokenItem
                 key={programId}
                 name={metadata.name}
                 symbol={metadata.ticker}
-                amount={
-                  token
-                    ? formatTokenBalance(token.balance, token.decimals)
-                    : "0"
+                amount={tokenAmount}
+                price={
+                  metadata.ticker === "BTC" ? tokenAmount * (price ?? 0) : 0
                 }
-                price="0.00" // TODO: Implement price fetching
-                priceChange="0.00" // TODO: Implement price change tracking
+                priceChange={metadata.ticker === "BTC" ? dollarValueChange : 0}
                 logo={metadata.icon}
                 onClick={() => router.push(`/${programId}`)}
               />

@@ -4,9 +4,9 @@ import Image from "next/image";
 interface TokenItemProps {
   name: string;
   symbol: string;
-  amount: string;
-  price: string;
-  priceChange: string;
+  amount: number;
+  price: number;
+  priceChange: number;
   logo: string;
   onClick?: () => void;
 }
@@ -20,7 +20,7 @@ export function TokenItem({
   logo,
   onClick,
 }: TokenItemProps) {
-  const isPositive = !priceChange.startsWith("-");
+  const isPositive = priceChange >= 0;
 
   return (
     <div
@@ -38,23 +38,31 @@ export function TokenItem({
         <div>
           <h3 className="font-medium">{name}</h3>
           <p className="text-sm text-white/60">
-            {amount} {symbol}
+            {amount.toString()} {symbol}
           </p>
         </div>
       </div>
       <div className="text-right">
-        <p className="font-medium">${price}</p>
+        <p className="font-medium">
+          $
+          {price.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
         <p
           className={cn(
             "text-sm",
-            isPositive ? "text-white/80" : "text-white/60"
+            isPositive ? "text-green-500" : "text-red-500"
           )}
         >
-          {isPositive ? "+" : ""}
-          {priceChange}
+          {isPositive ? "+" : "-"}$
+          {Math.abs(priceChange).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </p>
       </div>
     </div>
   );
 }
-

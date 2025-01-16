@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Layout } from "./layout";
-import { useLaserEyes } from "@omnisat/lasereyes";
+import { useLaserEyes } from "@/lib/hooks/useLaserEyes";
 import { useBalance } from "../lib/hooks/useBalance";
 import { useSigner } from "../lib/hooks/useSigner";
 import { toast } from "./ui/use-toast";
@@ -91,7 +91,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       }
 
       // Convert hex public keys to Pubkey
-      const senderPubkey = Buffer.from(hexPublicKey!.split("02")[1], "hex");
+      const senderPubkey = Buffer.from(hexPublicKey!, "hex");
       const recipientPubkey = Buffer.from(recipient, "hex");
       const mintPubkey = Buffer.from(programId, "hex");
 

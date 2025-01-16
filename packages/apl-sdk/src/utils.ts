@@ -15,6 +15,7 @@ import { pubSchnorr } from "@scure/btc-signer/utils";
 import { Signer as Bip322Signer } from "bip322-js";
 import { bech32m } from "bech32";
 // const bitcore = require("bitcore-lib-inquisition");
+import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 export function createAccountInstruction(
   utxo: UtxoMetaData,
@@ -264,4 +265,21 @@ export function writeBigUint64LE(
     buffer[offset + i] = Number(value & 0xffn); // Write the least significant byte
     value >>= 8n; // Shift the value 8 bits to the right
   }
+}
+
+/**
+ * Sanatize public key to be used in BTC transactions
+ * @param publicKey {string} Public key to sanatize
+ * @returns {string} Sanatized public key
+ */
+export function xOnly(publicKey: string): string {
+  if (publicKey.length === 66) {
+    return publicKey.slice(2);
+  }
+
+  if (publicKey.length === 64) {
+    return publicKey;
+  }
+
+  throw new Error("Invalid public key length");
 }

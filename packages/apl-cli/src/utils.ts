@@ -2,6 +2,7 @@ import fs from "fs";
 import { RpcConnection, PubkeyUtil } from "@repo/arch-sdk";
 import { readConfig } from "./config.js";
 import { Keypair } from "@repo/apl-sdk";
+import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 /**
  * Create RPC connection from config

@@ -52,11 +52,13 @@ export function TokenSelectDrawer({
                   symbol={metadata.ticker}
                   amount={
                     token
-                      ? formatTokenBalance(token.balance, token.decimals)
-                      : "0"
+                      ? Number(
+                          formatTokenBalance(token.balance, token.decimals)
+                        )
+                      : 0
                   }
-                  price="0.00"
-                  priceChange="0.00"
+                  price={0}
+                  priceChange={0}
                   logo={metadata.icon}
                 />
               </div>

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { Power } from "lucide-react";
-import { useLaserEyes } from "@omnisat/lasereyes";
+import { useLaserEyes } from "@/lib/hooks/useLaserEyes";
 import { truncateAddress } from "../lib/utils";
 
 export function Header(): React.ReactElement {
