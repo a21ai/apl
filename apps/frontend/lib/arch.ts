@@ -1,5 +1,5 @@
-import { ArchConnection, RpcConnection } from "@repo/arch-sdk";
-import { RPC_URL } from "@/lib/constants";
+import { RpcConnection } from "@repo/arch-sdk";
+import { RPC_URL } from "./constants";
 
-export const rpcConnection = new RpcConnection(RPC_URL);
-export const archConnection = ArchConnection(rpcConnection);
+// Create a singleton connection instance
+export const archConnection = new RpcConnection(RPC_URL);

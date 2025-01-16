@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { TypeIcon as type, LucideIcon } from 'lucide-react'
+import { LucideIcon } from 'lucide-react'
 
 interface ActionButtonProps {
   icon: LucideIcon
