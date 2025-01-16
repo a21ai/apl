@@ -7,7 +7,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-
+import { truncateAddress } from "@/lib/utils";
 interface ReceiveDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,7 +48,7 @@ export function ReceiveDrawer({
               className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
               onClick={handleCopy}
             >
-              <p className="text-sm font-mono">{address}</p>
+              <p className="text-sm font-mono">{truncateAddress(address)}</p>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-white/60">
                   {showCopied ? "Copied!" : ""}

@@ -178,106 +178,109 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        {/* Header with back button and title */}
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full -ml-2"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="flex-1 text-center text-2xl font-semibold mr-8">
-            Send {upperToken}
-          </h1>
-        </div>
-
-        {/* Token logo display */}
-        <div className="flex justify-center py-4">
-          <div className="bg-white rounded-full w-20 h-20 overflow-hidden">
-            <Image
-              src={tokenInfo.icon}
-              alt={`${tokenInfo.name} logo`}
-              width={80}
-              height={80}
-              className="w-full h-full"
-            />
-          </div>
-        </div>
-
-        {/* Send form */}
-        <div className="space-y-4">
-          {/* Recipient address input */}
-          <div className="relative">
-            <Input
-              placeholder={`Recipient's ${upperToken} address`}
-              className="bg-white/5 border-white/10 rounded-xl h-14 pl-4 pr-12"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              disabled={isLoading}
-            />
+      <div className="flex flex-col h-full">
+        <div className="flex-1 space-y-6">
+          {/* Header with back button and title */}
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full -ml-2"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <h1 className="flex-1 text-center text-2xl font-semibold mr-8">
+              Send {upperToken}
+            </h1>
           </div>
 
-          {/* Amount input with token symbol and max button */}
-          <div className="relative">
-            <Input
-              type="number"
-              placeholder="Amount"
-              className="bg-white/5 border-white/10 rounded-xl h-14 pl-4 pr-24"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              disabled={isLoading}
-              min="0"
-              step="any"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <span className="text-white/60">{upperToken}</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-8 bg-white/10 hover:bg-white/20 rounded-lg"
-                onClick={handleMaxAmount}
-              >
-                Max
-              </Button>
+          {/* Token logo display */}
+          <div className="flex justify-center py-4">
+            <div className="bg-white rounded-full w-20 h-20 overflow-hidden">
+              <Image
+                src={tokenInfo.icon}
+                alt={`${tokenInfo.name} logo`}
+                width={80}
+                height={80}
+                className="w-full h-full"
+              />
             </div>
           </div>
 
-          {/* USD value and available balance display */}
-          <div className="flex justify-between text-sm py-2">
-            {/* <div className="text-white/60">$0.00</div> */}
-            <div className="text-white/60"></div>
-            <div className="text-white/60">
-              Available:{" "}
-              {tokenBalance
-                ? (
-                    Number(tokenBalance.balance) /
-                    Math.pow(10, tokenBalance.decimals)
-                  ).toFixed(tokenBalance.decimals)
-                : "0"}{" "}
-              {upperToken}
+          {/* Send form */}
+          <div className="space-y-4">
+            {/* Recipient address input */}
+            <div className="relative">
+              <Input
+                placeholder={`Recipient's ${upperToken} address`}
+                className="bg-white/5 border-white/10 rounded-xl h-14 pl-4 pr-12"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Amount input with token symbol and max button */}
+            <div className="relative">
+              <Input
+                type="number"
+                placeholder="Amount"
+                className="bg-white/5 border-white/10 rounded-xl h-14 pl-4 pr-24"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isLoading}
+                min="0"
+                step="any"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <span className="text-white/60">{upperToken}</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 bg-white/10 hover:bg-white/20 rounded-lg"
+                  onClick={handleMaxAmount}
+                >
+                  Max
+                </Button>
+              </div>
+            </div>
+
+            {/* USD value and available balance display */}
+            <div className="flex justify-between text-sm py-2">
+              <div className="text-white/60"></div>
+              <div className="text-white/60">
+                Available:{" "}
+                {tokenBalance
+                  ? (
+                      Number(tokenBalance.balance) /
+                      Math.pow(10, tokenBalance.decimals)
+                    ).toFixed(tokenBalance.decimals)
+                  : "0"}{" "}
+                {upperToken}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-4 pt-4">
-          <Button
-            variant="outline"
-            className="h-12 rounded-xl bg-white/5 border-white/10 hover:bg-white/10"
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="h-12 rounded-xl"
-            onClick={handleSubmit}
-            disabled={isLoading || !recipient || !amount}
-          >
-            {isLoading ? "Sending..." : "Send"}
-          </Button>
+        {/* Action buttons fixed at bottom */}
+        <div className="mt-6">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              variant="outline"
+              className="h-12 rounded-xl bg-white/5 border-white/10 hover:bg-white/10"
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="h-12 rounded-xl"
+              onClick={handleSubmit}
+              disabled={isLoading || !recipient || !amount}
+            >
+              {isLoading ? "Sending..." : "Send"}
+            </Button>
+          </div>
         </div>
       </div>
     </Layout>

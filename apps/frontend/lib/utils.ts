@@ -14,3 +14,7 @@ export const formatTokenBalance = (
   const fractionalPart = balanceStr.slice(-decimals);
   return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ""}`;
 };
+// Helper function to truncate addresses for display
+export const truncateAddress = (address: string) => {
+  return `${address.slice(0, 5)}...${address.slice(-5)}`;
+};

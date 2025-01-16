@@ -13,11 +13,7 @@ import { TokenSelectDrawer } from "@/components/token-select-drawer";
 import { ReceiveDrawer } from "@/components/receive-drawer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { formatTokenBalance } from "@/lib/utils";
-// Helper function to truncate addresses for display
-const truncateAddress = (address: string) => {
-  return `${address.slice(0, 5)}...${address.slice(-5)}`;
-};
+import { formatTokenBalance, truncateAddress } from "@/lib/utils";
 
 export default function Home() {
   const router = useRouter();
