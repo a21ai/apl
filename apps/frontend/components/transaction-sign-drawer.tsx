@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
+import { useSigner } from "@/lib/hooks/useSigner";
 
 interface TransactionData {
   programId: string;
@@ -48,13 +50,24 @@ export function TransactionSignDrawer({
 }: TransactionSignDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  const signer = useSigner();
+
   const handleConfirm = async () => {
     try {
       setIsLoading(true);
       await onConfirm();
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Transaction confirmed successfully",
+      });
     } catch (error) {
       console.error("Transaction failed:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to confirm transaction",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
