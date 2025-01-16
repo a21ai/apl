@@ -1,5 +1,9 @@
-import { ArchConnection, RpcConnection } from "@repo/arch-sdk";
-import { RPC_URL } from "@/lib/constants";
+import { RpcConnection } from "@repo/arch-sdk";
+import { RPC_URL } from "./constants";
 
-export const rpcConnection = new RpcConnection(RPC_URL);
-export const archConnection = ArchConnection(rpcConnection);
+if (!process.env.NEXT_PUBLIC_RPC_URL) {
+  throw new Error("NEXT_PUBLIC_RPC_URL environment variable is not set");
+}
+
+// Create a singleton connection instance
+export const archConnection = new RpcConnection(RPC_URL);

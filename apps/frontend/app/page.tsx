@@ -3,7 +3,8 @@
 import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useArchAddress } from "@/lib/hooks/useArchAddress";
-import { useBalance, TokenBalance } from "@/lib/hooks/useBalance";
+import { TOKEN_PROGRAMS } from "@/lib/constants";
+import { useBalance } from "@/lib/hooks/useBalance";
 import { toast } from "@/components/ui/use-toast";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Layout } from "@/components/layout";
@@ -18,17 +19,13 @@ const truncateAddress = (address: string) => {
 };
 
 // Helper function to format token balance with decimals
-const formatTokenBalance = (balance: bigint, decimals: number): string => {
+export const formatTokenBalance = (balance: bigint, decimals: number): string => {
   const balanceStr = balance.toString().padStart(decimals + 1, "0");
   const integerPart = balanceStr.slice(0, -decimals) || "0";
   const fractionalPart = balanceStr.slice(-decimals);
   return `${integerPart}${fractionalPart ? `.${fractionalPart}` : ""}`;
 };
 
-// Get SCAT token from first balance
-const getScatToken = (balances?: TokenBalance[]) => {
-  return balances && balances.length > 0 ? balances[0] : null;
-};
 
 export default function Home() {
   const router = useRouter();
@@ -37,7 +34,7 @@ export default function Home() {
   const { publicKey, disconnect } = laserEyes;
   const hexPublicKey = publicKey ? Buffer.from(publicKey).toString("hex") : undefined;
   const { address } = useArchAddress(hexPublicKey || "");
-  const { balances } = useBalance(hexPublicKey);
+  const { balances, isLoading } = useBalance(hexPublicKey);
 
   if (!isConnected) {
     return (
@@ -81,13 +78,7 @@ export default function Home() {
         />
       </div>
 
-      <BalanceDisplay
-        balance="0.20"
-        change={{
-          amount: "0.0122",
-          percentage: "6.54",
-        }}
-      />
+      <BalanceDisplay publicKey={hexPublicKey} />
 
       <div className="grid grid-cols-2 gap-4">
         <ActionButton 
@@ -112,29 +103,28 @@ export default function Home() {
       </div>
 
       <div className="space-y-2">
-        <TokenItem
-          name="Bitcoin"
-          symbol="BTC"
-          amount="0.20"
-          price="0.20"
-          priceChange="0.01"
-          logo="/btc.png"
-          onClick={() => router.push("/BTC")}
-        />
-        <TokenItem
-          name="Stoner Cat"
-          symbol="SCAT"
-          amount={(() => {
-            const scatToken = getScatToken(balances);
-            return scatToken
-              ? formatTokenBalance(scatToken.balance, scatToken.decimals)
-              : "0";
-          })()}
-          price="0.00"
-          priceChange="0.00"
-          logo="/stoned-cat.gif"
-          onClick={() => router.push("/SCAT")}
-        />
+        {isLoading ? (
+          <div className="animate-pulse space-y-2">
+            <div className="h-16 bg-white/10 rounded-2xl" />
+            <div className="h-16 bg-white/10 rounded-2xl" />
+          </div>
+        ) : (
+          Object.entries(TOKEN_PROGRAMS).map(([programId, metadata]) => {
+            const token = balances?.find(b => b.mintPubkeyHex === programId);
+            return (
+              <TokenItem
+                key={programId}
+                name={metadata.name}
+                symbol={metadata.ticker}
+                amount={token ? formatTokenBalance(token.balance, token.decimals) : "0"}
+                price="0.00" // TODO: Implement price fetching
+                priceChange="0.00" // TODO: Implement price change tracking
+                logo={metadata.icon}
+                onClick={() => router.push(`/${metadata.ticker}`)}
+              />
+            );
+          })
+        )}
       </div>
     </Layout>
   );
