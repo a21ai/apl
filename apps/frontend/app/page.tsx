@@ -52,8 +52,6 @@ export default function Home() {
     }
   };
 
-  console.log(publicKey);
-
   return (
     <Layout>
       {/* Header with address and disconnect */}
@@ -78,10 +76,10 @@ export default function Home() {
       </div>
 
       <BalanceDisplay
-        balance="0.20"
+        balance="0.00"
         change={{
-          amount: "0.0122",
-          percentage: "6.54",
+          amount: "0.00",
+          percentage: "0.00",
         }}
       />
 

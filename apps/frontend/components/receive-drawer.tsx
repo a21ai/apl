@@ -29,7 +29,7 @@ export function ReceiveDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+      <DrawerContent className="mx-auto sm:max-w-md">
         <DrawerHeader>
           <DrawerTitle>Receive</DrawerTitle>
         </DrawerHeader>

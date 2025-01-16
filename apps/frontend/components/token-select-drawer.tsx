@@ -31,7 +31,7 @@ export function TokenSelectDrawer({
 }: TokenSelectDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+      <DrawerContent className="mx-auto sm:max-w-md">
         <DrawerHeader>
           <DrawerTitle>Select Token to Send</DrawerTitle>
           <DrawerDescription>

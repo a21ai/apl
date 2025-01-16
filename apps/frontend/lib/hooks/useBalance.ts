@@ -62,9 +62,6 @@ export function useBalance(publicKey?: string) {
                 Buffer.from(tokenAccountInfo.data)
               );
 
-              console.log(tokenAccount);
-              console.log(Buffer.from(tokenAccount.owner).toString("hex"));
-
               // Only include tokens with non-zero balance
               if (tokenAccount.amount > 0n) {
                 balances.push({
