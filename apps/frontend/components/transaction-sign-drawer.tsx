@@ -7,13 +7,10 @@ import {
   Drawer,
   DrawerContent,
   DrawerHeader,
-  DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
-import { useSigner } from "@/lib/hooks/useSigner";
 
 interface TransactionData {
   programId: string;
@@ -49,8 +46,6 @@ export function TransactionSignDrawer({
   onConfirm,
 }: TransactionSignDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
-
-  const signer = useSigner();
 
   const handleConfirm = async () => {
     try {

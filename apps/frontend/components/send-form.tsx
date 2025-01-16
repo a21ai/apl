@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Layout } from "./layout";
-import { TOKEN_PROGRAMS } from "../lib/constants";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useBalance } from "../lib/hooks/useBalance";
 import { useSigner } from "../lib/hooks/useSigner";
@@ -15,6 +14,8 @@ import { toast } from "./ui/use-toast";
 import { useState } from "react";
 import { archConnection } from "../lib/arch";
 import { AssociatedTokenUtil, MintUtil, transferTx } from "@repo/apl-sdk";
+import { TransactionSignDrawer } from "./transaction-sign-drawer";
+import { TOKEN_PROGRAMS } from "../lib/constants";
 
 interface SendFormProps {
   token: string;
@@ -26,6 +27,15 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSignDrawer, setShowSignDrawer] = useState(false);
+  const [pendingTx, setPendingTx] = useState<{
+    sourceTokenPubkey: Buffer;
+    mintPubkey: Buffer;
+    recipientTokenPubkey: Buffer;
+    senderPubkey: Buffer;
+    amount: bigint;
+    decimals: number;
+  } | null>(null);
   const signer = useSigner();
 
   // Get token info from constants based on mint public key
@@ -61,7 +71,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   // Find token balance
   const tokenBalance = balances?.find((b) => b.mintPubkeyHex === programId);
 
-  const handleSubmit = async () => {
+  const prepareTx = async () => {
     if (!laserEyes.publicKey) {
       toast({
         title: "Error",
@@ -141,14 +151,43 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       );
       console.log("=== End Transaction Input Details ===");
 
-      // Create and send transfer transaction
+      // Store pending transaction details
+      setPendingTx({
+        sourceTokenPubkey: Buffer.from(sourceTokenPubkey),
+        mintPubkey: Buffer.from(mintPubkey),
+        recipientTokenPubkey: Buffer.from(recipientTokenPubkey),
+        senderPubkey: Buffer.from(senderPubkey),
+        amount: BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
+        decimals: mintData.decimals
+      });
+      
+      setShowSignDrawer(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to prepare transaction";
+      console.error(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!pendingTx) return;
+    
+    try {
+      setIsLoading(true);
       const tx = await transferTx(
-        sourceTokenPubkey,
-        mintPubkey,
-        recipientTokenPubkey,
-        senderPubkey,
-        BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
-        mintData.decimals,
+        pendingTx.sourceTokenPubkey,
+        pendingTx.mintPubkey,
+        pendingTx.recipientTokenPubkey,
+        pendingTx.senderPubkey,
+        pendingTx.amount,
+        pendingTx.decimals,
         signer
       );
 
@@ -171,8 +210,11 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         description: errorMessage,
         variant: "destructive",
       });
+      throw error; // Re-throw to trigger drawer error handling
     } finally {
       setIsLoading(false);
+      setPendingTx(null);
+      setShowSignDrawer(false);
     }
   };
 
@@ -275,14 +317,49 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
             </Button>
             <Button
               className="h-12 rounded-xl"
-              onClick={handleSubmit}
+              onClick={prepareTx}
               disabled={isLoading || !recipient || !amount}
             >
-              {isLoading ? "Sending..." : "Send"}
+              {isLoading ? "Preparing..." : "Send"}
             </Button>
           </div>
         </div>
       </div>
+
+      {pendingTx && (
+        <TransactionSignDrawer
+          open={showSignDrawer}
+          onOpenChange={setShowSignDrawer}
+          account={hexPublicKey}
+          website="archway.io"
+          transactions={[
+            {
+              token: upperToken,
+              amount: `${amount} ${upperToken}`,
+              change: "negative"
+            }
+          ]}
+          network={{
+            name: "Archway",
+            fee: "0.000001 ARCH"
+          }}
+          advanced={[
+            {
+              programId: Buffer.from(pendingTx.mintPubkey).toString('hex'),
+              data: `Transfer ${amount} ${upperToken} to ${recipient}`
+            },
+            {
+              programId: Buffer.from(pendingTx.sourceTokenPubkey).toString('hex'),
+              data: `Source Account`
+            },
+            {
+              programId: Buffer.from(pendingTx.recipientTokenPubkey).toString('hex'),
+              data: `Recipient Account`
+            }
+          ]}
+          onConfirm={handleSubmit}
+        />
+      )}
     </Layout>
   );
 }
