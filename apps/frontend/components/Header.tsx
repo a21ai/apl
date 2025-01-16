@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import { Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { truncateAddress } from "../lib/utils";
@@ -8,6 +9,13 @@ import { truncateAddress } from "../lib/utils";
 export function Header(): React.ReactElement {
   const { publicKey, disconnect } = useLaserEyes();
   const isConnected = !!publicKey;
+  const [showCopied, setShowCopied] = useState(false);
+
+  const handleCopyAddress = (pubKey: string) => {
+    navigator.clipboard.writeText(pubKey);
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
 
   return (
     <header
@@ -18,8 +26,11 @@ export function Header(): React.ReactElement {
         {isConnected ? (
           <>
             <p className="text-white/60 text-xs">Connected Address</p>
-            <p className="text-sm font-mono text-white">
-              {truncateAddress(publicKey!)}
+            <p
+              onClick={() => handleCopyAddress(publicKey!)}
+              className="text-sm font-mono text-white hover:text-white/80 cursor-pointer transition-colors"
+            >
+              {showCopied ? "Copied!" : truncateAddress(publicKey!)}
             </p>
           </>
         ) : (
