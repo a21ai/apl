@@ -2,12 +2,7 @@ import {
   useLaserEyes,
   UNISAT,
   XVERSE,
-  PHANTOM,
-  OKX,
-  OYL,
-  MAGIC_EDEN,
 } from "@omnisat/lasereyes";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import {

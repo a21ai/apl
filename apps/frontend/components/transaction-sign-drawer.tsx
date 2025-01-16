@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { Copy, ChevronsUpDown, ExternalLink } from "lucide-react";
+import { ChevronsUpDown, ExternalLink } from "lucide-react";
 import Image from "next/image";
-import { Drawer, DrawerContent, DrawerHeader } from "@/components/ui/drawer";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -12,8 +13,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "@/components/ui/use-toast";
-import { truncateAddress } from "@/lib/utils";
-
 interface TransactionData {
   programId: string;
   data: string;
@@ -79,6 +78,9 @@ export function TransactionSignDrawer({
         <div className="w-full max-w-md mx-auto">
           <div className="p-4 border-b">
             <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
+                {account ? truncateAddress(account).slice(0, 2) : "A1"}
+              </div>
               <div>
                 <h2 className="text-2xl font-semibold">Confirm Transaction</h2>
                 <p className="text-muted-foreground">{website}</p>

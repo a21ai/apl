@@ -1,6 +1,6 @@
 "use client";
 
-import { QrCode, Send, Power } from "lucide-react";
+import { QrCode, Send } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 import { useBalance } from "@/lib/hooks/useBalance";
@@ -13,19 +13,18 @@ import { TokenSelectDrawer } from "@/components/token-select-drawer";
 import { ReceiveDrawer } from "@/components/receive-drawer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { formatTokenBalance, truncateAddress } from "@/lib/utils";
+import { formatTokenBalance } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const router = useRouter();
   const laserEyes = useLaserEyes();
   const isConnected = !!laserEyes.publicKey;
-  const { publicKey, disconnect } = laserEyes;
+  const { publicKey } = laserEyes;
   const hexPublicKey = publicKey ? publicKey : undefined;
   const { balances, isLoading } = useBalance(hexPublicKey);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
-  const [showCopied, setShowCopied] = useState(false);
   const [connectDrawerOpen, setConnectDrawerOpen] = useState(false);
 
   const handleTokenSelect = (programId: string) => {
@@ -33,45 +32,8 @@ export default function Home() {
     router.push(`/${programId}`);
   };
 
-  const handleCopyAddress = () => {
-    if (hexPublicKey) {
-      navigator.clipboard.writeText(hexPublicKey);
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
-    }
-  };
-
   return (
     <Layout>
-      {/* Header with address and disconnect */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          {isConnected ? (
-            <>
-              <p className="text-white/60 text-xs">Connected Address</p>
-              <p
-                onClick={handleCopyAddress}
-                className="text-white text-sm font-mono hover:text-white/80 cursor-pointer transition-colors"
-              >
-                {showCopied
-                  ? "Copied!"
-                  : hexPublicKey
-                    ? truncateAddress(hexPublicKey)
-                    : "..."}
-              </p>
-            </>
-          ) : (
-            <p className="text-white/60 text-xs">Not Connected</p>
-          )}
-        </div>
-        {isConnected && (
-          <Power
-            className="w-5 h-5 text-white/60 hover:text-white cursor-pointer transition-colors"
-            onClick={() => disconnect()}
-          />
-        )}
-      </div>
-
       <BalanceDisplay
         balance="0.00"
         change={{
