@@ -157,14 +157,18 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         mintPubkey: Buffer.from(mintPubkey),
         recipientTokenPubkey: Buffer.from(recipientTokenPubkey),
         senderPubkey: Buffer.from(senderPubkey),
-        amount: BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
-        decimals: mintData.decimals
+        amount: BigInt(
+          Math.floor(amountValue * Math.pow(10, mintData.decimals))
+        ),
+        decimals: mintData.decimals,
       });
-      
+
       setShowSignDrawer(true);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to prepare transaction";
+        error instanceof Error
+          ? error.message
+          : "Failed to prepare transaction";
       console.error(error);
       toast({
         title: "Error",
@@ -178,7 +182,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
 
   const handleSubmit = async () => {
     if (!pendingTx) return;
-    
+
     try {
       setIsLoading(true);
       const tx = await transferTx(
@@ -331,31 +335,32 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
           open={showSignDrawer}
           onOpenChange={setShowSignDrawer}
           account={hexPublicKey}
-          website="archway.io"
+          website="archway.gg"
           transactions={[
             {
               token: upperToken,
               amount: `${amount} ${upperToken}`,
-              change: "negative"
-            }
+              change: "negative",
+              icon: tokenInfo.icon,
+            },
           ]}
-          network={{
-            name: "Archway",
-            fee: "0.000001 ARCH"
-          }}
           advanced={[
             {
-              programId: Buffer.from(pendingTx.mintPubkey).toString('hex'),
-              data: `Transfer ${amount} ${upperToken} to ${recipient}`
+              programId: Buffer.from(pendingTx.mintPubkey).toString("hex"),
+              data: `Transfer ${amount} ${upperToken} to ${recipient}`,
             },
             {
-              programId: Buffer.from(pendingTx.sourceTokenPubkey).toString('hex'),
-              data: `Source Account`
+              programId: Buffer.from(pendingTx.sourceTokenPubkey).toString(
+                "hex"
+              ),
+              data: `Source Account`,
             },
             {
-              programId: Buffer.from(pendingTx.recipientTokenPubkey).toString('hex'),
-              data: `Recipient Account`
-            }
+              programId: Buffer.from(pendingTx.recipientTokenPubkey).toString(
+                "hex"
+              ),
+              data: `Recipient Account`,
+            },
           ]}
           onConfirm={handleSubmit}
         />

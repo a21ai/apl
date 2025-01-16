@@ -4,7 +4,7 @@ import { QrCode, Send, Power } from "lucide-react";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 import { useBalance } from "@/lib/hooks/useBalance";
-import { ConnectWallet } from "@/components/ConnectWallet";
+import { ConnectWalletDrawer } from "@/components/connect-wallet-drawer";
 import { Layout } from "@/components/layout";
 import { BalanceDisplay } from "@/components/balance-display";
 import { ActionButton } from "@/components/action-button";
@@ -14,6 +14,7 @@ import { ReceiveDrawer } from "@/components/receive-drawer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatTokenBalance, truncateAddress } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const router = useRouter();
@@ -25,19 +26,7 @@ export default function Home() {
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
-
-  if (!isConnected) {
-    return (
-      <Layout>
-        <div className="space-y-4">
-          <p className="text-white text-lg font-semibold text-center mb-4">
-            Connect a wallet
-          </p>
-          <ConnectWallet />
-        </div>
-      </Layout>
-    );
-  }
+  const [connectDrawerOpen, setConnectDrawerOpen] = useState(false);
 
   const handleTokenSelect = (programId: string) => {
     setSendDrawerOpen(false);
@@ -57,22 +46,30 @@ export default function Home() {
       {/* Header with address and disconnect */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <p className="text-white/60 text-xs">Connected Address</p>
-          <p
-            onClick={handleCopyAddress}
-            className="text-white text-sm font-mono hover:text-white/80 cursor-pointer transition-colors"
-          >
-            {showCopied
-              ? "Copied!"
-              : hexPublicKey
-                ? truncateAddress(hexPublicKey)
-                : "..."}
-          </p>
+          {isConnected ? (
+            <>
+              <p className="text-white/60 text-xs">Connected Address</p>
+              <p
+                onClick={handleCopyAddress}
+                className="text-white text-sm font-mono hover:text-white/80 cursor-pointer transition-colors"
+              >
+                {showCopied
+                  ? "Copied!"
+                  : hexPublicKey
+                    ? truncateAddress(hexPublicKey)
+                    : "..."}
+              </p>
+            </>
+          ) : (
+            <p className="text-white/60 text-xs">Not Connected</p>
+          )}
         </div>
-        <Power
-          className="w-5 h-5 text-white/60 hover:text-white cursor-pointer transition-colors"
-          onClick={() => disconnect()}
-        />
+        {isConnected && (
+          <Power
+            className="w-5 h-5 text-white/60 hover:text-white cursor-pointer transition-colors"
+            onClick={() => disconnect()}
+          />
+        )}
       </div>
 
       <BalanceDisplay
@@ -88,11 +85,13 @@ export default function Home() {
           icon={QrCode}
           label="Receive"
           onClick={() => setReceiveDrawerOpen(true)}
+          disabled={!isConnected}
         />
         <ActionButton
           icon={Send}
           label="Send"
           onClick={() => setSendDrawerOpen(true)}
+          disabled={!isConnected}
         />
       </div>
 
@@ -111,8 +110,20 @@ export default function Home() {
         />
       )}
 
+      <ConnectWalletDrawer
+        open={connectDrawerOpen}
+        onOpenChange={setConnectDrawerOpen}
+      />
+
       <div className="space-y-2">
-        {isLoading ? (
+        {!isConnected ? (
+          <Button
+            onClick={() => setConnectDrawerOpen(true)}
+            className="w-full h-14 bg-white/10 hover:bg-white/20 text-white rounded-2xl"
+          >
+            Connect Wallet
+          </Button>
+        ) : isLoading ? (
           <div className="animate-pulse space-y-2">
             <div className="h-16 bg-white/10 rounded-2xl" />
             <div className="h-16 bg-white/10 rounded-2xl" />

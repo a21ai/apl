@@ -3,14 +3,16 @@
 import * as React from "react";
 import { useState } from "react";
 import { Copy, ChevronsUpDown, ExternalLink } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-} from "@/components/ui/drawer";
+import Image from "next/image";
+import { Drawer, DrawerContent, DrawerHeader } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "@/components/ui/use-toast";
+import { truncateAddress } from "@/lib/utils";
 
 interface TransactionData {
   programId: string;
@@ -26,11 +28,8 @@ interface TransactionSignDrawerProps {
     token: string;
     amount: string;
     change: "positive" | "negative";
+    icon?: string;
   }[];
-  network: {
-    name: string;
-    fee: string;
-  };
   advanced?: TransactionData[];
   onConfirm: () => Promise<void>;
 }
@@ -41,7 +40,6 @@ export function TransactionSignDrawer({
   account = "Account 1",
   website = "archway.io",
   transactions = [],
-  network,
   advanced = [],
   onConfirm,
 }: TransactionSignDrawerProps) {
@@ -60,7 +58,10 @@ export function TransactionSignDrawer({
       console.error("Transaction failed:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to confirm transaction",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to confirm transaction",
         variant: "destructive",
       });
     } finally {
@@ -76,32 +77,16 @@ export function TransactionSignDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="mx-auto max-w-md">
         <div className="w-full max-w-md mx-auto">
-          <DrawerHeader className="border-b">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-                A1
-              </div>
-              <div className="flex-1">{account}</div>
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(account)}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </DrawerHeader>
-
           <div className="p-4 border-b">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center">
-                <div className="w-8 h-8 relative">
-                  <div className="w-full h-full bg-muted rounded-full" />
-                </div>
-              </div>
               <div>
                 <h2 className="text-2xl font-semibold">Confirm Transaction</h2>
                 <p className="text-muted-foreground">{website}</p>
               </div>
             </div>
             <p className="text-muted-foreground text-sm">
-              Balance changes are estimated. Amounts and assets involved are not guaranteed.
+              Balance changes are estimated. Amounts and assets involved are not
+              guaranteed.
             </p>
           </div>
 
@@ -109,11 +94,27 @@ export function TransactionSignDrawer({
             {transactions.map((tx, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-full" />
+                  <div className="w-8 h-8 bg-muted rounded-full overflow-hidden">
+                    {tx.icon ? (
+                      <Image
+                        src={tx.icon}
+                        alt={`${tx.token} icon`}
+                        width={32}
+                        height={32}
+                      />
+                    ) : null}
+                  </div>
                   <span>{tx.token}</span>
                 </div>
-                <span className={tx.change === "positive" ? "text-green-500" : "text-destructive"}>
-                  {tx.change === "positive" ? "+" : "-"}{tx.amount}
+                <span
+                  className={
+                    tx.change === "positive"
+                      ? "text-green-500"
+                      : "text-destructive"
+                  }
+                >
+                  {tx.change === "positive" ? "+" : "-"}
+                  {tx.amount}
                 </span>
               </div>
             ))}
@@ -123,13 +124,20 @@ export function TransactionSignDrawer({
             <div className="flex justify-between items-center">
               <span>Network</span>
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-muted rounded-full" />
-                <span>{network.name}</span>
+                <div className="w-5 h-5 rounded-full overflow-hidden">
+                  <Image
+                    src="/arch.png"
+                    alt="Arch Network"
+                    width={20}
+                    height={20}
+                  />
+                </div>
+                <span>Arch</span>
               </div>
             </div>
             <div className="flex justify-between items-center">
               <span>Network Fee</span>
-              <span className="text-muted-foreground">{network.fee}</span>
+              <span className="text-muted-foreground">0.00 ARCH</span>
             </div>
           </div>
 
@@ -150,15 +158,22 @@ export function TransactionSignDrawer({
                         <div className="flex justify-between items-center">
                           <span className="text-primary">Program Id</span>
                           <div className="flex items-center gap-2">
-                            <span>{item.programId}</span>
-                            <Button variant="ghost" size="icon" className="h-4 w-4">
+                            <span>{truncateAddress(item.programId)}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4"
+                              onClick={() => handleCopy(item.programId)}
+                            >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span>Data</span>
-                          <span className="text-muted-foreground">{item.data}</span>
+                          <span className="text-muted-foreground">
+                            {item.data}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -175,14 +190,14 @@ export function TransactionSignDrawer({
             <div className="flex gap-4 w-full">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 h-12 rounded-xl bg-white/5 border-white/10 hover:bg-white/10"
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 h-12 rounded-xl"
                 onClick={handleConfirm}
                 disabled={isLoading}
               >
