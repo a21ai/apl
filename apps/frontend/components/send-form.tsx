@@ -10,8 +10,15 @@ import { Layout } from "./layout";
 import { TOKEN_PROGRAMS } from "../lib/constants";
 import { useLaserEyes } from "@omnisat/lasereyes";
 import { useBalance } from "../lib/hooks/useBalance";
+import { useSigner } from "../lib/hooks/useSigner";
 import { toast } from "./ui/use-toast";
 import { useState } from "react";
+import { archConnection } from "../lib/arch";
+import { 
+  AssociatedTokenUtil,
+  MintUtil,
+  transferTx,
+} from "@repo/apl-sdk";
 
 type TokenInfo = {
   name: string;
@@ -77,60 +84,54 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         throw new Error("Invalid amount");
       }
 
-      // First, ensure both accounts exist
-      const createAccountResponse = await fetch("/api/create-token-account", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          publicKey: hexPublicKey,
-          programId,
-        }),
-      });
+      // Convert hex public keys to Pubkey
+      const senderPubkey = Buffer.from(hexPublicKey!, "hex");
+      const recipientPubkey = Buffer.from(recipient, "hex");
+      const mintPubkey = Buffer.from(programId, "hex");
 
-      if (!createAccountResponse.ok) {
-        const error = await createAccountResponse.json();
-        throw new Error(error.error || "Failed to create source token account");
+      // Get associated token accounts for sender and recipient
+      const sourceTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+        mintPubkey,
+        senderPubkey
+      );
+      const recipientTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+        mintPubkey,
+        recipientPubkey
+      );
+
+      // Verify both token accounts exist
+      const sourceTokenInfo = await archConnection.readAccountInfo(sourceTokenPubkey);
+      if (!sourceTokenInfo?.data) {
+        throw new Error("Source token account does not exist. Please create it first.");
       }
 
-      // Create recipient account
-      const createRecipientResponse = await fetch("/api/create-token-account", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          publicKey: recipient,
-          programId,
-        }),
-      });
-
-      if (!createRecipientResponse.ok) {
-        const error = await createRecipientResponse.json();
-        throw new Error(error.error || "Failed to create recipient token account");
+      const recipientTokenInfo = await archConnection.readAccountInfo(recipientTokenPubkey);
+      if (!recipientTokenInfo?.data) {
+        throw new Error("Recipient token account does not exist. Please create it first.");
       }
 
-      // Now proceed with transfer
-      const response = await fetch("/api/transfer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          publicKey: hexPublicKey,
-          programId,
-          recipient,
-          amount: amountValue,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to transfer tokens");
+      // Get decimals from mint
+      const mintInfo = await archConnection.readAccountInfo(mintPubkey);
+      if (!mintInfo?.data) {
+        throw new Error("Invalid token mint account");
       }
+      const mintData = MintUtil.deserialize(Buffer.from(mintInfo.data));
 
-      await response.json();
+      // Create and send transfer transaction
+      const signer = useSigner();
+      const tx = await transferTx(
+        sourceTokenPubkey,
+        mintPubkey,
+        recipientTokenPubkey,
+        senderPubkey,
+        BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
+        mintData.decimals,
+        signer
+      );
+
+      const result = await archConnection.sendTransaction(tx);
+      console.log("Transaction sent successfully:", result);
+
       toast({
         title: "Success",
         description: `Successfully transferred ${amount} ${upperToken} to ${recipient}`,
