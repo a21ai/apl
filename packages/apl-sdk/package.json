@@ -12,6 +12,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./src/constants": {
+      "types": "./src/constants.ts",
+      "default": "./dist/constants.js"
     }
   },
   "devDependencies": {
