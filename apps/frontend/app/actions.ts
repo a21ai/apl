@@ -8,6 +8,7 @@ import {
   associatedTokenTx,
   mintToTx,
   MintUtil,
+  waitForConfirmation,
 } from "@repo/apl-sdk";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 
@@ -104,6 +105,7 @@ export async function initializeWallet(publicKey: string) {
         // Send the transaction
         console.log("Sending transaction...");
         const txResult = await archConnection.sendTransaction(tx);
+        await waitForConfirmation(archConnection, txResult);
         console.log("Transaction sent successfully:", txResult);
       }
     }
@@ -177,6 +179,7 @@ export async function initializeWallet(publicKey: string) {
 
     console.log("Sending mint transaction...");
     const mintResult = await archConnection.sendTransaction(mintTx);
+    await waitForConfirmation(archConnection, mintResult);
     console.log("Successfully minted 1000 tokens to new account:", mintResult);
 
     return;

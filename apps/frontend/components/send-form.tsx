@@ -13,7 +13,12 @@ import { useSigner } from "../lib/hooks/useSigner";
 import { toast } from "./ui/use-toast";
 import { useState } from "react";
 import { archConnection } from "../lib/arch";
-import { AssociatedTokenUtil, MintUtil, transferTx } from "@repo/apl-sdk";
+import {
+  AssociatedTokenUtil,
+  MintUtil,
+  transferTx,
+  waitForConfirmation,
+} from "@repo/apl-sdk";
 import { TransactionSignDrawer } from "./transaction-sign-drawer";
 import { TOKEN_PROGRAMS } from "../lib/constants";
 
@@ -196,15 +201,20 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       );
 
       const result = await archConnection.sendTransaction(tx);
+      await waitForConfirmation(archConnection, result);
       console.log("Transaction sent successfully:", result);
+      setRecipient("");
+      setAmount("");
 
-      toast({
-        title: "Success",
-        description: `Successfully transferred ${amount} ${upperToken} to ${recipient}`,
-      });
+      // On success, wait 2 seconds before clearing the state
+      setTimeout(() => {
+        setShowSignDrawer(false);
 
-      // Navigate back to home page after successful transfer
-      router.push("/");
+        setTimeout(() => {
+          setPendingTx(null);
+          // Clear form fields
+        }, 200);
+      }, 2000);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to transfer tokens";
@@ -217,8 +227,6 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       throw error; // Re-throw to trigger drawer error handling
     } finally {
       setIsLoading(false);
-      setPendingTx(null);
-      setShowSignDrawer(false);
     }
   };
 

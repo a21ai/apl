@@ -6,6 +6,7 @@ import {
   AssociatedTokenUtil,
   associatedTokenTx,
   sendCoins,
+  waitForConfirmation,
 } from "@repo/apl-sdk";
 import { rpcConfig } from "../config.js";
 
@@ -75,6 +76,7 @@ export default function createAccountCommand(program: Command) {
           );
 
           const result = await rpcConnection.sendTransaction(tx);
+          await waitForConfirmation(rpcConnection, result);
           console.log("Transaction sent successfully!", result);
         }
       } catch (error) {

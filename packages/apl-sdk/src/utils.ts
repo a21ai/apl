@@ -7,6 +7,7 @@ import {
   Message,
   MessageUtil,
   SignatureUtil,
+  RpcConnection,
 } from "@repo/arch-sdk";
 import { SYSTEM_PROGRAM_ID } from "./constants.js";
 import * as btc from "@scure/btc-signer";
@@ -14,8 +15,6 @@ import { randomPrivateKeyBytes } from "@scure/btc-signer/utils";
 import { pubSchnorr } from "@scure/btc-signer/utils";
 import { Signer as Bip322Signer } from "bip322-js";
 import { bech32m } from "bech32";
-// const bitcore = require("bitcore-lib-inquisition");
-import bip371 from "bitcoinjs-lib/src/psbt/bip371.js";
 
 export function createAccountInstruction(
   utxo: UtxoMetaData,
@@ -282,4 +281,28 @@ export function xOnly(publicKey: string): string {
   }
 
   throw new Error("Invalid public key length");
+}
+
+// Helper function to wait for transaction confirmation
+export async function waitForConfirmation(
+  rpcConnection: RpcConnection,
+  txid: string,
+  maxAttempts = 30
+): Promise<void> {
+  console.log("Waiting for transaction confirmation...");
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const result = await rpcConnection.getProcessedTransaction(txid);
+    if (result?.status === "Processed") {
+      console.log("Transaction confirmed with Processed status!");
+      return;
+    }
+    if (typeof result?.status === "object" && "Failed" in result.status) {
+      throw new Error(`Transaction failed: ${result.status.Failed}`);
+    }
+    // Wait 2 seconds between attempts
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);
 }

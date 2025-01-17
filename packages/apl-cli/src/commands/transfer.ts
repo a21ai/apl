@@ -6,6 +6,7 @@ import {
   transferTx,
   MintUtil,
   AssociatedTokenUtil,
+  waitForConfirmation,
 } from "@repo/apl-sdk";
 
 export default function transferCommand(program: Command) {
@@ -82,6 +83,7 @@ export default function transferCommand(program: Command) {
         );
 
         const result = await rpcConnection.sendTransaction(tx);
+        await waitForConfirmation(rpcConnection, result);
         console.log("Transaction sent successfully!", result);
       } catch (error) {
         handleError(error);

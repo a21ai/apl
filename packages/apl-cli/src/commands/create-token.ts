@@ -6,6 +6,7 @@ import {
   initializeMintTx,
   sendCoins,
   createSignerFromKeypair,
+  waitForConfirmation,
 } from "@repo/apl-sdk";
 import { rpcConfig } from "../config.js";
 
@@ -59,6 +60,7 @@ export default function createTokenCommand(program: Command) {
         );
 
         const result = await rpcConnection.sendTransaction(tx);
+        await waitForConfirmation(rpcConnection, result);
         console.log("Transaction sent successfully!", result);
       } catch (error) {
         handleError(error);
