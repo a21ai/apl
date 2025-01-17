@@ -18,7 +18,10 @@ import {
   MintUtil,
   transferTx,
   waitForConfirmation,
+  createMockSigner,
+  readUInt64LE,
 } from "@repo/apl-sdk";
+import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
 import { TransactionSignDrawer } from "./transaction-sign-drawer";
 import { TOKEN_PROGRAMS } from "../lib/constants";
 
@@ -33,14 +36,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSignDrawer, setShowSignDrawer] = useState(false);
-  const [pendingTx, setPendingTx] = useState<{
-    sourceTokenPubkey: Buffer;
-    mintPubkey: Buffer;
-    recipientTokenPubkey: Buffer;
-    senderPubkey: Buffer;
-    amount: bigint;
-    decimals: number;
-  } | null>(null);
+  const [runtimeTx, setRuntimeTx] = useState<RuntimeTransaction | null>(null);
   const signer = useSigner();
 
   // Get token info from constants based on mint public key
@@ -156,18 +152,18 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       );
       console.log("=== End Transaction Input Details ===");
 
-      // Store pending transaction details
-      setPendingTx({
-        sourceTokenPubkey: Buffer.from(sourceTokenPubkey),
-        mintPubkey: Buffer.from(mintPubkey),
-        recipientTokenPubkey: Buffer.from(recipientTokenPubkey),
-        senderPubkey: Buffer.from(senderPubkey),
-        amount: BigInt(
-          Math.floor(amountValue * Math.pow(10, mintData.decimals))
-        ),
-        decimals: mintData.decimals,
-      });
-
+      // Create preview transaction with mock signer
+      const mockSigner = createMockSigner();
+      const previewTx = await transferTx(
+        sourceTokenPubkey,
+        mintPubkey,
+        recipientTokenPubkey,
+        senderPubkey,
+        BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
+        mintData.decimals,
+        mockSigner
+      );
+      setRuntimeTx(previewTx);
       setShowSignDrawer(true);
     } catch (error) {
       const errorMessage =
@@ -186,21 +182,23 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   };
 
   const handleSubmit = async () => {
-    if (!pendingTx) return;
+    if (!runtimeTx) return;
 
     try {
       setIsLoading(true);
-      const tx = await transferTx(
-        pendingTx.sourceTokenPubkey,
-        pendingTx.mintPubkey,
-        pendingTx.recipientTokenPubkey,
-        pendingTx.senderPubkey,
-        pendingTx.amount,
-        pendingTx.decimals,
+
+      // Create real transaction with actual signer
+      const realTx = await transferTx(
+        Buffer.from(runtimeTx.message.instructions[0].accounts[0].pubkey),  // sourceTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[1].pubkey),  // mintPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[2].pubkey),  // recipientTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[3].pubkey),  // senderPubkey
+        readUInt64LE(Buffer.from(runtimeTx.message.instructions[0].data.slice(1)), 0), // amount
+        runtimeTx.message.instructions[0].data[9], // decimals
         signer
       );
 
-      const result = await archConnection.sendTransaction(tx);
+      const result = await archConnection.sendTransaction(realTx);
       await waitForConfirmation(archConnection, result);
       console.log("Transaction sent successfully:", result);
       setRecipient("");
@@ -211,7 +209,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         setShowSignDrawer(false);
 
         setTimeout(() => {
-          setPendingTx(null);
+          setRuntimeTx(null);
           // Clear form fields
         }, 200);
       }, 2000);
@@ -338,38 +336,13 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         </div>
       </div>
 
-      {pendingTx && (
+      {runtimeTx && (
         <TransactionSignDrawer
           open={showSignDrawer}
           onOpenChange={setShowSignDrawer}
           account={hexPublicKey}
           website="archway.gg"
-          transactions={[
-            {
-              token: upperToken,
-              amount: `${amount} ${upperToken}`,
-              change: "negative",
-              icon: tokenInfo.icon,
-            },
-          ]}
-          advanced={[
-            {
-              programId: Buffer.from(pendingTx.mintPubkey).toString("hex"),
-              data: `Transfer ${amount} ${upperToken} to ${recipient}`,
-            },
-            {
-              programId: Buffer.from(pendingTx.sourceTokenPubkey).toString(
-                "hex"
-              ),
-              data: `Source Account`,
-            },
-            {
-              programId: Buffer.from(pendingTx.recipientTokenPubkey).toString(
-                "hex"
-              ),
-              data: `Recipient Account`,
-            },
-          ]}
+          tx={runtimeTx}
           onConfirm={handleSubmit}
         />
       )}

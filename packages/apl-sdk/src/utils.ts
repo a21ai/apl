@@ -283,6 +283,20 @@ export function xOnly(publicKey: string): string {
   throw new Error("Invalid public key length");
 }
 
+/**
+ * Creates a mock signer callback that returns an empty signature.
+ * Used for transaction preview without triggering wallet interactions.
+ * 
+ * @returns SignerCallback that returns an empty base64-encoded signature
+ */
+export function createMockSigner(): SignerCallback {
+  return async (_messageHash: string): Promise<string> => {
+    // Return empty base64 signature (64 bytes of zeros)
+    const emptySignature = Buffer.from(new Uint8Array(64)).toString('base64');
+    return emptySignature;
+  };
+}
+
 // Helper function to wait for transaction confirmation
 export async function waitForConfirmation(
   rpcConnection: RpcConnection,
