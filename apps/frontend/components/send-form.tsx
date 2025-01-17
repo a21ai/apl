@@ -344,32 +344,27 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
           onOpenChange={setShowSignDrawer}
           account={hexPublicKey}
           website="archway.gg"
-          transactions={[
-            {
-              token: upperToken,
-              amount: `${amount} ${upperToken}`,
-              change: "negative",
-              icon: tokenInfo.icon,
-            },
-          ]}
-          advanced={[
-            {
-              programId: Buffer.from(pendingTx.mintPubkey).toString("hex"),
-              data: `Transfer ${amount} ${upperToken} to ${recipient}`,
-            },
-            {
-              programId: Buffer.from(pendingTx.sourceTokenPubkey).toString(
-                "hex"
-              ),
-              data: `Source Account`,
-            },
-            {
-              programId: Buffer.from(pendingTx.recipientTokenPubkey).toString(
-                "hex"
-              ),
-              data: `Recipient Account`,
-            },
-          ]}
+          tx={{
+            version: 0,
+            signatures: [],
+            message: {
+              signers: [pendingTx.senderPubkey],
+              instructions: [
+                {
+                  program_id: pendingTx.mintPubkey,
+                  accounts: [
+                    { pubkey: pendingTx.sourceTokenPubkey, is_signer: false, is_writable: true },
+                    { pubkey: pendingTx.recipientTokenPubkey, is_signer: false, is_writable: true },
+                    { pubkey: pendingTx.senderPubkey, is_signer: true, is_writable: false }
+                  ],
+                  data: new Uint8Array([
+                    3, // Transfer instruction
+                    ...new Uint8Array(new BigUint64Array([pendingTx.amount]).buffer)
+                  ])
+                }
+              ]
+            }
+          }}
           onConfirm={handleSubmit}
         />
       )}

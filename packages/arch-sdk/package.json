@@ -29,20 +29,24 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./src/serde/instruction": {
-      "types": "./src/serde/instruction.ts",
-      "default": "./dist/serde/instruction.js"
+      "types": "./dist/serde/instruction.d.ts",
+      "import": "./dist/serde/instruction.js",
+      "require": "./dist/serde/instruction.cjs"
     },
     "./src/struct/instruction": {
-      "types": "./src/struct/instruction.ts",
-      "default": "./dist/struct/instruction.js"
+      "types": "./dist/struct/instruction.d.ts",
+      "import": "./dist/struct/instruction.js",
+      "require": "./dist/struct/instruction.cjs"
     },
     "./src/struct/runtime-transaction": {
-      "types": "./src/struct/runtime-transaction.ts",
-      "default": "./dist/struct/runtime-transaction.js"
+      "types": "./dist/struct/runtime-transaction.d.ts",
+      "import": "./dist/struct/runtime-transaction.js",
+      "require": "./dist/struct/runtime-transaction.cjs"
     }
   },
   "devDependencies": {

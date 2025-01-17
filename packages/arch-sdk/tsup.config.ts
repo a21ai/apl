@@ -1,7 +1,12 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: [
+    'src/index.ts',
+    'src/serde/instruction.ts',
+    'src/struct/instruction.ts',
+    'src/struct/runtime-transaction.ts'
+  ],
   format: ['cjs', 'esm'],
   dts: true,
   splitting: false,
