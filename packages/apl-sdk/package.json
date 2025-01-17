@@ -16,6 +16,10 @@
     "./src/constants": {
       "types": "./src/constants.ts",
       "default": "./dist/constants.js"
+    },
+    "./src/serde/token-instruction": {
+      "types": "./src/serde/token-instruction.ts",
+      "default": "./dist/serde/token-instruction.js"
     }
   },
   "devDependencies": {

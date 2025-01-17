@@ -16,7 +16,8 @@ import ConfirmationAnimation from "./confirmation-animation";
 import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
 import { Instruction } from "@repo/arch-sdk/src/struct/instruction";
 import { toHex } from "@repo/arch-sdk/src/serde/instruction";
-import { parseTokenInstruction } from "@/lib/token-instruction-parser";
+import { deserialize as deserializeTokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
+import { TokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
 import { 
   SYSTEM_PROGRAM_ID, 
   TOKEN_PROGRAM_ID, 
@@ -123,7 +124,7 @@ export function TransactionSignDrawer({
                         }
 
                         const instructionData = toHex(instruction);
-                        const parsedTokenInstruction = parseTokenInstruction(instruction);
+                        const parsedTokenInstruction = deserializeTokenInstruction(instruction.data);
                         
                         return (
                           <div key={i} className="space-y-2">

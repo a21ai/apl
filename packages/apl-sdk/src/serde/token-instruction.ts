@@ -140,6 +140,125 @@ export function serializeU64LE(value: number | bigint): Buffer {
 /// to match Rust's exact byte pattern (1 byte tag + optional 32 bytes)
 
 // Main serialization function that matches Rust's pack() implementation
+export interface ParsedTokenInstruction {
+  type: string;
+  info: Record<string, string | number>;
+}
+
+export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
+  if (data.length === 0) return null;
+
+  // First byte must exist since we checked length
+  const instructionType = data[0] as number;
+  const remainingData = data.slice(1);
+
+  // Helper function to safely read a u8 value
+  const readU8 = (data: Uint8Array, offset: number): number | null => {
+    if (data.length <= offset) return null;
+    const value = data[offset];
+    return typeof value === 'number' ? value : null;
+  };
+
+  // Helper function to safely read a u64 value
+  const readU64 = (data: Uint8Array, offset: number): bigint | null => {
+    if (data.length < offset + 8) return null;
+    try {
+      return new DataView(data.buffer).getBigUint64(offset, true);
+    } catch {
+      return null;
+    }
+  };
+
+  switch (instructionType) {
+    case TokenInstruction.Transfer:
+    case TokenInstruction.TransferChecked: {
+      const amount = readU64(remainingData, 0);
+      if (amount === null) return null;
+      
+      return {
+        type: instructionType === TokenInstruction.Transfer ? 'Transfer' : 'TransferChecked',
+        info: {
+          amount: amount.toString(),
+        },
+      };
+    }
+
+    case TokenInstruction.MintTo:
+    case TokenInstruction.MintToChecked: {
+      const amount = readU64(remainingData, 0);
+      if (amount === null) return null;
+
+      return {
+        type: instructionType === TokenInstruction.MintTo ? 'MintTo' : 'MintToChecked',
+        info: {
+          amount: amount.toString(),
+        },
+      };
+    }
+
+    case TokenInstruction.Burn:
+    case TokenInstruction.BurnChecked: {
+      const amount = readU64(remainingData, 0);
+      if (amount === null) return null;
+
+      return {
+        type: instructionType === TokenInstruction.Burn ? 'Burn' : 'BurnChecked',
+        info: {
+          amount: amount.toString(),
+        },
+      };
+    }
+
+    case TokenInstruction.InitializeMint:
+    case TokenInstruction.InitializeMint2: {
+      const decimals = readU8(remainingData, 0);
+      if (decimals === null) return null;
+
+      return {
+        type: instructionType === TokenInstruction.InitializeMint ? 'InitializeMint' : 'InitializeMint2',
+        info: {
+          decimals: decimals.toString(),
+        },
+      };
+    }
+
+    case TokenInstruction.InitializeMultisig: {
+      const m = readU8(remainingData, 0);
+      if (m === null) return null;
+
+      return {
+        type: 'InitializeMultisig',
+        info: {
+          m: m.toString(),
+        },
+      };
+    }
+
+    case TokenInstruction.SetAuthority: {
+      const authorityType = readU8(remainingData, 0);
+      if (authorityType === null) return null;
+
+      return {
+        type: 'SetAuthority',
+        info: {
+          authorityType: authorityType.toString(),
+        },
+      };
+    }
+
+    default: {
+      // Only attempt to get instruction name if it's a valid enum value
+      const validInstruction = Object.values(TokenInstruction).includes(instructionType);
+      const instructionName = validInstruction ? TokenInstruction[instructionType as TokenInstruction] : null;
+
+      return {
+        type: instructionName || 'Unknown',
+        info: {},
+      };
+    }
+  }
+}
+
 export function serialize(instruction: TokenInstruction, data: any): Buffer {
   const buffers: Buffer[] = [];
 

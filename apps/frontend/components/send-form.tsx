@@ -19,6 +19,7 @@ import {
   transferTx,
   waitForConfirmation,
 } from "@repo/apl-sdk";
+import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
 import { TransactionSignDrawer } from "./transaction-sign-drawer";
 import { TOKEN_PROGRAMS } from "../lib/constants";
 
@@ -33,14 +34,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSignDrawer, setShowSignDrawer] = useState(false);
-  const [pendingTx, setPendingTx] = useState<{
-    sourceTokenPubkey: Buffer;
-    mintPubkey: Buffer;
-    recipientTokenPubkey: Buffer;
-    senderPubkey: Buffer;
-    amount: bigint;
-    decimals: number;
-  } | null>(null);
+  const [runtimeTx, setRuntimeTx] = useState<RuntimeTransaction | null>(null);
   const signer = useSigner();
 
   // Get token info from constants based on mint public key
@@ -156,18 +150,17 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       );
       console.log("=== End Transaction Input Details ===");
 
-      // Store pending transaction details
-      setPendingTx({
-        sourceTokenPubkey: Buffer.from(sourceTokenPubkey),
-        mintPubkey: Buffer.from(mintPubkey),
-        recipientTokenPubkey: Buffer.from(recipientTokenPubkey),
-        senderPubkey: Buffer.from(senderPubkey),
-        amount: BigInt(
-          Math.floor(amountValue * Math.pow(10, mintData.decimals))
-        ),
-        decimals: mintData.decimals,
-      });
-
+      // Create and store the transaction
+      const tx = await transferTx(
+        sourceTokenPubkey,
+        mintPubkey,
+        recipientTokenPubkey,
+        senderPubkey,
+        BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
+        mintData.decimals,
+        signer
+      );
+      setRuntimeTx(tx);
       setShowSignDrawer(true);
     } catch (error) {
       const errorMessage =
@@ -186,21 +179,12 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
   };
 
   const handleSubmit = async () => {
-    if (!pendingTx) return;
+    if (!runtimeTx) return;
 
     try {
       setIsLoading(true);
-      const tx = await transferTx(
-        pendingTx.sourceTokenPubkey,
-        pendingTx.mintPubkey,
-        pendingTx.recipientTokenPubkey,
-        pendingTx.senderPubkey,
-        pendingTx.amount,
-        pendingTx.decimals,
-        signer
-      );
 
-      const result = await archConnection.sendTransaction(tx);
+      const result = await archConnection.sendTransaction(runtimeTx);
       await waitForConfirmation(archConnection, result);
       console.log("Transaction sent successfully:", result);
       setRecipient("");
@@ -211,7 +195,7 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         setShowSignDrawer(false);
 
         setTimeout(() => {
-          setPendingTx(null);
+          setRuntimeTx(null);
           // Clear form fields
         }, 200);
       }, 2000);
@@ -338,33 +322,13 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
         </div>
       </div>
 
-      {pendingTx && (
+      {runtimeTx && (
         <TransactionSignDrawer
           open={showSignDrawer}
           onOpenChange={setShowSignDrawer}
           account={hexPublicKey}
           website="archway.gg"
-          tx={{
-            version: 0,
-            signatures: [],
-            message: {
-              signers: [pendingTx.senderPubkey],
-              instructions: [
-                {
-                  program_id: pendingTx.mintPubkey,
-                  accounts: [
-                    { pubkey: pendingTx.sourceTokenPubkey, is_signer: false, is_writable: true },
-                    { pubkey: pendingTx.recipientTokenPubkey, is_signer: false, is_writable: true },
-                    { pubkey: pendingTx.senderPubkey, is_signer: true, is_writable: false }
-                  ],
-                  data: new Uint8Array([
-                    3, // Transfer instruction
-                    ...new Uint8Array(new BigUint64Array([pendingTx.amount]).buffer)
-                  ])
-                }
-              ]
-            }
-          }}
+          tx={runtimeTx}
           onConfirm={handleSubmit}
         />
       )}
