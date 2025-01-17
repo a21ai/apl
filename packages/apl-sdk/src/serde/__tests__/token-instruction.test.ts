@@ -5,6 +5,7 @@ import {
   AuthorityType,
   serialize,
   serializeU64LE,
+  deserialize,
   InitializeMintData,
   TransferData,
   SetAuthorityData,
@@ -30,6 +31,92 @@ describe("token instruction serialization", () => {
       expect(Buffer.isBuffer(result)).toBe(true);
       expect(result.length).toBe(8);
       expect(result.readBigUInt64LE(0)).toBe(BigInt("9007199254740991"));
+    });
+  });
+
+  describe("serialize and deserialize", () => {
+    it("should correctly round-trip InitializeMint instruction", () => {
+      const data: InitializeMintData = {
+        instruction: TokenInstruction.InitializeMint,
+        decimals: 9,
+        mintAuthority: testPubkey,
+        freezeAuthority: null,
+      };
+      const serialized = serialize(TokenInstruction.InitializeMint, data);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("InitializeMint");
+      expect(deserialized?.info.decimals).toBe("9");
+    });
+
+    it("should correctly round-trip Transfer instruction", () => {
+      const data: TransferData = {
+        instruction: TokenInstruction.Transfer,
+        amount: BigInt(1000),
+      };
+      const serialized = serialize(TokenInstruction.Transfer, data);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("Transfer");
+      expect(deserialized?.info.amount).toBe("1000");
+    });
+
+    it("should correctly round-trip SetAuthority instruction", () => {
+      const data: SetAuthorityData = {
+        instruction: TokenInstruction.SetAuthority,
+        authorityType: AuthorityType.MintTokens,
+        newAuthority: testPubkey,
+      };
+      const serialized = serialize(TokenInstruction.SetAuthority, data);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("SetAuthority");
+      expect(deserialized?.info.authorityType).toBe("0"); // MintTokens = 0
+    });
+
+    it("should correctly round-trip InitializeMultisig instruction", () => {
+      const data: InitializeMultisigData = {
+        instruction: TokenInstruction.InitializeMultisig,
+        m: 2,
+      };
+      const serialized = serialize(TokenInstruction.InitializeMultisig, data);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("InitializeMultisig");
+      expect(deserialized?.info.m).toBe("2");
+    });
+
+    it("should correctly round-trip TransferChecked instruction", () => {
+      const data: TransferCheckedData = {
+        instruction: TokenInstruction.TransferChecked,
+        amount: BigInt(1000),
+        decimals: 9,
+      };
+      const serialized = serialize(TokenInstruction.TransferChecked, data);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("TransferChecked");
+      expect(deserialized?.info.amount).toBe("1000");
+    });
+
+    it("should handle unknown instruction type", () => {
+      const unknownInstruction = 99;
+      const serialized = Buffer.from([unknownInstruction]);
+      const deserialized = deserialize(serialized);
+
+      expect(deserialized).not.toBeNull();
+      expect(deserialized?.type).toBe("Unknown");
+      expect(Object.keys(deserialized?.info || {}).length).toBe(0);
+    });
+
+    it("should handle empty buffer", () => {
+      const deserialized = deserialize(new Uint8Array());
+      expect(deserialized).toBeNull();
     });
   });
 
@@ -122,6 +209,14 @@ describe("token instruction serialization", () => {
         const result = serialize(instruction, { instruction });
         expect(result.length).toBe(1);
         expect(result[0]).toBe(instruction);
+      });
+
+      it(`should deserialize ${TokenInstruction[instruction]} instruction`, () => {
+        const serialized = serialize(instruction, { instruction });
+        const deserialized = deserialize(serialized);
+        expect(deserialized).not.toBeNull();
+        expect(deserialized?.type).toBe(TokenInstruction[instruction]);
+        expect(Object.keys(deserialized?.info || {}).length).toBe(0);
       });
     });
   });

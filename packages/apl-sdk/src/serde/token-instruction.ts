@@ -156,14 +156,20 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
   const readU8 = (data: Uint8Array, offset: number): number | null => {
     if (data.length <= offset) return null;
     const value = data[offset];
-    return typeof value === 'number' ? value : null;
+    return typeof value === "number" ? value : null;
   };
 
   // Helper function to safely read a u64 value
   const readU64 = (data: Uint8Array, offset: number): bigint | null => {
     if (data.length < offset + 8) return null;
     try {
-      return new DataView(data.buffer).getBigUint64(offset, true);
+      let value = BigInt(0);
+      for (let i = 0; i < 8; i++) {
+        const byte = data[offset + i];
+        if (typeof byte === "undefined") return null;
+        value += BigInt(byte) << BigInt(i * 8);
+      }
+      return value;
     } catch {
       return null;
     }
@@ -174,9 +180,12 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
     case TokenInstruction.TransferChecked: {
       const amount = readU64(remainingData, 0);
       if (amount === null) return null;
-      
+
       return {
-        type: instructionType === TokenInstruction.Transfer ? 'Transfer' : 'TransferChecked',
+        type:
+          instructionType === TokenInstruction.Transfer
+            ? "Transfer"
+            : "TransferChecked",
         info: {
           amount: amount.toString(),
         },
@@ -189,7 +198,10 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
       if (amount === null) return null;
 
       return {
-        type: instructionType === TokenInstruction.MintTo ? 'MintTo' : 'MintToChecked',
+        type:
+          instructionType === TokenInstruction.MintTo
+            ? "MintTo"
+            : "MintToChecked",
         info: {
           amount: amount.toString(),
         },
@@ -202,7 +214,8 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
       if (amount === null) return null;
 
       return {
-        type: instructionType === TokenInstruction.Burn ? 'Burn' : 'BurnChecked',
+        type:
+          instructionType === TokenInstruction.Burn ? "Burn" : "BurnChecked",
         info: {
           amount: amount.toString(),
         },
@@ -215,7 +228,10 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
       if (decimals === null) return null;
 
       return {
-        type: instructionType === TokenInstruction.InitializeMint ? 'InitializeMint' : 'InitializeMint2',
+        type:
+          instructionType === TokenInstruction.InitializeMint
+            ? "InitializeMint"
+            : "InitializeMint2",
         info: {
           decimals: decimals.toString(),
         },
@@ -227,7 +243,7 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
       if (m === null) return null;
 
       return {
-        type: 'InitializeMultisig',
+        type: "InitializeMultisig",
         info: {
           m: m.toString(),
         },
@@ -239,7 +255,7 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
       if (authorityType === null) return null;
 
       return {
-        type: 'SetAuthority',
+        type: "SetAuthority",
         info: {
           authorityType: authorityType.toString(),
         },
@@ -248,11 +264,14 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
 
     default: {
       // Only attempt to get instruction name if it's a valid enum value
-      const validInstruction = Object.values(TokenInstruction).includes(instructionType);
-      const instructionName = validInstruction ? TokenInstruction[instructionType as TokenInstruction] : null;
+      const validInstruction =
+        Object.values(TokenInstruction).includes(instructionType);
+      const instructionName = validInstruction
+        ? TokenInstruction[instructionType as TokenInstruction]
+        : null;
 
       return {
-        type: instructionName || 'Unknown',
+        type: instructionName || "Unknown",
         info: {},
       };
     }

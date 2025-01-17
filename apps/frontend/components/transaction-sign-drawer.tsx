@@ -4,7 +4,13 @@ import * as React from "react";
 import { useState } from "react";
 import { ChevronsUpDown, ExternalLink } from "lucide-react";
 import Image from "next/image";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,13 +19,18 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
-import { RuntimeTransaction, Instruction, InstructionUtil } from "@repo/arch-sdk";
+import {
+  RuntimeTransaction,
+  Instruction,
+  InstructionUtil,
+} from "@repo/arch-sdk";
 import { deserialize as deserializeTokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
-import { 
-  SYSTEM_PROGRAM_ID, 
-  TOKEN_PROGRAM_ID, 
-  ASSOCIATED_TOKEN_PROGRAM_ID 
+import {
+  SYSTEM_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@repo/apl-sdk";
+import { TOKEN_PROGRAMS } from "@/lib/constants";
 
 interface TransactionSignDrawerProps {
   open: boolean;
@@ -82,152 +93,220 @@ export function TransactionSignDrawer({
             </div>
           ) : (
             <>
-              <div className="p-4 border-b">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-                    {account ? truncateAddress(account).slice(0, 2) : "A1"}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-semibold">
-                      Confirm Transaction
-                    </h2>
-                    <p className="text-muted-foreground">{website}</p>
+              <DrawerHeader>
+                <DrawerTitle>Confirm Transaction</DrawerTitle>
+              </DrawerHeader>
+              <div className="p-4 space-y-4 border-b">
+                <p className="text-muted-foreground text-sm">Balance changes</p>
+                {tx.message.instructions.map(
+                  (instruction: Instruction, i: number) => {
+                    const parsedInstruction = deserializeTokenInstruction(
+                      instruction.data
+                    );
+                    if (!parsedInstruction) {
+                      return null;
+                    }
+
+                    // Find the token by checking the accounts involved in the instruction
+                    const matchingToken = Object.entries(TOKEN_PROGRAMS).find(
+                      ([tokenId]) => {
+                        return instruction.accounts.some((account) =>
+                          Buffer.from(account.pubkey)
+                            .toString("hex")
+                            .includes(tokenId)
+                        );
+                      }
+                    );
+
+                    if (!matchingToken) {
+                      return null;
+                    }
+
+                    const tokenInfo = matchingToken[1];
+
+                    // Handle different instruction types
+                    let changeAmount: bigint | null = null;
+                    let changeType: "positive" | "negative" = "negative";
+                    const decimals = 9; // All tokens use 9 decimals
+
+                    switch (parsedInstruction.type) {
+                      case "Transfer":
+                      case "TransferChecked":
+                        changeAmount = BigInt(
+                          parsedInstruction.info.amount.toString()
+                        );
+                        changeType = "negative";
+                        break;
+                      case "MintTo":
+                        changeAmount = BigInt(
+                          parsedInstruction.info.amount.toString()
+                        );
+                        changeType = "positive";
+                        break;
+                      case "Burn":
+                        changeAmount = BigInt(
+                          parsedInstruction.info.amount.toString()
+                        );
+                        changeType = "negative";
+                        break;
+                    }
+
+                    if (!changeAmount) {
+                      return null;
+                    }
+
+                    // Format amount with correct decimals
+                    const formattedAmount = (
+                      Number(changeAmount) / Math.pow(10, decimals)
+                    ).toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: decimals,
+                    });
+
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-muted rounded-full overflow-hidden">
+                            <Image
+                              src={tokenInfo.icon}
+                              alt={`${tokenInfo.name} icon`}
+                              width={32}
+                              height={32}
+                            />
+                          </div>
+                          <span>{tokenInfo.ticker}</span>
+                        </div>
+                        <span
+                          className={
+                            changeType === "positive"
+                              ? "text-green-500"
+                              : "text-red-500"
+                          }
+                        >
+                          {changeType === "positive" ? "+" : "-"}
+                          {formattedAmount} {tokenInfo.ticker}
+                        </span>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+
+              <div className="p-4 space-y-4 border-b">
+                <div className="flex justify-between items-center">
+                  <span>Network</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full overflow-hidden">
+                      <Image
+                        src="/arch.png"
+                        alt="Arch Network"
+                        width={20}
+                        height={20}
+                      />
+                    </div>
+                    <span>Arch</span>
                   </div>
                 </div>
-                <p className="text-muted-foreground text-sm">
-                  Balance changes are estimated. Amounts and assets involved are
-                  not guaranteed.
-                </p>
+                <div className="flex justify-between items-center">
+                  <span>Network Fee</span>
+                  <span className="text-muted-foreground">0.00 ARCH</span>
+                </div>
               </div>
 
               <div className="p-4 space-y-4 border-b">
                 <Collapsible className="w-full">
                   <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground">
                     <ChevronsUpDown className="h-4 w-4" />
-                    <span>Transaction Details</span>
+                    <span>Advanced</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="mt-4 space-y-4">
-                      {tx.message.instructions.map((instruction: Instruction, i: number) => {
-                        const programId = Array.from(instruction.program_id).join(',');
-                        let programType = "Unknown";
-                        
-                        if (programId === Array.from(SYSTEM_PROGRAM_ID).join(',')) {
-                          programType = "System";
-                        } else if (programId === Array.from(TOKEN_PROGRAM_ID).join(',')) {
-                          programType = "Token";
-                        } else if (programId === Array.from(ASSOCIATED_TOKEN_PROGRAM_ID).join(',')) {
-                          programType = "Associated Token";
-                        }
+                      {tx.message.instructions.map(
+                        (instruction: Instruction, i: number) => {
+                          const programId = Buffer.from(
+                            instruction.program_id
+                          ).toString("hex");
 
-                        const instructionData = InstructionUtil.toHex(instruction);
-                        const parsedTokenInstruction = deserializeTokenInstruction(instruction.data);
-                        
-                        return (
-                          <div key={i} className="space-y-2">
-                            <div className="text-muted-foreground">{programType} Instruction</div>
-                            <div className="space-y-2 bg-muted/50 rounded-lg p-3">
-                              <div className="flex justify-between items-center">
-                                <span className="text-primary">Program</span>
-                                <div className="flex items-center gap-2">
-                                  <span>{truncateAddress(instructionData.program_id)}</span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-4 w-4"
-                                    onClick={() => handleCopy(instructionData.program_id)}
-                                  >
-                                    <ExternalLink className="h-4 w-4" />
-                                  </Button>
+                          console.log(programId, instruction);
+
+                          let programType = "Unknown";
+
+                          if (
+                            programId ===
+                            Buffer.from(SYSTEM_PROGRAM_ID).toString("hex")
+                          ) {
+                            programType = "System";
+                          } else if (
+                            programId ===
+                            Buffer.from(TOKEN_PROGRAM_ID).toString("hex")
+                          ) {
+                            programType = "Token";
+                          } else if (
+                            programId ===
+                            Buffer.from(ASSOCIATED_TOKEN_PROGRAM_ID).toString(
+                              "hex"
+                            )
+                          ) {
+                            programType = "Associated Token";
+                          }
+
+                          const instructionData =
+                            InstructionUtil.toHex(instruction);
+                          const parsedTokenInstruction =
+                            deserializeTokenInstruction(instruction.data);
+
+                          return (
+                            <div key={i} className="space-y-2">
+                              <div className="text-muted-foreground">
+                                {programType} Instruction
+                              </div>
+                              <div className="space-y-2 bg-muted/50 rounded-lg p-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-primary">Program</span>
+                                  <div className="flex items-center gap-2">
+                                    {programType ? (
+                                      <span>{programType}</span>
+                                    ) : (
+                                      <span>
+                                        {truncateAddress(
+                                          instructionData.program_id
+                                        )}
+                                      </span>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-4 w-4"
+                                      onClick={() =>
+                                        handleCopy(instructionData.program_id)
+                                      }
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span>Data</span>
+                                  <span className="text-muted-foreground">
+                                    {parsedTokenInstruction
+                                      ? `${parsedTokenInstruction.type}: ${JSON.stringify(parsedTokenInstruction.info)}`
+                                      : instructionData.data}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <span>Data</span>
-                                <span className="text-muted-foreground">
-                                  {parsedTokenInstruction ? 
-                                    `${parsedTokenInstruction.type}: ${JSON.stringify(parsedTokenInstruction.info)}` :
-                                    instructionData.data
-                                  }
-                                </span>
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
 
-              <div className="p-4 space-y-4 border-b">
-                <div className="flex justify-between items-center">
-                  <span>Network</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full overflow-hidden">
-                      <Image
-                        src="/arch.png"
-                        alt="Arch Network"
-                        width={20}
-                        height={20}
-                      />
-                    </div>
-                    <span>Arch</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Network Fee</span>
-                  <span className="text-muted-foreground">0.00 ARCH</span>
-                </div>
-              </div>
-
               <div className="flex flex-col gap-4 p-4">
-                <p className="text-muted-foreground text-center">
-                  Only confirm if you trust this website.
-                </p>
-                <div className="flex gap-4 w-full">
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-12 rounded-xl bg-white/5 border-white/10 hover:bg-white/10"
-                    onClick={() => onOpenChange(false)}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="flex-1 h-12 rounded-xl"
-                    onClick={handleConfirm}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Confirming..." : "Confirm"}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="p-4 space-y-4 border-b">
-                <div className="flex justify-between items-center">
-                  <span>Network</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full overflow-hidden">
-                      <Image
-                        src="/arch.png"
-                        alt="Arch Network"
-                        width={20}
-                        height={20}
-                      />
-                    </div>
-                    <span>Arch</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Network Fee</span>
-                  <span className="text-muted-foreground">0.00 ARCH</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 p-4">
-                <p className="text-muted-foreground text-center">
-                  Only confirm if you trust this website.
-                </p>
                 <div className="flex gap-4 w-full">
                   <Button
                     variant="outline"
