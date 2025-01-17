@@ -13,16 +13,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
-import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
-import { Instruction } from "@repo/arch-sdk/src/struct/instruction";
-import { toHex } from "@repo/arch-sdk/src/serde/instruction";
-import { deserialize as deserializeTokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
-import { TokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
+import { RuntimeTransaction, Instruction, InstructionUtil } from "@repo/arch-sdk";
+import { deserialize as deserializeTokenInstruction, TokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
 import { 
   SYSTEM_PROGRAM_ID, 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID 
-} from "@repo/apl-sdk/src/constants";
+} from "@repo/apl-sdk";
 
 interface TransactionSignDrawerProps {
   open: boolean;
@@ -123,7 +120,7 @@ export function TransactionSignDrawer({
                           programType = "Associated Token";
                         }
 
-                        const instructionData = toHex(instruction);
+                        const instructionData = InstructionUtil.toHex(instruction);
                         const parsedTokenInstruction = deserializeTokenInstruction(instruction.data);
                         
                         return (
