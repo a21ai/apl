@@ -13,14 +13,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
-import { RuntimeTransaction } from "@/../../packages/arch-sdk/src/struct/runtime-transaction.js";
-import { Instruction } from "@/../../packages/arch-sdk/src/struct/instruction.js";
-import { toHex } from "@/../../packages/arch-sdk/src/serde/instruction.js";
+import { RuntimeTransaction } from "../../../packages/arch-sdk/src/struct/runtime-transaction";
+import { Instruction } from "../../../packages/arch-sdk/src/struct/instruction";
+import { toHex } from "../../../packages/arch-sdk/src/serde/instruction";
+import { parseTokenInstruction } from "@/lib/token-instruction-parser";
 import { 
   SYSTEM_PROGRAM_ID, 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID 
-} from "@/../../packages/apl-sdk/src/constants.js";
+} from "../../../packages/apl-sdk/src/constants";
 
 interface TransactionSignDrawerProps {
   open: boolean;
@@ -122,6 +123,7 @@ export function TransactionSignDrawer({
                         }
 
                         const instructionData = toHex(instruction);
+                        const parsedTokenInstruction = parseTokenInstruction(instruction);
                         
                         return (
                           <div key={i} className="space-y-2">
@@ -144,7 +146,10 @@ export function TransactionSignDrawer({
                               <div className="flex justify-between items-center">
                                 <span>Data</span>
                                 <span className="text-muted-foreground">
-                                  {instructionData.data}
+                                  {parsedTokenInstruction ? 
+                                    `${parsedTokenInstruction.type}: ${JSON.stringify(parsedTokenInstruction.info)}` :
+                                    instructionData.data
+                                  }
                                 </span>
                               </div>
                             </div>

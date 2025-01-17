@@ -1,5 +1,5 @@
-import { Instruction } from "@/../../packages/arch-sdk/src/struct/instruction.js";
-import { TOKEN_PROGRAM_ID } from "@/../../packages/apl-sdk/src/constants.js";
+import { Instruction } from "../../../packages/arch-sdk/src/struct/instruction";
+import { TOKEN_PROGRAM_ID } from "../../../packages/apl-sdk/src/constants";
 
 // Token instruction types based on the first byte of instruction data
 enum TokenInstructionType {
