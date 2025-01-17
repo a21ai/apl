@@ -13,15 +13,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
-import { RuntimeTransaction } from "../../../packages/arch-sdk/src/struct/runtime-transaction";
-import { Instruction } from "../../../packages/arch-sdk/src/struct/instruction";
-import { toHex } from "../../../packages/arch-sdk/src/serde/instruction";
+import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
+import { Instruction } from "@repo/arch-sdk/src/struct/instruction";
+import { toHex } from "@repo/arch-sdk/src/serde/instruction";
 import { parseTokenInstruction } from "@/lib/token-instruction-parser";
 import { 
   SYSTEM_PROGRAM_ID, 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID 
-} from "../../../packages/apl-sdk/src/constants";
+} from "@repo/apl-sdk/src/constants";
 
 interface TransactionSignDrawerProps {
   open: boolean;
