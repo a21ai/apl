@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
 import { RuntimeTransaction, Instruction, InstructionUtil } from "@repo/arch-sdk";
-import { deserialize as deserializeTokenInstruction, TokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
+import { deserialize as deserializeTokenInstruction } from "@repo/apl-sdk/src/serde/token-instruction";
 import { 
   SYSTEM_PROGRAM_ID, 
   TOKEN_PROGRAM_ID, 
