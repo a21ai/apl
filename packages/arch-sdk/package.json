@@ -5,28 +5,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./src/serde/instruction": {
-      "types": "./src/serde/instruction.ts",
-      "default": "./dist/serde/instruction.js"
-    },
-    "./src/serde/account": {
-      "types": "./src/serde/account.ts",
-      "default": "./dist/serde/account.js"
-    },
-    "./src/struct/instruction": {
-      "types": "./src/struct/instruction.ts",
-      "default": "./dist/struct/instruction.js"
-    },
-    "./src/struct/runtime-transaction": {
-      "types": "./src/struct/runtime-transaction.ts",
-      "default": "./dist/struct/runtime-transaction.js"
-    }
-  },
   "files": [
     "dist"
   ],
