@@ -13,24 +13,21 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConfirmationAnimation from "./confirmation-animation";
-
-interface TransactionData {
-  programId: string;
-  data: string;
-}
+import { RuntimeTransaction } from "@/../../packages/arch-sdk/src/struct/runtime-transaction.js";
+import { Instruction } from "@/../../packages/arch-sdk/src/struct/instruction.js";
+import { toHex } from "@/../../packages/arch-sdk/src/serde/instruction.js";
+import { 
+  SYSTEM_PROGRAM_ID, 
+  TOKEN_PROGRAM_ID, 
+  ASSOCIATED_TOKEN_PROGRAM_ID 
+} from "@/../../packages/apl-sdk/src/constants.js";
 
 interface TransactionSignDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   account?: string;
   website?: string;
-  transactions: {
-    token: string;
-    amount: string;
-    change: "positive" | "negative";
-    icon?: string;
-  }[];
-  advanced?: TransactionData[];
+  tx: RuntimeTransaction;
   onConfirm: () => Promise<void>;
 }
 
@@ -39,8 +36,7 @@ export function TransactionSignDrawer({
   onOpenChange,
   account = "Account 1",
   website = "archway.io",
-  transactions = [],
-  advanced = [],
+  tx,
   onConfirm,
 }: TransactionSignDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -106,33 +102,58 @@ export function TransactionSignDrawer({
               </div>
 
               <div className="p-4 space-y-4 border-b">
-                {transactions.map((tx, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-muted rounded-full overflow-hidden">
-                        {tx.icon ? (
-                          <Image
-                            src={tx.icon}
-                            alt={`${tx.token} icon`}
-                            width={32}
-                            height={32}
-                          />
-                        ) : null}
-                      </div>
-                      <span>{tx.token}</span>
+                <Collapsible className="w-full">
+                  <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground">
+                    <ChevronsUpDown className="h-4 w-4" />
+                    <span>Transaction Details</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-4 space-y-4">
+                      {tx.message.instructions.map((instruction: Instruction, i: number) => {
+                        const programId = Array.from(instruction.program_id).join(',');
+                        let programType = "Unknown";
+                        
+                        if (programId === Array.from(SYSTEM_PROGRAM_ID).join(',')) {
+                          programType = "System";
+                        } else if (programId === Array.from(TOKEN_PROGRAM_ID).join(',')) {
+                          programType = "Token";
+                        } else if (programId === Array.from(ASSOCIATED_TOKEN_PROGRAM_ID).join(',')) {
+                          programType = "Associated Token";
+                        }
+
+                        const instructionData = toHex(instruction);
+                        
+                        return (
+                          <div key={i} className="space-y-2">
+                            <div className="text-muted-foreground">{programType} Instruction</div>
+                            <div className="space-y-2 bg-muted/50 rounded-lg p-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-primary">Program</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{truncateAddress(instructionData.program_id)}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4"
+                                    onClick={() => handleCopy(instructionData.program_id)}
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span>Data</span>
+                                <span className="text-muted-foreground">
+                                  {instructionData.data}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <span
-                      className={
-                        tx.change === "positive"
-                          ? "text-green-500"
-                          : "text-destructive"
-                      }
-                    >
-                      {tx.change === "positive" ? "+" : "-"}
-                      {tx.amount}
-                    </span>
-                  </div>
-                ))}
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
 
               <div className="p-4 space-y-4 border-b">
@@ -156,47 +177,49 @@ export function TransactionSignDrawer({
                 </div>
               </div>
 
-              {advanced && advanced.length > 0 && (
-                <Collapsible className="w-full">
-                  <div className="px-4 py-2 border-b">
-                    <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground">
-                      <ChevronsUpDown className="h-4 w-4" />
-                      Advanced
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="p-4 space-y-6">
-                      {advanced.map((item, i) => (
-                        <div key={i} className="space-y-2">
-                          <div className="text-muted-foreground">Unknown</div>
-                          <div className="space-y-2 bg-muted/50 rounded-lg p-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-primary">Program Id</span>
-                              <div className="flex items-center gap-2">
-                                <span>{truncateAddress(item.programId)}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-4 w-4"
-                                  onClick={() => handleCopy(item.programId)}
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span>Data</span>
-                              <span className="text-muted-foreground">
-                                {item.data}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+              <div className="flex flex-col gap-4 p-4">
+                <p className="text-muted-foreground text-center">
+                  Only confirm if you trust this website.
+                </p>
+                <div className="flex gap-4 w-full">
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-12 rounded-xl bg-white/5 border-white/10 hover:bg-white/10"
+                    onClick={() => onOpenChange(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 h-12 rounded-xl"
+                    onClick={handleConfirm}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Confirming..." : "Confirm"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-4 border-b">
+                <div className="flex justify-between items-center">
+                  <span>Network</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full overflow-hidden">
+                      <Image
+                        src="/arch.png"
+                        alt="Arch Network"
+                        width={20}
+                        height={20}
+                      />
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    <span>Arch</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Network Fee</span>
+                  <span className="text-muted-foreground">0.00 ARCH</span>
+                </div>
+              </div>
 
               <div className="flex flex-col gap-4 p-4">
                 <p className="text-muted-foreground text-center">
