@@ -18,6 +18,8 @@ import {
   MintUtil,
   transferTx,
   waitForConfirmation,
+  createMockSigner,
+  readUInt64LE,
 } from "@repo/apl-sdk";
 import { RuntimeTransaction } from "@repo/arch-sdk/src/struct/runtime-transaction";
 import { TransactionSignDrawer } from "./transaction-sign-drawer";
@@ -150,17 +152,18 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
       );
       console.log("=== End Transaction Input Details ===");
 
-      // Create and store the transaction
-      const tx = await transferTx(
+      // Create preview transaction with mock signer
+      const mockSigner = createMockSigner();
+      const previewTx = await transferTx(
         sourceTokenPubkey,
         mintPubkey,
         recipientTokenPubkey,
         senderPubkey,
         BigInt(Math.floor(amountValue * Math.pow(10, mintData.decimals))),
         mintData.decimals,
-        signer
+        mockSigner
       );
-      setRuntimeTx(tx);
+      setRuntimeTx(previewTx);
       setShowSignDrawer(true);
     } catch (error) {
       const errorMessage =
@@ -184,7 +187,18 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
     try {
       setIsLoading(true);
 
-      const result = await archConnection.sendTransaction(runtimeTx);
+      // Create real transaction with actual signer
+      const realTx = await transferTx(
+        Buffer.from(runtimeTx.message.instructions[0].accounts[0].pubkey),  // sourceTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[1].pubkey),  // mintPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[2].pubkey),  // recipientTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[3].pubkey),  // senderPubkey
+        readUInt64LE(Buffer.from(runtimeTx.message.instructions[0].data.slice(1)), 0), // amount
+        runtimeTx.message.instructions[0].data[9], // decimals
+        signer
+      );
+
+      const result = await archConnection.sendTransaction(realTx);
       await waitForConfirmation(archConnection, result);
       console.log("Transaction sent successfully:", result);
       setRecipient("");
