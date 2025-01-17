@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { QrCode, Send } from "lucide-react";
+import { QrCode, Send, Gift } from "lucide-react";
 import { useLaserEyes } from "@/lib/hooks/useLaserEyes";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
 import { useBalance } from "@/lib/hooks/useBalance";
@@ -17,6 +17,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatTokenBalance } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { mintScat } from "./actions";
+import { toast } from "@/components/ui/use-toast";
+import { waitForConfirmationWithToast } from "@/lib/wait-for-confirmation";
 
 export default function Home() {
   const router = useRouter();
@@ -30,6 +33,7 @@ export default function Home() {
   const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
   const [connectDrawerOpen, setConnectDrawerOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
 
   // Find BTC token ID from TOKEN_PROGRAMS
   const btcTokenId = Object.keys(TOKEN_PROGRAMS).find(
@@ -37,19 +41,31 @@ export default function Home() {
     (token) => TOKEN_PROGRAMS[token].ticker === "BTC"
   );
 
+  // Find SCAT token ID from TOKEN_PROGRAMS
+  const scatTokenId = Object.keys(TOKEN_PROGRAMS).find(
+    // @ts-ignore
+    (token) => TOKEN_PROGRAMS[token].ticker === "SCAT"
+  );
+
   // Find BTC balance from tokens list
   const btcBalance = btcTokenId
     ? balances.find((b) => b.mintPubkeyHex === btcTokenId)
     : undefined;
 
-  // Calculate total USD value
-  const totalUsdValue =
-    btcBalance && price
-      ? Number(formatTokenBalance(btcBalance.balance, btcBalance.decimals)) *
-        price
-      : 0;
+  // Calculate total USD value including both BTC and SCAT
+  const totalUsdValue = balances.reduce((total, token) => {
+    const amount = Number(formatTokenBalance(token.balance, token.decimals));
+    if (token.mintPubkeyHex === btcTokenId && price) {
+      // BTC value
+      return total + amount * price;
+    } else if (token.mintPubkeyHex === scatTokenId) {
+      // SCAT value (fixed at $0.42069)
+      return total + amount * 0.42069;
+    }
+    return total;
+  }, 0);
 
-  // Calculate dollar value change based on holdings
+  // Calculate dollar value change based on BTC holdings only
   const totalDollarValueChange =
     btcBalance && price && percentChange24h
       ? Number(formatTokenBalance(btcBalance.balance, btcBalance.decimals)) *
@@ -76,6 +92,32 @@ export default function Home() {
     setIsInitializing(false);
   }, [publicKey]);
 
+  const handleFreeMint = async () => {
+    if (!publicKey) {
+      toast({
+        title: "Error",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsMinting(true);
+      const result = await mintScat(publicKey);
+      waitForConfirmationWithToast(result.txId!);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to mint tokens",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
   return (
     <Layout>
       <BalanceDisplay
@@ -86,7 +128,7 @@ export default function Home() {
         }}
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <ActionButton
           icon={QrCode}
           label="Receive"
@@ -98,6 +140,12 @@ export default function Home() {
           label="Send"
           onClick={() => setSendDrawerOpen(true)}
           disabled={!isConnected}
+        />
+        <ActionButton
+          icon={Gift}
+          label={isMinting ? "Minting..." : "Free SCAT"}
+          onClick={handleFreeMint}
+          disabled={!isConnected || isMinting}
         />
       </div>
 
@@ -163,7 +211,11 @@ export default function Home() {
                 symbol={metadata.ticker}
                 amount={tokenAmount}
                 price={
-                  metadata.ticker === "BTC" ? tokenAmount * (price ?? 0) : 0
+                  metadata.ticker === "BTC"
+                    ? tokenAmount * (price ?? 0)
+                    : metadata.ticker === "SCAT"
+                      ? tokenAmount * 0.42069 // SCAT tokens fixed at $1 each
+                      : 0
                 }
                 priceChange={metadata.ticker === "BTC" ? dollarValueChange : 0}
                 logo={metadata.icon}

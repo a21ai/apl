@@ -6,7 +6,7 @@ export const TOKEN_PROGRAMS = {
     ticker: "BTC",
     icon: "/btc.png",
   },
-  bdd56520e2b004f8ed544f715d6224d9c968dd8fd490872122b2c0e4bc48cc90: {
+  "6cf56a417931a9ea5b936bb23c4ce999e0523b1aced3755639eacaa0414ca64d": {
     name: "Stoner Cat",
     ticker: "SCAT",
     icon: "/stoned-cat.gif",

@@ -9,7 +9,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerDescription,
 } from "@/components/ui/drawer";
 import { truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import ConfirmationAnimation from "./confirmation-animation";
+import ConfirmationAnimation from "@/components/confirmation-animation";
 import {
   RuntimeTransaction,
   Instruction,
@@ -44,8 +43,6 @@ interface TransactionSignDrawerProps {
 export function TransactionSignDrawer({
   open,
   onOpenChange,
-  account = "Account 1",
-  website = "archway.io",
   tx,
   onConfirm,
 }: TransactionSignDrawerProps) {

@@ -189,11 +189,14 @@ export function SendForm({ token }: SendFormProps): React.ReactElement {
 
       // Create real transaction with actual signer
       const realTx = await transferTx(
-        Buffer.from(runtimeTx.message.instructions[0].accounts[0].pubkey),  // sourceTokenPubkey
-        Buffer.from(runtimeTx.message.instructions[0].accounts[1].pubkey),  // mintPubkey
-        Buffer.from(runtimeTx.message.instructions[0].accounts[2].pubkey),  // recipientTokenPubkey
-        Buffer.from(runtimeTx.message.instructions[0].accounts[3].pubkey),  // senderPubkey
-        readUInt64LE(Buffer.from(runtimeTx.message.instructions[0].data.slice(1)), 0), // amount
+        Buffer.from(runtimeTx.message.instructions[0].accounts[0].pubkey), // sourceTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[1].pubkey), // mintPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[2].pubkey), // recipientTokenPubkey
+        Buffer.from(runtimeTx.message.instructions[0].accounts[3].pubkey), // senderPubkey
+        readUInt64LE(
+          Buffer.from(runtimeTx.message.instructions[0].data.slice(1)),
+          0
+        ), // amount
         runtimeTx.message.instructions[0].data[9], // decimals
         signer
       );

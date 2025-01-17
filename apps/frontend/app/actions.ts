@@ -191,3 +191,88 @@ export async function initializeWallet(publicKey: string) {
     };
   }
 }
+
+/**
+ * Mints SCAT tokens to a specified recipient address
+ * @param recipientPublicKey The recipient's public key in hex format
+ * @param amount The amount of SCAT tokens to mint (in base units)
+ * @returns The transaction result or error
+ */
+export async function mintScat(
+  recipientPublicKey: string,
+  amount: bigint = BigInt(1e9)
+) {
+  try {
+    const scatTokenMint = Object.keys(TOKEN_PROGRAMS).find(
+      (token) =>
+        TOKEN_PROGRAMS[token as keyof typeof TOKEN_PROGRAMS]?.ticker === "SCAT"
+    );
+
+    if (!scatTokenMint) {
+      throw new Error("SCAT token not found in TOKEN_PROGRAMS");
+    }
+
+    // Create dispenser keypair from env vars
+    if (
+      !process.env.DISPENSER_PRIVATE_KEY ||
+      !process.env.DISPENSER_PUBLIC_KEY
+    ) {
+      throw new Error("Dispenser keypair env vars not set");
+    }
+
+    const dispenserKeypair = {
+      publicKey: Buffer.from(process.env.DISPENSER_PUBLIC_KEY, "hex"),
+      secretKey: Buffer.from(process.env.DISPENSER_PRIVATE_KEY, "hex"),
+    };
+
+    // Verify mint account and authority
+    console.log("Verifying SCAT token mint account...");
+    const mintInfo = await archConnection.readAccountInfo(
+      Buffer.from(scatTokenMint, "hex")
+    );
+    if (!mintInfo || !mintInfo.data) {
+      throw new Error("Invalid or uninitialized SCAT token mint account");
+    }
+
+    const mintData = MintUtil.deserialize(Buffer.from(mintInfo.data));
+    if (mintData.mint_authority === null) {
+      throw new Error("SCAT token mint has no mint authority");
+    }
+
+    if (
+      !Buffer.from(mintData.mint_authority).equals(dispenserKeypair.publicKey)
+    ) {
+      throw new Error("Dispenser keypair is not the mint authority");
+    }
+
+    // Get the associated token account for the recipient
+    const recipientTokenAccount = AssociatedTokenUtil.getAssociatedTokenAddress(
+      Buffer.from(scatTokenMint, "hex"),
+      Buffer.from(recipientPublicKey, "hex")
+    );
+
+    console.log(`Creating mint transaction for ${amount} SCAT tokens...`);
+    const dispenserSigner = createSignerFromKeypair(dispenserKeypair);
+    const mintTx = await mintToTx(
+      Buffer.from(scatTokenMint, "hex"),
+      recipientTokenAccount,
+      amount,
+      dispenserKeypair.publicKey,
+      dispenserSigner
+    );
+
+    console.log("Sending mint transaction...");
+    const mintResult = await archConnection.sendTransaction(mintTx);
+
+    return {
+      success: true,
+      txId: mintResult,
+    };
+  } catch (error) {
+    console.error("Failed to mint SCAT tokens:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}

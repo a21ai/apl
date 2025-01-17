@@ -1,5 +1,7 @@
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+
 import { Header } from "./Header";
 
 interface LayoutProps {
@@ -18,6 +20,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </div>
       <Toaster />
+      <SonnerToaster visibleToasts={9} />
     </>
   );
 }

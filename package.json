@@ -22,6 +22,7 @@
     "packages/*"
   ],
   "dependencies": {
-    "qrcode.react": "^4.2.0"
+    "qrcode.react": "^4.2.0",
+    "sonner": "^1.7.2"
   }
 }
