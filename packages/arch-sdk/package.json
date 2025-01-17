@@ -27,28 +27,6 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./src/serde/instruction": {
-      "types": "./dist/serde/instruction.d.ts",
-      "import": "./dist/serde/instruction.js",
-      "require": "./dist/serde/instruction.cjs"
-    },
-    "./src/struct/instruction": {
-      "types": "./dist/struct/instruction.d.ts",
-      "import": "./dist/struct/instruction.js",
-      "require": "./dist/struct/instruction.cjs"
-    },
-    "./src/struct/runtime-transaction": {
-      "types": "./dist/struct/runtime-transaction.d.ts",
-      "import": "./dist/struct/runtime-transaction.js",
-      "require": "./dist/struct/runtime-transaction.cjs"
-    }
-  },
   "devDependencies": {
     "@types/node": "^22.1.0",
     "prettier": "^3.3.3",
