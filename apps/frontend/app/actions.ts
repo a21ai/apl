@@ -82,9 +82,9 @@ export async function initializeWallet(publicKey: string) {
         console.log("Sending initial coins to associated token account...");
         const utxo = await sendCoins(
           {
-            url: process.env.NEXT_PUBLIC_RPC_URL || "http://localhost:9002",
-            username: process.env.NEXT_PUBLIC_RPC_USERNAME || "bitcoin",
-            password: process.env.NEXT_PUBLIC_RPC_PASSWORD || "bitcoin",
+            url: process.env.RPC_URL || "http://localhost:9002",
+            username: process.env.RPC_USERNAME || "bitcoin",
+            password: process.env.RPC_PASSWORD || "bitcoin",
           },
           associatedTokenContractAddress,
           3000
