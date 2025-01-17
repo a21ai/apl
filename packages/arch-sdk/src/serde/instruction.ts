@@ -16,13 +16,16 @@ export const serialize = (instruction: Instruction): Uint8Array => {
   dataLengthView.setBigUint64(0, BigInt(instruction.data.length), true);
   const littleEndianDataLength = new Uint8Array(dataLengthBuffer);
 
-  return new Uint8Array([
-    ...serializedProgramId,
-    ...accountsCount,
-    ...serializedAccounts,
-    ...littleEndianDataLength,
-    ...instruction.data,
-  ]);
+  // Convert serializedAccounts to Uint8Array and concatenate all arrays
+  const serializedAccountsArray = new Uint8Array(serializedAccounts);
+  const allArrays = [
+    serializedProgramId,
+    accountsCount,
+    serializedAccountsArray,
+    littleEndianDataLength,
+    instruction.data,
+  ] as const;
+  return new Uint8Array(Buffer.concat(allArrays));
 };
 
 export const toHex = (instruction: Instruction) => {
