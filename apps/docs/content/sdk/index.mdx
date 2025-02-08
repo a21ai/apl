@@ -1,0 +1,64 @@
+# APL SDK Documentation
+
+## Overview
+
+The APL SDK provides a JavaScript/TypeScript interface for creating and managing tokens on the Arch network. This documentation covers:
+
+- Reading and deserializing RPC data
+- Creating and sending transactions
+- Common patterns and best practices
+
+## Getting Started
+
+### Installation
+
+```bash
+npm install @repo/apl-sdk
+# or
+yarn add @repo/apl-sdk
+```
+
+### Environment Setup
+
+#### Node.js
+```typescript
+import { createRpcConnection } from '@repo/apl-sdk';
+
+const rpcConnection = createRpcConnection('YOUR_RPC_URL');
+```
+
+#### Web Browser
+```typescript
+import { createRpcConnection } from '@repo/apl-sdk';
+
+const rpcConnection = createRpcConnection('YOUR_RPC_URL');
+
+// Example web wallet signer
+const signer = {
+  signMessage: async (message: Uint8Array) => {
+    // Implementation using web wallet
+    return await window.wallet.signMessage(message);
+  }
+};
+```
+
+## Documentation Sections
+
+- [RPC Examples](./rpc-examples) - Reading and deserializing blockchain data
+- [Transaction Examples](./transaction-examples) - Creating and sending transactions
+
+## Best Practices
+
+1. Always use BigInt for token amounts to avoid precision issues
+2. Implement proper error handling for transaction failures
+3. Use associated token accounts for predictable account derivation
+4. Test signing callbacks thoroughly in your environment
+5. Verify transaction success after submission
+
+## Security Considerations
+
+1. Never expose private keys in web environments
+2. Validate all input addresses before creating transactions
+3. Implement proper access controls for mint and freeze authorities
+4. Use proper error handling to prevent partial state changes
+5. Verify transaction signatures before submission
