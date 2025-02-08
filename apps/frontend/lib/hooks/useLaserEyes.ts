@@ -1,9 +1,6 @@
-import {
-  useLaserEyes as useLaserEyesCore,
-  ProviderType,
-} from "@omnisat/lasereyes";
+import { useLaserEyes as useLaserEyesCore } from "@omnisat/lasereyes";
 import { xOnly } from "@repo/apl-sdk";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback } from "react";
 
 const PUBKEY_LOCAL_STORAGE_KEY = "archway:pubkey";
 
