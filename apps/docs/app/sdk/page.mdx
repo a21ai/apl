@@ -1,0 +1,116 @@
+# APL SDK
+
+## Overview
+
+The APL SDK provides a TypeScript interface for creating and managing tokens on the Arch network.
+
+## Installation
+
+```sh npm2yarn copy
+npm install @a21/apl-sdk @saturnbtcio/arch-sdk
+```
+
+## Example Usage
+
+You can use the sdk to read data from the arch network. The example below fetches all token accounts and then deserializes them into a `Mint` object.
+
+```typescript filename="list-tokens.ts" copy
+import { RpcConnection } from "@saturnbtcio/arch-sdk";
+import { MintUtil, TOKEN_PROGRAM_ID } from "@a21/apl-sdk";
+
+const main = async () => {
+  const rpc = new RpcConnection("https://rpc-gamma.test.arch.network/");
+
+  // Fetch token accounts
+  const tokens = await rpc.getProgramAccounts(TOKEN_PROGRAM_ID, {
+    DataSize: 82,
+  });
+
+  tokens.forEach(
+    (token: { account: { data: Uint8Array }; pubkey: Uint8Array }) => {
+      try {
+        // Deserialize token account
+        const mint = MintUtil.deserialize(Buffer.from(token.account.data));
+        console.log(mint);
+      } catch (error) {
+        // Skip invalid mints
+      }
+    }
+  );
+};
+
+main();
+```
+
+The sdk also provides methods to create APL transactions. In the example below we transfer a token from one account to another.
+
+```typescript filename="transfer-token.ts" copy
+
+```
+
+## Token Operations
+
+The APL SDK provides core token operations with minimal setup required. Each operation that creates new accounts requires a valid UTXO with sufficient funds.
+
+### Creating Tokens
+
+```typescript
+import { Pubkey } from "@saturnbtcio/arch-sdk";
+import { initializeMintTx, Keypair } from "@a21/apl-sdk";
+
+const tx = await initializeMintTx(
+  mintKeypair, // Keypair for the new mint account
+  utxo, // UTXO for account creation
+  9, // Decimals (default)
+  mintAuthority, // Mint authority public key
+  null, // Optional freeze authority
+  signer // Transaction signing callback
+);
+```
+
+### Creating Associated Token Accounts
+
+```typescript
+import { Pubkey } from "@repo/arch-sdk";
+import { associatedTokenTx } from "@repo/apl-sdk";
+
+const tx = await associatedTokenTx(
+  utxo, // UTXO for account creation
+  associatedToken, // Associated token account pubkey
+  ownerPubkey, // Owner's public key
+  mintPubkey, // Token mint address
+  signer // Transaction signing callback
+);
+```
+
+### Minting Tokens
+
+```typescript
+import { Pubkey } from "@repo/arch-sdk";
+import { mintToTx } from "@repo/apl-sdk";
+
+const tx = await mintToTx(
+  mintPubkey, // Token mint address
+  recipientPubkey, // Recipient token account
+  amount, // Amount to mint
+  mintAuthority, // Mint authority public key
+  signer // Transaction signing callback
+);
+```
+
+### Transferring Tokens
+
+```typescript
+import { Pubkey } from "@repo/arch-sdk";
+import { transferTx } from "@repo/apl-sdk";
+
+const tx = await transferTx(
+  sourceTokenPubkey, // Source token account
+  mintPubkey, // Token mint address
+  destinationPubkey, // Destination token account
+  ownerPubkey, // Owner of source account
+  amount, // Amount to transfer
+  9, // Decimals (default)
+  signer // Transaction signing callback
+);
+```

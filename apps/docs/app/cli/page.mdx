@@ -1,0 +1,116 @@
+import { Callout } from "nextra/components";
+
+# APL CLI
+
+The APL CLI is an interface for interacting with the arch APL standard.
+
+## Installation
+
+```sh npm2yarn copy
+npm install -g @a21/apl-cli
+```
+
+## Getting Started
+
+First create a new keypair.
+
+```bash copy
+apl-cli create-keypair
+```
+
+Then set the rpc url and network
+
+```bash copy
+apl-cli config set --url https://rpc-gamma.test.arch.network/ --network testnet
+```
+
+Now you can use the CLI to interact with the Arch network.
+
+## Usage
+
+```bash filename="apl-cli --help" copy
+Usage: apl-cli [options] [command]
+
+CLI for wallet and token operations on Arch network
+
+Options:
+  -V, --version                            output the version number
+  -h, --help                               display help for command
+
+Commands:
+  create-keypair [options]                 Creates a local private keypair and saves to file
+  balance [options]                        Show token balances for all accounts
+  create-token [options]                   Create a new token
+  mint [options]                           Mint tokens to recipient (requires mint authority)
+  tokens [options]                         List all tokens
+  create-account [options] <tokenAddress>  Create an associated token account
+  config                                   Configuration management
+  transfer [options]                       Transfer tokens from your account to another account
+  help [command]                           display help for command
+```
+
+### Fetch your balance
+
+```bash copy
+apl-cli balance
+```
+
+### List all tokens
+
+```bash copy
+apl-cli tokens
+```
+
+### Create a new token
+
+<Callout>Initializing a new Arch account requires a utxo</Callout>
+
+Creates a new token with 0 supply, setting the mint authority to the keypair you created.
+
+```bash copy
+apl-cli create-token
+```
+
+### Create a new token account
+
+<Callout>Initializing a new Arch account requires a utxo</Callout>
+
+Initializes a new token account for the given token address.
+
+```bash copy
+apl-cli create-account <tokenAddress>
+```
+
+You may also create a token account for any address, not just your own, by passing `--owner` flag. This is useful if you want to send someone a token and they dont already have a token account created.
+
+```bash copy
+apl-cli create-account --owner <ownerAddress> <tokenAddress>
+```
+
+### Mint Tokens
+
+Only the mint authority can mint new tokens.
+
+```bash copy
+apl-cli mint --mint <contractAddress> --to <address> --amount <amount>
+```
+
+### Transfer Tokens
+
+```bash copy
+apl-cli transfer --mint <contractAddress> --to <address> --amount <amount>
+```
+
+### Configure the CLI
+
+Read the current config
+
+```bash copy
+apl-cli config get
+```
+
+Set the config
+
+```bash copy
+apl-cli config set --url <url> --network <network> --keypair <path>
+```
