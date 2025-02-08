@@ -1,12 +1,12 @@
 export const RPC_URL = "http://localhost:9002";
 
 export const TOKEN_PROGRAMS = {
-  ba9dc4025b736d94ca520ef5d9a4089cc2e1d1d8b66c91e28ce1250e0819f497: {
+  "71850f9a782510b8dec44c1eb724a9d7d3bde7844f031a48b1a44e5ca4b73544": {
     name: "Bitcoin",
     ticker: "BTC",
     icon: "/btc.png",
   },
-  "6cf56a417931a9ea5b936bb23c4ce999e0523b1aced3755639eacaa0414ca64d": {
+  "1f78223bff1496990d959b9b040a272472b36bca2ae661a438a0a4bad6c68205": {
     name: "Stoner Cat",
     ticker: "SCAT",
     icon: "/stoned-cat.gif",

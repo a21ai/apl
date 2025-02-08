@@ -1,8 +1,5 @@
-import {
-  useLaserEyes,
-  UNISAT,
-  XVERSE,
-} from "@omnisat/lasereyes";
+import { UNISAT, XVERSE } from "@omnisat/lasereyes";
+import { useLaserEyes } from "@/lib/hooks/useLaserEyes";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import {

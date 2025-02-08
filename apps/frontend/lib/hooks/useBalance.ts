@@ -36,7 +36,9 @@ export function useBalance(publicKey?: string) {
 
     try {
       // Get all token mints
-      const mints = await archConnection.getProgramAccounts(TOKEN_PROGRAM_ID);
+      const mints = await archConnection.getProgramAccounts(TOKEN_PROGRAM_ID, [
+        { DataSize: 82 },
+      ]);
       const balances: TokenBalance[] = [];
 
       // Track which tokens we've found
@@ -126,17 +128,7 @@ export function useBalance(publicKey?: string) {
   const initializeWallet = useCallback(async () => {
     if (!publicKey) return;
     await initializeWalletAction(publicKey);
-
-    // Start polling until initialized
-    const pollInterval = setInterval(async () => {
-      const result = await mutate(undefined, true);
-      if (result?.isInitialized) {
-        clearInterval(pollInterval);
-      }
-    }, 1000);
-
-    // Cleanup interval if component unmounts
-    return () => clearInterval(pollInterval);
+    await mutate();
   }, [publicKey, mutate]);
 
   return {

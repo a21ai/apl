@@ -21,13 +21,15 @@ import { mintScat } from "./actions";
 import { toast } from "@/components/ui/use-toast";
 import { waitForConfirmationWithToast } from "@/lib/wait-for-confirmation";
 
+import "@/app/globals.css";
+
 export default function Home() {
   const router = useRouter();
   const laserEyes = useLaserEyes();
   const { price, percentChange24h } = useExchangeRate();
   const isConnected = !!laserEyes.publicKey;
   const { publicKey } = laserEyes;
-  const { balances, isLoading, isInitialized, initializeWallet } =
+  const { balances, isLoading, isInitialized, initializeWallet, mutate } =
     useBalance(publicKey);
   const [sendDrawerOpen, setSendDrawerOpen] = useState(false);
   const [receiveDrawerOpen, setReceiveDrawerOpen] = useState(false);
@@ -105,7 +107,9 @@ export default function Home() {
     try {
       setIsMinting(true);
       const result = await mintScat(publicKey);
-      waitForConfirmationWithToast(result.txId!);
+      setIsMinting(false);
+      await waitForConfirmationWithToast(result.txId!);
+      mutate();
     } catch (error) {
       toast({
         title: "Error",
@@ -113,8 +117,6 @@ export default function Home() {
           error instanceof Error ? error.message : "Failed to mint tokens",
         variant: "destructive",
       });
-    } finally {
-      setIsMinting(false);
     }
   };
 

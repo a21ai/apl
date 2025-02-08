@@ -3,14 +3,24 @@
 import { archConnection } from "@/lib/arch";
 import {
   createSignerFromKeypair,
-  sendCoins,
+  //   sendCoins,
   AssociatedTokenUtil,
   associatedTokenTx,
   mintToTx,
   MintUtil,
   waitForConfirmation,
+  loadWallet,
+  unloadWallet,
+  sendToAddress,
 } from "@repo/apl-sdk";
 import { TOKEN_PROGRAMS } from "@/lib/constants";
+
+const RPC_CONFIG = {
+  url: process.env.RPC_URL || "http://localhost:9002",
+  username: process.env.RPC_USERNAME || "bitcoin",
+  password: process.env.RPC_PASSWORD || "bitcoin",
+};
+const WALLET_NAME = "testwallet";
 
 /**
  * Initialize a new wallet by creating a keypair and funding it with initial coins
@@ -38,6 +48,8 @@ export async function initializeWallet(publicKey: string) {
       `Creating associated token accounts for ${tokenMints.length} tokens:`,
       tokenMints
     );
+
+    let isWalletLoaded = false;
 
     for (const mint of tokenMints) {
       console.log(`\nProcessing token mint: ${mint}`);
@@ -79,16 +91,21 @@ export async function initializeWallet(publicKey: string) {
         );
 
         // Fund the associated token account with coins
+
+        if (!isWalletLoaded) {
+          await loadWallet(RPC_CONFIG, WALLET_NAME);
+          isWalletLoaded = true;
+        }
+
         console.log("Sending initial coins to associated token account...");
-        const utxo = await sendCoins(
-          {
-            url: process.env.RPC_URL || "http://localhost:9002",
-            username: process.env.RPC_USERNAME || "bitcoin",
-            password: process.env.RPC_PASSWORD || "bitcoin",
-          },
+        const txid = await sendToAddress(
+          RPC_CONFIG,
           associatedTokenContractAddress,
-          3000
+          3000,
+          WALLET_NAME
         );
+
+        const utxo = { txid, vout: 0 };
         console.log("Funded associated token account. UTXO:", utxo);
 
         // Create the associated token account transaction
@@ -110,6 +127,10 @@ export async function initializeWallet(publicKey: string) {
       }
     }
 
+    if (isWalletLoaded) {
+      await unloadWallet(RPC_CONFIG, WALLET_NAME);
+    }
+
     console.log(
       "Successfully initialized wallet and all associated token accounts"
     );
@@ -121,10 +142,14 @@ export async function initializeWallet(publicKey: string) {
     }
 
     // Now mint 1000 tokens to the new account
-    if (!process.env.DISPENSER_TOKEN) {
-      throw new Error("DISPENSER_TOKEN env var not set");
+    const dispenserToken = Object.keys(TOKEN_PROGRAMS).find(
+      (token) =>
+        TOKEN_PROGRAMS[token as keyof typeof TOKEN_PROGRAMS]?.ticker === "BTC"
+    );
+
+    if (!dispenserToken) {
+      throw new Error("BTC token not found in TOKEN_PROGRAMS");
     }
-    const dispenserToken = process.env.DISPENSER_TOKEN;
 
     // Create dispenser keypair from env vars
     if (

@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@types/prompts": "^2.4.9",
     "prettier": "^3.2.5",
     "turbo": "^2.2.3",
     "typescript": "^5.5.4",
@@ -22,6 +23,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "prompts": "^2.4.2",
     "qrcode.react": "^4.2.0",
     "sonner": "^1.7.2"
   }

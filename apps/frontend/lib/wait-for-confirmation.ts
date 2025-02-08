@@ -12,7 +12,9 @@ export async function waitForConfirmationWithToast(
 
   try {
     // Wait for confirmation
-    await waitForConfirmation(archConnection, txId);
+    await waitForConfirmation(archConnection, txId, {
+      timeout: 1000,
+    });
 
     // Update toast on success
     toast.success("Transaction confirmed!", {

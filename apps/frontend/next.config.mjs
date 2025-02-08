@@ -1,10 +1,10 @@
-import webpack from 'webpack';
+import webpack from "webpack";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
     // Enable new forbidden() and unauthorized() APIs
-    authInterrupts: true
+    authInterrupts: true,
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -17,25 +17,25 @@ const nextConfig = {
         assert: false,
         fs: false,
         path: false,
-        os: false
+        os: false,
       };
 
       config.resolve.alias = {
         ...config.resolve.alias,
-        'node:crypto': false,
-        'node:stream': false,
-        'node:buffer': false,
-        'node:util': false,
-        'node:assert': false,
-        'node:fs': false,
-        'node:path': false,
-        'node:os': false
+        "node:crypto": false,
+        "node:stream": false,
+        "node:buffer": false,
+        "node:util": false,
+        "node:assert": false,
+        "node:fs": false,
+        "node:path": false,
+        "node:os": false,
       };
 
       config.plugins.push(
         new webpack.ProvidePlugin({
-          process: 'process/browser',
-          Buffer: ['buffer', 'Buffer']
+          process: "process/browser",
+          Buffer: ["buffer", "Buffer"],
         })
       );
 
@@ -47,14 +47,14 @@ const nextConfig = {
           {
             test: /\.m?js/,
             resolve: {
-              fullySpecified: false
-            }
-          }
-        ]
+              fullySpecified: false,
+            },
+          },
+        ],
       };
     }
     return config;
-  }
+  },
 };
 
 export default nextConfig;
