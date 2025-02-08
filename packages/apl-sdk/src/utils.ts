@@ -286,13 +286,13 @@ export function xOnly(publicKey: string): string {
 /**
  * Creates a mock signer callback that returns an empty signature.
  * Used for transaction preview without triggering wallet interactions.
- * 
+ *
  * @returns SignerCallback that returns an empty base64-encoded signature
  */
 export function createMockSigner(): SignerCallback {
   return async (_messageHash: string): Promise<string> => {
     // Return empty base64 signature (64 bytes of zeros)
-    const emptySignature = Buffer.from(new Uint8Array(64)).toString('base64');
+    const emptySignature = Buffer.from(new Uint8Array(64)).toString("base64");
     return emptySignature;
   };
 }
@@ -301,21 +301,26 @@ export function createMockSigner(): SignerCallback {
 export async function waitForConfirmation(
   rpcConnection: RpcConnection,
   txid: string,
-  maxAttempts = 30
+  options: {
+    timeout?: number;
+    maxAttempts?: number;
+  } = { timeout: 2000, maxAttempts: 30 }
 ): Promise<void> {
-  console.log("Waiting for transaction confirmation...");
+  // Destructure with defaults
+  const { timeout = 2000, maxAttempts = 30 } = options;
+
+  await new Promise((resolve) => setTimeout(resolve, 200)); // Sleeps for 200 ms
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const result = await rpcConnection.getProcessedTransaction(txid);
     if (result?.status === "Processed") {
-      console.log("Transaction confirmed with Processed status!");
       return;
     }
     if (typeof result?.status === "object" && "Failed" in result.status) {
       throw new Error(`Transaction failed: ${result.status.Failed}`);
     }
-    // Wait 2 seconds between attempts
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait between attempts
+    await new Promise((resolve) => setTimeout(resolve, timeout));
   }
 
   throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);

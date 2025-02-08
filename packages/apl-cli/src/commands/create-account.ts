@@ -1,14 +1,18 @@
 import { Command } from "commander";
-import { loadKeypair, createRpcConnection, handleError } from "../utils.js";
+import {
+  loadKeypair,
+  createRpcConnection,
+  handleError,
+  getUtxo,
+} from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createSignerFromKeypair,
   AssociatedTokenUtil,
   associatedTokenTx,
-  sendCoins,
   waitForConfirmation,
 } from "@repo/apl-sdk";
-import { rpcConfig } from "../config.js";
+import { readConfig } from "../config.js";
 
 export default function createAccountCommand(program: Command) {
   program
@@ -23,6 +27,7 @@ export default function createAccountCommand(program: Command) {
         const keypair = loadKeypair();
         const mintPubkey = PubkeyUtil.fromHex(tokenAddress);
         const rpcConnection = createRpcConnection();
+        const config = readConfig();
 
         // Determine owner - use provided owner address if available, otherwise use keypair
         const ownerPubkey = options.owner
@@ -65,12 +70,17 @@ export default function createAccountCommand(program: Command) {
             associatedTokenPubkey
           );
 
-          const utxo = await sendCoins(rpcConfig, associatedTokenAddress, 3000);
+          // Get UTXO based on network from config - requires 3000 sats
+          const utxo = await getUtxo(
+            config.network,
+            associatedTokenAddress,
+            3000
+          );
 
           const tx = await associatedTokenTx(
             utxo,
             associatedTokenPubkey,
-            ownerPubkey, // Use the determined owner pubkey
+            ownerPubkey,
             mintPubkey,
             signer
           );

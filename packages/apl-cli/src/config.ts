@@ -3,22 +3,39 @@ import os from "os";
 import path from "path";
 import { RPCConfig } from "@repo/apl-sdk";
 
+// Network types supported by the CLI
+export type Network = "regtest" | "testnet" | "mainnet";
+
 interface CliConfig {
   keypair: string;
   rpcUrl: string;
+  network: Network;
 }
 
 const CONFIG_DIR = path.join(os.homedir(), ".apl-cli");
 
-export const rpcConfig: RPCConfig = {
-  url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18443",
-  username: "bitcoin",
-  password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+export const rpcConfig: Record<Network, RPCConfig> = {
+  regtest: {
+    url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18443",
+    username: "bitcoin",
+    password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+  },
+  testnet: {
+    url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18332",
+    username: "bitcoin",
+    password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+  },
+  mainnet: {
+    url: "http://bitcoin-node.dev.aws.archnetwork.xyz:8332",
+    username: "bitcoin",
+    password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+  },
 };
 
 export const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(CONFIG_DIR, "keypair.json"),
   rpcUrl: "http://localhost:9002",
+  network: "regtest",
 };
 
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
@@ -78,24 +95,22 @@ export function writeConfig(config: Partial<CliConfig>): void {
 
 export async function getConfig(): Promise<void> {
   const config = readConfig();
-  console.log("Config File:", CONFIG_FILE);
-  console.log("RPC URL:", config.rpcUrl);
-  console.log("Keypair Path:", config.keypair);
+
+  // Print header
+  console.log("\n📝 Current Configuration\n" + "=".repeat(30));
+
+  // Print each config value with appropriate formatting
+  console.log("\n🔗 RPC URL:", config.rpcUrl);
+  console.log("🔑 Keypair Path:", config.keypair);
+  console.log("🌐 Network:", config.network);
+  console.log("\n📂 Config Location:", CONFIG_FILE);
+  console.log("=".repeat(30) + "\n");
 }
 
 export async function setConfig(options: Partial<CliConfig>): Promise<void> {
-  if (!options.keypair && !options.rpcUrl) {
-    throw new Error("Please provide at least one option to set");
-  }
+  writeConfig(options);
 
-  try {
-    writeConfig(options);
-    const config = readConfig();
-    console.log("Config updated successfully");
-    console.log("Config File:", CONFIG_FILE);
-    console.log("RPC URL:", config.rpcUrl);
-    console.log("Keypair Path:", config.keypair);
-  } catch (error) {
-    throw error;
-  }
+  // Show success message and display updated config
+  console.log("\n✅ Configuration updated successfully!\n");
+  await getConfig();
 }

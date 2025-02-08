@@ -1,14 +1,18 @@
 import { Command } from "commander";
-import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
+import {
+  loadKeypair,
+  handleError,
+  createRpcConnection,
+  getUtxo,
+} from "../utils.js";
 import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createKeypair,
   initializeMintTx,
-  sendCoins,
   createSignerFromKeypair,
   waitForConfirmation,
 } from "@repo/apl-sdk";
-import { rpcConfig } from "../config.js";
+import { readConfig } from "../config.js";
 
 export default function createTokenCommand(program: Command) {
   program
@@ -21,6 +25,7 @@ export default function createTokenCommand(program: Command) {
         const rpcConnection = createRpcConnection();
         const mintKeypair = createKeypair();
         const walletKeypair = loadKeypair();
+        const config = readConfig();
 
         const contractAddress = await rpcConnection.getAccountAddress(
           mintKeypair.publicKey
@@ -29,7 +34,9 @@ export default function createTokenCommand(program: Command) {
           "Contract Address:",
           Buffer.from(mintKeypair.publicKey).toString("hex")
         );
-        const utxo = await sendCoins(rpcConfig, contractAddress, 3000);
+
+        // Get UTXO based on network from config - requires 3000 sats
+        const utxo = await getUtxo(config.network, contractAddress, 3000);
 
         const decimals = parseInt(options.decimals);
         const freezeAuthority = options.freezeAuthority
@@ -47,7 +54,7 @@ export default function createTokenCommand(program: Command) {
           console.log(`Freeze Authority: ${options.freezeAuthority}`);
         }
 
-        // Create and send initialize mint transaction (stubbed)
+        // Create and send initialize mint transaction
         const signer = createSignerFromKeypair(mintKeypair);
 
         const tx = await initializeMintTx(
