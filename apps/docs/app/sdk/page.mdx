@@ -10,13 +10,13 @@ The APL SDK provides a TypeScript interface for creating and managing tokens on 
 npm install @a21/apl-sdk
 ```
 
-## Example Usage
+## Reading RPC Data
 
-You can use the sdk to read data from the arch network. The example below fetches all token accounts and then deserializes them into a `Mint` object.
+You can use the SDK to read data from the Arch network. Here's a complete example of reading token accounts and balances:
 
 ```typescript filename="list-tokens.ts" copy
 import { RpcConnection } from "@repo/arch-sdk";
-import { MintUtil, TOKEN_PROGRAM_ID } from "@a21/apl-sdk";
+import { MintUtil, TOKEN_PROGRAM_ID, TokenAccountUtil, AssociatedTokenUtil } from "@a21/apl-sdk";
 
 const main = async () => {
   const rpc = new RpcConnection("https://rpc-gamma.test.arch.network/");
@@ -26,17 +26,38 @@ const main = async () => {
     DataSize: 82,
   });
 
-  tokens.forEach(
-    (token: { account: { data: Uint8Array }; pubkey: Uint8Array }) => {
-      try {
-        // Deserialize token account
-        const mint = MintUtil.deserialize(Buffer.from(token.account.data));
-        console.log(mint);
-      } catch (error) {
-        // Skip invalid mints
+  tokens.forEach(async (token) => {
+    try {
+      // Deserialize token account
+      const mint = MintUtil.deserialize(Buffer.from(token.account.data));
+      if (!mint.is_initialized) return;
+
+      console.log('\nToken:', Buffer.from(token.pubkey).toString('hex'));
+      console.log('Decimals:', mint.decimals);
+      console.log('Total Supply:', mint.supply.toString());
+
+      // Example: Reading associated token account
+      const associatedTokenPubkey = AssociatedTokenUtil.getAssociatedTokenAddress(
+        token.pubkey,
+        ownerPubkey
+      );
+
+      const tokenAccountInfo = await rpc.readAccountInfo(associatedTokenPubkey);
+      if (tokenAccountInfo?.data) {
+        const tokenAccount = TokenAccountUtil.deserialize(
+          Buffer.from(tokenAccountInfo.data)
+        );
+        console.log('Balance:', tokenAccount.amount.toString());
+        console.log('State:', ['Uninitialized', 'Initialized', 'Frozen'][tokenAccount.state]);
+        
+        if (tokenAccount.delegate) {
+          console.log('Delegated Amount:', tokenAccount.delegated_amount.toString());
+        }
       }
+    } catch (error) {
+      console.error('Failed to read token data:', error);
     }
-  );
+  });
 };
 
 main();
@@ -48,7 +69,7 @@ The APL SDK provides core token operations with minimal setup required. Each ope
 
 ### Creating Tokens
 
-```typescript
+```typescript filename="create-token.ts" copy
 import { Pubkey } from "@saturnbtcio/arch-sdk";
 import { initializeMintTx, Keypair } from "@a21/apl-sdk";
 
@@ -60,11 +81,15 @@ const tx = await initializeMintTx(
   null, // Optional freeze authority
   signer // Transaction signing callback
 );
+
+// Send transaction and wait for confirmation
+const result = await rpcConnection.sendTransaction(tx);
+await waitForConfirmation(rpcConnection, result);
 ```
 
 ### Creating Associated Token Accounts
 
-```typescript
+```typescript filename="create-account.ts" copy
 import { Pubkey } from "@repo/arch-sdk";
 import { associatedTokenTx } from "@repo/apl-sdk";
 
@@ -75,36 +100,171 @@ const tx = await associatedTokenTx(
   mintPubkey, // Token mint address
   signer // Transaction signing callback
 );
+
+// Send transaction and wait for confirmation
+const result = await rpcConnection.sendTransaction(tx);
+await waitForConfirmation(rpcConnection, result);
 ```
 
 ### Minting Tokens
 
-```typescript
+```typescript filename="mint-tokens.ts" copy
 import { Pubkey } from "@repo/arch-sdk";
 import { mintToTx } from "@repo/apl-sdk";
 
-const tx = await mintToTx(
-  mintPubkey, // Token mint address
-  recipientPubkey, // Recipient token account
-  amount, // Amount to mint
-  mintAuthority, // Mint authority public key
-  signer // Transaction signing callback
-);
+try {
+  // Verify recipient token account exists
+  const recipientTokenInfo = await rpcConnection.readAccountInfo(recipientPubkey);
+  if (!recipientTokenInfo?.data) {
+    throw new Error('Recipient token account does not exist');
+  }
+
+  const tx = await mintToTx(
+    mintPubkey, // Token mint address
+    recipientPubkey, // Recipient token account
+    amount, // Amount to mint
+    mintAuthority, // Mint authority public key
+    signer // Transaction signing callback
+  );
+
+  // Send transaction and wait for confirmation
+  const result = await rpcConnection.sendTransaction(tx);
+  await waitForConfirmation(rpcConnection, result);
+} catch (error) {
+  console.error('Mint failed:', error);
+  throw error;
+}
 ```
 
 ### Transferring Tokens
 
-```typescript
+```typescript filename="transfer-tokens.ts" copy
 import { Pubkey } from "@repo/arch-sdk";
 import { transferTx } from "@repo/apl-sdk";
 
-const tx = await transferTx(
-  sourceTokenPubkey, // Source token account
-  mintPubkey, // Token mint address
-  destinationPubkey, // Destination token account
-  ownerPubkey, // Owner of source account
-  amount, // Amount to transfer
-  9, // Decimals (default)
-  signer // Transaction signing callback
+try {
+  // Verify accounts exist
+  const sourceTokenInfo = await rpcConnection.readAccountInfo(sourceTokenPubkey);
+  if (!sourceTokenInfo?.data) {
+    throw new Error('Source token account does not exist');
+  }
+
+  const recipientTokenInfo = await rpcConnection.readAccountInfo(destinationPubkey);
+  if (!recipientTokenInfo?.data) {
+    throw new Error('Recipient token account does not exist');
+  }
+
+  const tx = await transferTx(
+    sourceTokenPubkey, // Source token account
+    mintPubkey, // Token mint address
+    destinationPubkey, // Destination token account
+    ownerPubkey, // Owner of source account
+    amount, // Amount to transfer
+    9, // Decimals (default)
+    signer // Transaction signing callback
+  );
+
+  // Send transaction and wait for confirmation
+  const result = await rpcConnection.sendTransaction(tx);
+  await waitForConfirmation(rpcConnection, result);
+} catch (error) {
+  console.error('Transfer failed:', error);
+  throw error;
+}
+```
+
+## Web Integration
+
+For web applications, use LaserEyes for wallet integration. First, set up the provider in your app:
+
+```typescript filename="app/layout.tsx" copy
+import dynamic from "next/dynamic";
+import { LaserEyesProvider } from "@omnisat/lasereyes";
+
+// Use dynamic import to avoid SSR issues
+const DynamicLaserEyesProvider = dynamic(
+  () => import("@omnisat/lasereyes").then((mod) => mod.LaserEyesProvider),
+  { ssr: false }
 );
+
+export default function RootLayout({ children }) {
+  return <DynamicLaserEyesProvider>{children}</DynamicLaserEyesProvider>;
+}
+```
+
+Then implement the signer hook:
+
+```typescript filename="lib/hooks/useSigner.ts" copy
+import { useMemo } from "react";
+import { useLaserEyes } from "@omnisat/lasereyes";
+import { SignerCallback } from "@repo/apl-sdk";
+
+export function useSigner(): SignerCallback {
+  const laserEyes = useLaserEyes();
+
+  return useMemo(() => {
+    return async (messageHash: string) => {
+      if (!laserEyes.publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      // Special handling for Unisat wallet
+      if (laserEyes.provider === "unisat") {
+        const signature = await window.unisat.signMessage(
+          messageHash,
+          "bip322-simple"
+        );
+        return signature;
+      }
+
+      // LaserEyes expects hex string for signMessage
+      const signature = await laserEyes.signMessage(messageHash);
+      return signature;
+    };
+  }, [laserEyes]);
+}
+
+Example usage in a React component:
+
+```typescript filename="components/TransferForm.tsx" copy
+import { useLaserEyes } from "@omnisat/lasereyes";
+import { transferTx, waitForConfirmation } from "@repo/apl-sdk";
+import { useSigner } from "../lib/hooks/useSigner";
+
+export function TransferForm() {
+  const signer = useSigner();
+  const laserEyes = useLaserEyes();
+  
+  const handleTransfer = async () => {
+    if (!laserEyes.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+
+    try {
+      const tx = await transferTx(
+        sourceTokenPubkey,
+        mintPubkey,
+        recipientTokenPubkey,
+        Buffer.from(laserEyes.publicKey, 'hex'),
+        amount,
+        decimals,
+        signer
+      );
+
+      // Send transaction and wait for confirmation
+      const result = await rpcConnection.sendTransaction(tx);
+      await waitForConfirmation(rpcConnection, result);
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <button onClick={handleTransfer}>
+      Transfer Tokens
+    </button>
+  );
+}
+}
 ```
