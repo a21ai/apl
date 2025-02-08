@@ -175,43 +175,96 @@ try {
 
 ## Web Integration
 
-For web applications, you'll need to implement a signer that works with your web wallet:
+For web applications, use LaserEyes for wallet integration. First, set up the provider in your app:
 
-```typescript filename="web-signer.ts" copy
-// Example web wallet signer
-const webSigner = {
-  signMessage: async (message: Uint8Array) => {
-    // Implementation using web wallet (e.g., LaserEyes)
-    return await window.wallet.signMessage(message);
-  }
-};
+```typescript filename="app/layout.tsx" copy
+import dynamic from "next/dynamic";
+import { LaserEyesProvider } from "@omnisat/lasereyes";
 
-// Use the web signer in transactions
-const tx = await transferTx(
-  sourceTokenPubkey,
-  mintPubkey,
-  recipientTokenPubkey,
-  ownerPubkey,
-  amount,
-  decimals,
-  webSigner
+// Use dynamic import to avoid SSR issues
+const DynamicLaserEyesProvider = dynamic(
+  () => import("@omnisat/lasereyes").then((mod) => mod.LaserEyesProvider),
+  { ssr: false }
 );
 
-// Send transaction and wait for confirmation
-try {
-  const result = await rpcConnection.sendTransaction(tx);
+export default function RootLayout({ children }) {
+  return <DynamicLaserEyesProvider>{children}</DynamicLaserEyesProvider>;
+}
+```
+
+Then implement the signer hook:
+
+```typescript filename="lib/hooks/useSigner.ts" copy
+import { useMemo } from "react";
+import { useLaserEyes } from "@omnisat/lasereyes";
+import { SignerCallback } from "@repo/apl-sdk";
+
+export function useSigner(): SignerCallback {
+  const laserEyes = useLaserEyes();
+
+  return useMemo(() => {
+    return async (messageHash: string) => {
+      if (!laserEyes.publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      // Special handling for Unisat wallet
+      if (laserEyes.provider === "unisat") {
+        const signature = await window.unisat.signMessage(
+          messageHash,
+          "bip322-simple"
+        );
+        return signature;
+      }
+
+      // LaserEyes expects hex string for signMessage
+      const signature = await laserEyes.signMessage(messageHash);
+      return signature;
+    };
+  }, [laserEyes]);
+}
+
+Example usage in a React component:
+
+```typescript filename="components/TransferForm.tsx" copy
+import { useLaserEyes } from "@omnisat/lasereyes";
+import { transferTx, waitForConfirmation } from "@repo/apl-sdk";
+import { useSigner } from "../lib/hooks/useSigner";
+
+export function TransferForm() {
+  const signer = useSigner();
+  const laserEyes = useLaserEyes();
   
-  // Wait for confirmation with timeout
-  await Promise.race([
-    waitForConfirmation(rpcConnection, result),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Transaction timeout')), 30000)
-    )
-  ]);
-} catch (error) {
-  if (error.message === 'Transaction timeout') {
-    console.error('Transaction timed out');
-  }
-  throw error;
+  const handleTransfer = async () => {
+    if (!laserEyes.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+
+    try {
+      const tx = await transferTx(
+        sourceTokenPubkey,
+        mintPubkey,
+        recipientTokenPubkey,
+        Buffer.from(laserEyes.publicKey, 'hex'),
+        amount,
+        decimals,
+        signer
+      );
+
+      // Send transaction and wait for confirmation
+      const result = await rpcConnection.sendTransaction(tx);
+      await waitForConfirmation(rpcConnection, result);
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <button onClick={handleTransfer}>
+      Transfer Tokens
+    </button>
+  );
+}
 }
 ```
