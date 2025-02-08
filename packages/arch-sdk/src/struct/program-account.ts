@@ -6,7 +6,7 @@ export interface AccountFilter {
     offset: number;
     bytes: string; // hex-encoded bytes
   };
-  dataSize?: number;
+  DataSize?: number;
 }
 export interface ProgramAccount {
   pubkey: Pubkey;
