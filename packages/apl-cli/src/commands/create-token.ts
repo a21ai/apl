@@ -5,12 +5,12 @@ import {
   createRpcConnection,
   getUtxo,
 } from "../utils.js";
-import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createKeypair,
   initializeMintTx,
   createSignerFromKeypair,
   waitForConfirmation,
+  PubkeyUtil,
 } from "@repo/apl-sdk";
 import { readConfig } from "../config.js";
 

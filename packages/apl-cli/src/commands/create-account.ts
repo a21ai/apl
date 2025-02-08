@@ -5,12 +5,12 @@ import {
   handleError,
   getUtxo,
 } from "../utils.js";
-import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createSignerFromKeypair,
   AssociatedTokenUtil,
   associatedTokenTx,
   waitForConfirmation,
+  PubkeyUtil,
 } from "@repo/apl-sdk";
 import { readConfig } from "../config.js";
 

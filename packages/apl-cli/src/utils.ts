@@ -1,7 +1,6 @@
 import fs from "fs";
-import { RpcConnection, PubkeyUtil } from "@repo/arch-sdk";
 import { readConfig, rpcConfig, Network } from "./config.js";
-import { Keypair, sendCoins } from "@repo/apl-sdk";
+import { Keypair, sendCoins, RpcConnection, PubkeyUtil } from "@repo/apl-sdk";
 import prompts from "prompts";
 
 /**

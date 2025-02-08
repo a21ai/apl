@@ -7,7 +7,7 @@ The APL SDK provides a TypeScript interface for creating and managing tokens on 
 ## Installation
 
 ```sh npm2yarn copy
-npm install @a21/apl-sdk @saturnbtcio/arch-sdk
+npm install @a21/apl-sdk
 ```
 
 ## Example Usage
@@ -15,7 +15,7 @@ npm install @a21/apl-sdk @saturnbtcio/arch-sdk
 You can use the sdk to read data from the arch network. The example below fetches all token accounts and then deserializes them into a `Mint` object.
 
 ```typescript filename="list-tokens.ts" copy
-import { RpcConnection } from "@saturnbtcio/arch-sdk";
+import { RpcConnection } from "@repo/arch-sdk";
 import { MintUtil, TOKEN_PROGRAM_ID } from "@a21/apl-sdk";
 
 const main = async () => {

@@ -1,12 +1,12 @@
 import { Command } from "commander";
 import { loadKeypair, handleError, createRpcConnection } from "../utils.js";
-import { PubkeyUtil } from "@repo/arch-sdk";
 import {
   createSignerFromKeypair,
   mintToTx,
   MintUtil,
   AssociatedTokenUtil,
   waitForConfirmation,
+  PubkeyUtil,
 } from "@repo/apl-sdk";
 
 export default function mintCommand(program: Command) {
