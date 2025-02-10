@@ -31,7 +31,11 @@ const sendRPCRequest = async (
     { auth }
   );
 
-  return response.data.result;
+  if (response?.data?.error) {
+    console.log(method, params, response.data);
+  }
+
+  return response.data;
 };
 
 // Wallet management functions
@@ -39,12 +43,22 @@ export const loadWallet = async (
   config: RPCConfig,
   walletName: string
 ): Promise<void> => {
-  try {
+  const r = await sendRPCRequest(config, "loadwallet", [walletName]);
+  await sendRPCRequest(config, "getbalance", []);
+
+  if (r?.error?.code == -18) {
+    await createWallet(config, walletName);
     await sendRPCRequest(config, "loadwallet", [walletName]);
-    console.log(`✓ Wallet '${walletName}' loaded successfully.`);
-  } catch (error) {
-    // Silently handle if wallet is already loaded
   }
+
+  console.log(`✓ Wallet '${walletName}' loaded successfully.`);
+};
+
+export const createWallet = async (
+  config: RPCConfig,
+  walletName: string
+): Promise<void> => {
+  await sendRPCRequest(config, "createwallet", [walletName]);
 };
 
 export const unloadWallet = async (
@@ -63,14 +77,29 @@ export const sendToAddress = async (
   walletName: string
 ): Promise<string> => {
   console.log(`ℹ Sending ${amount} satoshis to address: ${to}`);
-  const txid = await sendRPCRequest(
+  const res = await sendRPCRequest(
     config,
     "sendtoaddress",
     [to, amount / 1e8, "", "", false, true, 1, "economical"],
     walletName
   );
-  console.log(`✓ Coins sent successfully! Transaction ID: ${txid}`);
-  return txid;
+
+  // Insufficient funds
+  if (res?.error?.code == -6) {
+    await generateToAddress(config, walletName);
+  }
+
+  console.log(`✓ Coins sent successfully! Transaction ID: ${res.result}`);
+  return res.result;
+};
+
+export const generateToAddress = async (
+  config: RPCConfig,
+  walletName: string
+): Promise<void> => {
+  const r = await sendRPCRequest(config, "getnewaddress", [walletName]);
+  await sendRPCRequest(config, "generatetoaddress", [101, r.result]);
+  await sendRPCRequest(config, "getbalances", []);
 };
 
 export const sendCoins = async (

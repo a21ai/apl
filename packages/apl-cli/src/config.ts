@@ -16,9 +16,9 @@ const CONFIG_DIR = path.join(os.homedir(), ".apl-cli");
 
 export const rpcConfig: Record<Network, RPCConfig> = {
   regtest: {
-    url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18443",
+    url: "http://localhost:18443",
     username: "bitcoin",
-    password: "428bae8f3c94f8c39c50757fc89c39bc7e6ebc70ebf8f618",
+    password: "bitcoin",
   },
   testnet: {
     url: "http://bitcoin-node.dev.aws.archnetwork.xyz:18332",
