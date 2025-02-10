@@ -4,49 +4,69 @@ services:
   bitcoin:
     image: bitcoin/bitcoin:latest
     container_name: bitcoin-node
+    networks:
+      default:
+        aliases:
+          - bitcoin
     ports:
       - "18443:18443"
+      - "18444:18444"
     volumes:
       - bitcoin_data:/home/bitcoin/.bitcoin
     command: >
       bitcoind
-      -regtest=1
-      -server=1
-      -rpcuser=bitcoin
-      -rpcpassword=bitcoin
+      -regtest=1 
+      -server=1 
+      -fallbackfee=0.0002 
+      -txindex=1 
+      -listen=1 
+      -discover=0 
+      -dnsseed=0 
+      -dns=0 
+      -printtoconsole=1 
+      -rpcbind=0.0.0.0 
       -rpcallowip=0.0.0.0/0
-      -rpcbind=0.0.0.0
-      -fallbackfee=0.0002
-      -txindex=1
-      -listen=1
-      -discover=0
-      -dnsseed=0
-      -dns=0
-      -printtoconsole=1
     healthcheck:
-      test: ["CMD", "bitcoin-cli", "-regtest", "-rpcuser=bitcoin", "-rpcpassword=bitcoin", "getblockchaininfo"]
+      test: ["CMD", "bitcoin-cli", "-regtest", "getblockchaininfo"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   electrs:
-    image: getumbrel/electrs:v0.10.7
+    build:
+      context: https://github.com/mempool/electrs.git#mempool
+      dockerfile: Dockerfile
     container_name: electrs
+    networks:
+      default:
+        aliases:
+          - electrs
     depends_on:
       bitcoin:
         condition: service_healthy
     ports:
       - "50001:50001"
       - "4224:4224"
+    command: >
+      --network regtest
+      --daemon-rpc-addr bitcoin:18443
+      --daemon-dir /home/bitcoin/.bitcoin
+      --db-dir /data/db
+      --electrum-rpc-addr 0.0.0.0:50001
+      --monitoring-addr 0.0.0.0:4224
+      --address-search
+      -vvvv
     volumes:
-      - /tmp/electrs_config/config.toml:/data/.electrs/config.toml:ro
-      - /tmp/electrs_data:/data/db
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
+      - electrs_data:/data/db
+    environment:
+      - RUST_BACKTRACE=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4224/metrics"]
+      test: ["CMD-SHELL", "echo 'GET /metrics HTTP/1.1\r\nHost: localhost:4224\r\n\r\n' | nc localhost 4224 | grep -q 'block_count'"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 120s
     restart: on-failure
 
   arch-validator:
@@ -60,11 +80,12 @@ services:
       - "9003:9003"
     environment:
       - BITCOIN_RPC_URL=http://bitcoin:18443
-      - BITCOIN_RPC_USER=bitcoin
-      - BITCOIN_RPC_PASS=bitcoin
       - ELECTRS_URL=electrs:50001
       - RUST_BACKTRACE=1
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
     restart: on-failure
 
 volumes:
   bitcoin_data:
+  electrs_data:
