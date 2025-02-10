@@ -5,7 +5,7 @@ services:
     image: bitcoin/bitcoin:latest
     container_name: bitcoin-node
     ports:
-      - "18443:18443" # RPC port for regtest
+      - "18443:18443"
     volumes:
       - bitcoin_data:/home/bitcoin/.bitcoin
     command: >
@@ -23,41 +23,41 @@ services:
       -dnsseed=0
       -dns=0
       -printtoconsole=1
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-regtest", "-rpcuser=bitcoin", "-rpcpassword=bitcoin", "getblockchaininfo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   electrs:
     image: getumbrel/electrs:v0.10.7
     container_name: electrs
-    user: "1000:1000" # Run as non-root user to fix permission issues
     depends_on:
-      - bitcoin
+      bitcoin:
+        condition: service_healthy
     ports:
-      - "50001:50001" # Electrum protocol port
-      - "4224:4224" # Prometheus monitoring port
+      - "50001:50001"
+      - "4224:4224"
     volumes:
-      - bitcoin_data:/home/bitcoin/.bitcoin:ro # Mount bitcoin data as read-only
-      - electrs_data:/home/user/db # Mount electrs db with write access
-    environment:
-      # - ELECTRS_NETWORK=regtest
-      - ELECTRS_DB_DIR=/home/user/db
-      - ELECTRS_DAEMON_RPC_ADDR=bitcoin:18443
-      - ELECTRS_DAEMON_P2P_ADDR=bitcoin:18444
-      - ELECTRS_ELECTRUM_RPC_ADDR=0.0.0.0:50001
-      - ELECTRS_MONITORING_ADDR=0.0.0.0:4224
-      - ELECTRS_DAEMON_RPC_USER=bitcoin
-      - ELECTRS_DAEMON_RPC_PASS=bitcoin
-      - ELECTRS_SKIP_BLOCK_DOWNLOAD_WAIT=1
-      - ELECTRS_DAEMON_DIR=/home/bitcoin/.bitcoin
+      - /tmp/electrs_config/config.toml:/data/.electrs/config.toml:ro
+      - /tmp/electrs_data:/data/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4224/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: on-failure
 
   arch-validator:
     image: ghcr.io/arch-network/local_validator:latest
     container_name: arch-validator
-    ports:
-      - "9002:9002" # RPC port
-      - "9003:9003" # P2P port
     depends_on:
-      - bitcoin
-      - electrs
+      electrs:
+        condition: service_healthy
+    ports:
+      - "9002:9002"
+      - "9003:9003"
     environment:
       - BITCOIN_RPC_URL=http://bitcoin:18443
       - BITCOIN_RPC_USER=bitcoin
@@ -68,4 +68,3 @@ services:
 
 volumes:
   bitcoin_data:
-  electrs_data:
