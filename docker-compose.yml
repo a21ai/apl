@@ -4,66 +4,86 @@ services:
   bitcoin:
     image: bitcoin/bitcoin:latest
     container_name: bitcoin-node
+    networks:
+      default:
+        aliases:
+          - bitcoin
     ports:
-      - "18443:18443" # RPC port for regtest
+      - "18443:18443"
+      - "18444:18444"
     volumes:
       - bitcoin_data:/home/bitcoin/.bitcoin
     command: >
       bitcoind
-      -regtest=1
-      -server=1
-      -rpcuser=bitcoin
-      -rpcpassword=bitcoin
+      -regtest=1 
+      -server=1 
+      -fallbackfee=0.0002 
+      -txindex=1 
+      -listen=1 
+      -discover=0 
+      -dnsseed=0 
+      -dns=0 
+      -printtoconsole=1 
+      -rpcbind=0.0.0.0 
       -rpcallowip=0.0.0.0/0
-      -rpcbind=0.0.0.0
-      -fallbackfee=0.0002
-      -txindex=1
-      -listen=1
-      -discover=0
-      -dnsseed=0
-      -dns=0
-      -printtoconsole=1
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-regtest", "getblockchaininfo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   electrs:
-    image: getumbrel/electrs:v0.10.7
+    build:
+      context: https://github.com/mempool/electrs.git#mempool
+      dockerfile: Dockerfile
     container_name: electrs
-    user: "1000:1000" # Run as non-root user to fix permission issues
+    networks:
+      default:
+        aliases:
+          - electrs
     depends_on:
-      - bitcoin
+      bitcoin:
+        condition: service_healthy
     ports:
-      - "50001:50001" # Electrum protocol port
-      - "4224:4224" # Prometheus monitoring port
+      - "50001:50001"
+      - "4224:4224"
+    command: >
+      --network regtest
+      --daemon-rpc-addr bitcoin:18443
+      --daemon-dir /home/bitcoin/.bitcoin
+      --db-dir /data/db
+      --electrum-rpc-addr 0.0.0.0:50001
+      --monitoring-addr 0.0.0.0:4224
+      --address-search
+      -vvvv
     volumes:
-      - bitcoin_data:/home/bitcoin/.bitcoin:ro # Mount bitcoin data as read-only
-      - electrs_data:/home/user/db # Mount electrs db with write access
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
+      - electrs_data:/data/db
     environment:
-      # - ELECTRS_NETWORK=regtest
-      - ELECTRS_DB_DIR=/home/user/db
-      - ELECTRS_DAEMON_RPC_ADDR=bitcoin:18443
-      - ELECTRS_DAEMON_P2P_ADDR=bitcoin:18444
-      - ELECTRS_ELECTRUM_RPC_ADDR=0.0.0.0:50001
-      - ELECTRS_MONITORING_ADDR=0.0.0.0:4224
-      - ELECTRS_DAEMON_RPC_USER=bitcoin
-      - ELECTRS_DAEMON_RPC_PASS=bitcoin
-      - ELECTRS_SKIP_BLOCK_DOWNLOAD_WAIT=1
-      - ELECTRS_DAEMON_DIR=/home/bitcoin/.bitcoin
+      - RUST_BACKTRACE=1
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'GET /metrics HTTP/1.1\r\nHost: localhost:4224\r\n\r\n' | nc localhost 4224 | grep -q 'block_count'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     restart: on-failure
 
   arch-validator:
     image: ghcr.io/arch-network/local_validator:latest
     container_name: arch-validator
-    ports:
-      - "9002:9002" # RPC port
-      - "9003:9003" # P2P port
     depends_on:
-      - bitcoin
-      - electrs
+      electrs:
+        condition: service_healthy
+    ports:
+      - "9002:9002"
+      - "9003:9003"
     environment:
       - BITCOIN_RPC_URL=http://bitcoin:18443
-      - BITCOIN_RPC_USER=bitcoin
-      - BITCOIN_RPC_PASS=bitcoin
       - ELECTRS_URL=electrs:50001
       - RUST_BACKTRACE=1
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
     restart: on-failure
 
 volumes:
