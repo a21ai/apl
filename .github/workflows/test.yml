@@ -40,7 +40,7 @@ jobs:
           mkdir -p /home/runner/.local/share/solana/install/releases/1.17.9/solana-release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
           cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf /home/runner/.cache/solana/v1.17.9/
           chmod -R 755 /home/runner/.cache/solana/v1.17.9
-          cargo install cargo-build-sbf --version 1.17.9
+          cargo install cargo-build-sbf
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
