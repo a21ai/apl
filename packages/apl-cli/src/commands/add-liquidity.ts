@@ -9,7 +9,7 @@ import {
   createSignerFromKeypair,
   waitForConfirmation,
 } from "@repo/apl-sdk";
-import { PubkeyUtil } from "@repo/arch-sdk";
+import { PubkeyUtil } from "@repo/apl-sdk";
 
 export default function addLiquidityCommand(program: Command) {
   program
