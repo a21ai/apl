@@ -39,7 +39,7 @@ jobs:
           mkdir -p /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
           mkdir -p /home/runner/.local/share/solana/install/releases/1.17.9/solana-release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
           cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/sbf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/bpf/* /home/runner/.cache/solana/v1.17.9/bpf/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/bpf/
           chmod -R 755 /home/runner/.cache/solana/v1.17.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
 
