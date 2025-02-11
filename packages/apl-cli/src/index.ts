@@ -9,6 +9,10 @@ import createAccountCommand from "./commands/create-account.js";
 import configCommand from "./commands/config.js";
 import transferCommand from "./commands/transfer.js";
 import tokensCommand from "./commands/tokens.js";
+import initializePoolCommand from "./commands/initialize-pool.js";
+import addLiquidityCommand from "./commands/add-liquidity.js";
+import removeLiquidityCommand from "./commands/remove-liquidity.js";
+import swapCommand from "./commands/swap.js";
 
 const program = new Command();
 
@@ -26,5 +30,11 @@ tokensCommand(program);
 createAccountCommand(program);
 configCommand(program);
 transferCommand(program);
+
+// AMM commands
+initializePoolCommand(program);
+addLiquidityCommand(program);
+removeLiquidityCommand(program);
+swapCommand(program);
 
 program.parseAsync(process.argv);

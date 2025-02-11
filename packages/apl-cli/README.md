@@ -299,6 +299,165 @@ Notes:
 - Recipient's token account must exist
 - Amount must be a positive integer
 
+### AMM Operations
+
+#### initialize-pool
+
+Description:
+Initialize a new AMM pool with two tokens.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Token mints must exist
+- RPC URL must be configured
+
+Usage:
+```bash
+apl-cli initialize-pool [options]
+```
+
+Options:
+- `--token-a <pubkey>` (Required) - Token A mint address
+- `--token-b <pubkey>` (Required) - Token B mint address
+- `--token-a-vault <pubkey>` (Required) - Token A vault address
+- `--token-b-vault <pubkey>` (Required) - Token B vault address
+- `--lp-mint <pubkey>` (Required) - LP token mint address
+- `--fee-numerator <number>` - Fee numerator (default: 25)
+- `--fee-denominator <number>` - Fee denominator (default: 10000)
+
+Example:
+```bash
+apl-cli initialize-pool \
+  --token-a deadbeef... \
+  --token-b cafe... \
+  --token-a-vault abcd... \
+  --token-b-vault efgh... \
+  --lp-mint ijkl...
+```
+
+#### add-liquidity
+
+Description:
+Add liquidity to an existing AMM pool.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Pool must exist
+- Token accounts must exist
+- RPC URL must be configured
+
+Usage:
+```bash
+apl-cli add-liquidity [options]
+```
+
+Options:
+- `--pool <pubkey>` (Required) - Pool address
+- `--token-a-vault <pubkey>` (Required) - Token A vault address
+- `--token-b-vault <pubkey>` (Required) - Token B vault address
+- `--lp-mint <pubkey>` (Required) - LP token mint address
+- `--user-token-a <pubkey>` (Required) - User's token A account
+- `--user-token-b <pubkey>` (Required) - User's token B account
+- `--user-lp <pubkey>` (Required) - User's LP token account
+- `--token-a-amount <number>` (Required) - Amount of token A to add
+- `--token-b-amount <number>` (Required) - Amount of token B to add
+- `--min-lp-amount <number>` - Minimum LP tokens to receive (default: 0)
+
+Example:
+```bash
+apl-cli add-liquidity \
+  --pool deadbeef... \
+  --token-a-vault abcd... \
+  --token-b-vault efgh... \
+  --lp-mint ijkl... \
+  --user-token-a mnop... \
+  --user-token-b qrst... \
+  --user-lp uvwx... \
+  --token-a-amount 1000000 \
+  --token-b-amount 1000000 \
+  --min-lp-amount 900000
+```
+
+#### remove-liquidity
+
+Description:
+Remove liquidity from an AMM pool.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Pool must exist
+- Token accounts must exist
+- RPC URL must be configured
+
+Usage:
+```bash
+apl-cli remove-liquidity [options]
+```
+
+Options:
+- `--pool <pubkey>` (Required) - Pool address
+- `--token-a-vault <pubkey>` (Required) - Token A vault address
+- `--token-b-vault <pubkey>` (Required) - Token B vault address
+- `--lp-mint <pubkey>` (Required) - LP token mint address
+- `--user-token-a <pubkey>` (Required) - User's token A account
+- `--user-token-b <pubkey>` (Required) - User's token B account
+- `--user-lp <pubkey>` (Required) - User's LP token account
+- `--lp-amount <number>` (Required) - Amount of LP tokens to burn
+- `--min-token-a-amount <number>` - Minimum token A to receive (default: 0)
+- `--min-token-b-amount <number>` - Minimum token B to receive (default: 0)
+
+Example:
+```bash
+apl-cli remove-liquidity \
+  --pool deadbeef... \
+  --token-a-vault abcd... \
+  --token-b-vault efgh... \
+  --lp-mint ijkl... \
+  --user-token-a mnop... \
+  --user-token-b qrst... \
+  --user-lp uvwx... \
+  --lp-amount 1000000 \
+  --min-token-a-amount 900000 \
+  --min-token-b-amount 900000
+```
+
+#### swap
+
+Description:
+Swap tokens through an AMM pool.
+
+Prerequisites:
+- Keypair must exist (see "Setup" section)
+- Pool must exist
+- Token accounts must exist
+- RPC URL must be configured
+
+Usage:
+```bash
+apl-cli swap [options]
+```
+
+Options:
+- `--pool <pubkey>` (Required) - Pool address
+- `--input-vault <pubkey>` (Required) - Input token vault address
+- `--output-vault <pubkey>` (Required) - Output token vault address
+- `--user-input <pubkey>` (Required) - User's input token account
+- `--user-output <pubkey>` (Required) - User's output token account
+- `--amount-in <number>` (Required) - Amount of input tokens to swap
+- `--min-amount-out <number>` - Minimum output tokens to receive (default: 0)
+
+Example:
+```bash
+apl-cli swap \
+  --pool deadbeef... \
+  --input-vault abcd... \
+  --output-vault efgh... \
+  --user-input ijkl... \
+  --user-output mnop... \
+  --amount-in 1000000 \
+  --min-amount-out 900000
+```
+
 ## Development
 
 ### Building
