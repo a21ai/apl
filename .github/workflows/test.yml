@@ -23,8 +23,10 @@ jobs:
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v1.17.9/install)"
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           solana --version
+          cargo install cargo-build-sbf
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
