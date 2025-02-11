@@ -24,5 +24,6 @@ jobs:
 
       - name: Run tests
         run: |
-          cd packages/apl-sdk && yarn test
-          cd ../apl-cli && yarn test
+          cd packages/arch-sdk && yarn build
+          cd ../apl-sdk && yarn build && yarn test
+          cd ../apl-cli && yarn build && yarn test
