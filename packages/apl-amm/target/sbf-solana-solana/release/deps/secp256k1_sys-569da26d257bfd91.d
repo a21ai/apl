@@ -1,0 +1,10 @@
+/Users/utxodetective/proj/a21/archway-turbo/packages/apl-amm/target/sbf-solana-solana/release/deps/libsecp256k1_sys-569da26d257bfd91.rmeta: /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/lib.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/macros.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/types.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/recovery.rs
+
+/Users/utxodetective/proj/a21/archway-turbo/packages/apl-amm/target/sbf-solana-solana/release/deps/libsecp256k1_sys-569da26d257bfd91.rlib: /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/lib.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/macros.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/types.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/recovery.rs
+
+/Users/utxodetective/proj/a21/archway-turbo/packages/apl-amm/target/sbf-solana-solana/release/deps/secp256k1_sys-569da26d257bfd91.d: /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/lib.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/macros.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/types.rs /Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/recovery.rs
+
+/Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/lib.rs:
+/Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/macros.rs:
+/Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/types.rs:
+/Users/utxodetective/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-sys-0.9.2/src/recovery.rs:
