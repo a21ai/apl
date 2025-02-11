@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      BPF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/bpf
+      SBF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/sbf
 
     steps:
       - uses: actions/checkout@v3
@@ -28,10 +31,10 @@ jobs:
           solana --version
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
-          solana config set --url localhost
-          mkdir -p /home/runner/.cache/solana
+          solana config set --url http://localhost:8899
+          mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
           rustup target add bpf
-          cargo install cargo-build-bpf --locked
+          cargo install cargo-build-sbf --locked
           rustup component add rust-src
           solana-install init v1.17.9
 
