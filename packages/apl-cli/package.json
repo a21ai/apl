@@ -9,7 +9,7 @@
     "build": "tsc && chmod +x ./dist/index.js",
     "dev": "tsc --watch",
     "test": "jest",
-    "pretest": "yarn build"
+    "pretest": "cd ../arch-sdk && yarn build && cd ../apl-sdk && yarn build && cd ../apl-cli && yarn build"
   },
   "dependencies": {
     "@repo/apl-sdk": "*",
