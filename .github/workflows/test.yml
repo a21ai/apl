@@ -9,31 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      BPF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/bpf
-      SBF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/sbf
-
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-          components: rust-src
-
-      - name: Install Solana CLI
-        run: |
-          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          solana --version
-          solana-keygen new --no-bip39-passphrase -o id.json
-          solana config set --keypair id.json
-          solana config set --url http://localhost:8899
-          cargo install cargo-build-sbf
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -48,20 +25,30 @@ jobs:
       - name: Build packages
         run: yarn turbo build
 
-      - name: Build Rust packages
-        run: |
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          cd programs/arch-program && cargo build-sbf
-          cd ../associated-token-account && cargo build-sbf
-          cd ../token && cargo build-sbf
-          cd ../apl-amm && cargo build-sbf
+      - name: Pull Solana CLI Docker Container
+        run: docker pull andreaskasper/solana:cli
 
-      - name: Test Rust packages
+      - name: Build Rust packages in Docker
         run: |
-          cd programs/arch-program && cargo test
-          cd ../associated-token-account && cargo test
-          cd ../token && cargo test
-          cd ../apl-amm && cargo test
+          docker run --rm \
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            andreaskasper/solana:cli \
+            bash -c "cd programs/arch-program && cargo build-sbf && \
+                    cd ../associated-token-account && cargo build-sbf && \
+                    cd ../token && cargo build-sbf && \
+                    cd ../apl-amm && cargo build-sbf"
+
+      - name: Test Rust packages in Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            andreaskasper/solana:cli \
+            bash -c "cd programs/arch-program && cargo test && \
+                    cd ../associated-token-account && cargo test && \
+                    cd ../token && cargo test && \
+                    cd ../apl-amm && cargo test"
 
       - name: Run sdk tests
         run: cd packages/apl-sdk && yarn test
