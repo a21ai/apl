@@ -38,6 +38,8 @@ jobs:
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9
           solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9/bpf
+          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9/sbf
+          chmod -R 755 /home/runner/.cache/solana/v1.17.9
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
