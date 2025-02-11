@@ -20,6 +20,12 @@ jobs:
           profile: minimal
           override: true
 
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.17.9/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -35,10 +41,10 @@ jobs:
 
       - name: Build Rust packages
         run: |
-          cd programs/arch-program && cargo build --release
-          cd ../associated-token-account && cargo build --release
-          cd ../token && cargo build --release
-          cd ../apl-amm && cargo build --release
+          cd programs/arch-program && cargo build-sbf
+          cd ../associated-token-account && cargo build-sbf
+          cd ../token && cargo build-sbf
+          cd ../apl-amm && cargo build-sbf
 
       - name: Test Rust packages
         run: |
