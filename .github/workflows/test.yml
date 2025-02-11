@@ -19,9 +19,11 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           override: true
+          components: rust-src
+          target: bpf
 
       - name: Install Solana CLI
         run: |
@@ -33,9 +35,7 @@ jobs:
           solana config set --keypair id.json
           solana config set --url http://localhost:8899
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
-          rustup target add bpf
           cargo install cargo-build-sbf --locked
-          rustup component add rust-src
           solana-install init v1.17.9
 
       - name: Setup Node.js
