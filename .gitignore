@@ -36,3 +36,19 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Rust/Cargo
+target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+.cargo-ok
+
+# Solana
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
