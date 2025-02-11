@@ -30,7 +30,8 @@ jobs:
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
           solana config set --url localhost
-          solana program build-bpf
+          solana-install install-bpf
+          solana program build
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
