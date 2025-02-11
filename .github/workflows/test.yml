@@ -35,6 +35,7 @@ jobs:
           solana config set --url http://localhost:8899
           solana-install init v1.17.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          rm -rf /home/runner/.cache/solana/v1.17.9
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
           mkdir -p /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
           mkdir -p /home/runner/.local/share/solana/install/releases/1.17.9/solana-release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
@@ -42,10 +43,8 @@ jobs:
           ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk || true
           ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf || true
           sleep 5
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies /home/runner/.cache/solana/v1.17.9/sbf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies /home/runner/.cache/solana/v1.17.9/bpf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/c /home/runner/.cache/solana/v1.17.9/sbf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/c /home/runner/.cache/solana/v1.17.9/bpf/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/sbf/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/bpf/
           chmod -R 755 /home/runner/.cache/solana/v1.17.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
 
