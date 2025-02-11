@@ -15,43 +15,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "22.11.0"
+          node-version: "18"
           cache: "yarn"
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
 
-      # Build all dependencies using Turbo before running tests
-      - name: Build packages
-        run: yarn turbo build
-
-      - name: Pull Solana CLI Docker Container
-        run: docker pull andreaskasper/solana:cli
-
-      - name: Build Rust packages in Docker
+      - name: Build and test in Docker
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/project \
             -w /project \
-            andreaskasper/solana:cli \
-            bash -c "cd programs/arch-program && cargo build-sbf && \
-                    cd ../associated-token-account && cargo build-sbf && \
-                    cd ../token && cargo build-sbf && \
-                    cd ../apl-amm && cargo build-sbf"
-
-      - name: Test Rust packages in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/project \
-            -w /project \
-            andreaskasper/solana:cli \
-            bash -c "cd programs/arch-program && cargo test && \
-                    cd ../associated-token-account && cargo test && \
-                    cd ../token && cargo test && \
-                    cd ../apl-amm && cargo test"
-
-      - name: Run sdk tests
-        run: cd packages/apl-sdk && yarn test
-
-      - name: Run cli tests
-        run: cd packages/apl-cli && yarn test
+            node:18 \
+            bash -c "curl --proto '=https' --tlsv1.2 -sSfL https://release.solana.com/stable/install | sh && \
+                    export PATH=\"/root/.local/share/solana/install/active_release/bin:$PATH\" && \
+                    yarn install && \
+                    yarn turbo build && \
+                    yarn turbo test"
