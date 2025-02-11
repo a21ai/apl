@@ -26,7 +26,11 @@ jobs:
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           solana --version
-          solana program build-sbf
+          solana-install init
+          solana-keygen new --no-bip39-passphrase -o id.json
+          solana config set --keypair id.json
+          solana config set --url localhost
+          solana program build-bpf
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
