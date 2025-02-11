@@ -26,23 +26,13 @@ jobs:
 
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.17.9/install)"
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           solana --version
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
           solana config set --url http://localhost:8899
-          rm -rf /home/runner/.cache/solana
-          mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
-          ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk || true
-          ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf || true
-          ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies || true
-          sleep 5
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/sbf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/bpf/
-          chmod -R 755 /home/runner/.cache/solana/v1.17.9
-          ls -la /home/runner/.cache/solana/v1.17.9/sbf/dependencies/platform-tools || true
           cargo install cargo-build-sbf
 
       - name: Setup Node.js
