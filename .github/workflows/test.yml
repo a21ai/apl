@@ -36,9 +36,8 @@ jobs:
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
           solana-install init v1.17.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9
-          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9/bpf
-          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9/sbf
+          mkdir -p /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf /home/runner/.cache/solana/v1.17.9/
           chmod -R 755 /home/runner/.cache/solana/v1.17.9
 
       - name: Setup Node.js
