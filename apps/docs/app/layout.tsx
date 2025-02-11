@@ -6,7 +6,6 @@ import "nextra-theme-docs/style-prefixed.css";
 import { getPageMap } from "nextra/page-map";
 
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
-import { Banner, Head } from "nextra/components";
 
 const banner = <></>;
 const navbar = (

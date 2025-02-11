@@ -20,7 +20,8 @@
   "packageManager": "yarn@1.22.22",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "programs/*"
   ],
   "dependencies": {
     "prompts": "^2.4.2",
