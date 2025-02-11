@@ -35,7 +35,9 @@ jobs:
           solana config set --url http://localhost:8899
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
           solana-install init v1.17.9
-          /home/runner/.local/share/solana/install/active_release/bin/cargo-build-sbf --version
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9
+          solana-install init v1.17.9 --data-dir /home/runner/.cache/solana/v1.17.9/bpf
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
