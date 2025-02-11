@@ -29,9 +29,10 @@ jobs:
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
           solana config set --url localhost
+          mkdir -p /home/runner/.cache/solana
           solana-install install-bpf
           rustup target add bpf
-          cargo install cargo-build-sbf
+          cargo install cargo-build-sbf --locked
           rustup component add rust-src
 
       - name: Setup Node.js
