@@ -18,6 +18,9 @@ jobs:
           node-version: "18"
           cache: "yarn"
 
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
       - name: Cache Turbo
         uses: actions/cache@v4
         with:
@@ -31,8 +34,8 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/project \
             -w /project \
-            node:18 \
-            bash -c "curl --proto '=https' --tlsv1.2 -sSfL https://release.solana.com/v1.17.9/install | sh && \
+            rust:latest \
+            bash -c "curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/solana-developers/solana-install/main/install.sh | bash && \
                     export PATH=\"/root/.local/share/solana/install/active_release/bin:$PATH\" && \
                     yarn install && \
                     yarn turbo build && \
