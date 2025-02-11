@@ -36,7 +36,6 @@ jobs:
             -w /project \
             rust:latest \
             bash -c "curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/solana-developers/solana-install/main/install.sh | bash && \
-                    export PATH=\"/root/.local/share/solana/install/active_release/bin:$PATH\" && \
                     yarn install && \
                     yarn turbo build && \
                     yarn turbo test"
