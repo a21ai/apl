@@ -36,12 +36,15 @@ jobs:
           rm -rf /home/runner/.cache/solana
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}/dependencies/platform-tools/rust/lib
           ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk || true
+          ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf || true
+          ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies || true
           sleep 5
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/sbf/
-          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/bpf/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools /home/runner/.cache/solana/v1.17.9/sbf/dependencies/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools /home/runner/.cache/solana/v1.17.9/bpf/dependencies/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/c /home/runner/.cache/solana/v1.17.9/sbf/
+          cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/c /home/runner/.cache/solana/v1.17.9/bpf/
           chmod -R 755 /home/runner/.cache/solana/v1.17.9
           ls -la /home/runner/.cache/solana/v1.17.9/sbf/dependencies/platform-tools/rust/lib || true
-          chmod -R 755 /home/runner/.cache/solana/v1.17.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
 
       - name: Setup Node.js
