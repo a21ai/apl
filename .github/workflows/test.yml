@@ -33,13 +33,8 @@ jobs:
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
           solana config set --url http://localhost:8899
-          solana-install init v1.17.9
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version
           rm -rf /home/runner/.cache/solana
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}/dependencies/platform-tools/rust/lib
-          mkdir -p /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
-          mkdir -p /home/runner/.local/share/solana/install/releases/1.17.9/solana-release/bin/sdk/sbf/dependencies/platform-tools/rust/lib
           ls -la /home/runner/.local/share/solana/install/active_release/bin/sdk || true
           sleep 5
           cp -r /home/runner/.local/share/solana/install/active_release/bin/sdk/sbf/* /home/runner/.cache/solana/v1.17.9/sbf/
