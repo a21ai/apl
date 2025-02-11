@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -16,11 +16,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22.11.0'
-          cache: 'yarn'
+          node-version: "22.11.0"
+          cache: "yarn"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Run tests
+      # Build all dependencies using Turbo before running tests
+      - name: Build packages
+        run: yarn turbo build
+
+      - name: Run sdk tests
         run: cd packages/apl-sdk && yarn test
+
+      - name: Run cli tests
+        run: cd packages/apl-cli && yarn test
