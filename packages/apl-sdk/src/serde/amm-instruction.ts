@@ -1,4 +1,4 @@
-import { Pubkey } from "@repo/arch-sdk";
+import type { Pubkey } from "@repo/arch-sdk";
 import { writeBigUint64LE } from "../utils.js";
 
 export enum AmmInstruction {

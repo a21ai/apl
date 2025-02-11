@@ -1,4 +1,4 @@
-import { Pubkey } from "@repo/arch-sdk";
+import type { Pubkey } from "@repo/arch-sdk";
 import { readUInt64LE, writeBigUint64LE } from "../utils.js";
 
 /**

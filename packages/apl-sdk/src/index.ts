@@ -15,4 +15,14 @@ export * as TokenInstructionUtil from "./serde/token-instruction.js";
 export * as MintUtil from "./serde/mint.js";
 export * as TokenAccountUtil from "./serde/token-account.js";
 
-export * from "@repo/arch-sdk";
+export type {
+  Pubkey,
+  RuntimeTransaction,
+  UtxoMetaData,
+  Instruction,
+} from "@repo/arch-sdk";
+
+export {
+  PubkeyUtil,
+  RpcConnection,
+} from "@repo/arch-sdk";

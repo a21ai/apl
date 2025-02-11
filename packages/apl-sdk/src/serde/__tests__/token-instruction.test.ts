@@ -1,4 +1,4 @@
-import { Pubkey } from "@repo/arch-sdk";
+import type { Pubkey } from "@repo/arch-sdk";
 import { randomPrivateKeyBytes, pubSchnorr } from "@scure/btc-signer/utils";
 import {
   TokenInstruction,
