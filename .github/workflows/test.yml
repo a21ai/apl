@@ -30,6 +30,8 @@ jobs:
           solana-keygen new --no-bip39-passphrase -o id.json
           solana config set --keypair id.json
           solana config set --url localhost
+          cargo install cargo-build-sbf
+          rustup component add rust-src
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
