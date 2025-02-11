@@ -6,10 +6,12 @@ use {
         account::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         msg,
+        program::{invoke, invoke_signed},
         program_error::ProgramError,
         program_pack::Pack,
         pubkey::Pubkey,
     },
+    apl_token,
 };
 
 mod math;
@@ -119,10 +121,11 @@ impl Processor {
         let token_a_vault_info = next_account_info(account_info_iter)?;
         let token_b_vault_info = next_account_info(account_info_iter)?;
         let lp_mint_info = next_account_info(account_info_iter)?;
-        let _user_token_a_info = next_account_info(account_info_iter)?;
-        let _user_token_b_info = next_account_info(account_info_iter)?;
-        let _user_lp_info = next_account_info(account_info_iter)?;
-        let _user_authority_info = next_account_info(account_info_iter)?;
+        let user_token_a_info = next_account_info(account_info_iter)?;
+        let user_token_b_info = next_account_info(account_info_iter)?;
+        let user_lp_info = next_account_info(account_info_iter)?;
+        let user_authority_info = next_account_info(account_info_iter)?;
+        let token_program_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;
@@ -161,10 +164,62 @@ impl Processor {
             return Err(AmmError::SlippageExceeded.into());
         }
 
-        // TODO: Transfer tokens using CPI
-        // 1. Transfer token A from user to vault
-        // 2. Transfer token B from user to vault
-        // 3. Mint LP tokens to user
+        // Transfer token A from user to vault
+        let transfer_a_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            user_token_a_info.key,
+            token_a_vault_info.key,
+            user_authority_info.key,
+            &[],
+            token_a_amount,
+        )?;
+        invoke(
+            &transfer_a_ix,
+            &[
+                user_token_a_info.clone(),
+                token_a_vault_info.clone(),
+                user_authority_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
+
+        // Transfer token B from user to vault
+        let transfer_b_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            user_token_b_info.key,
+            token_b_vault_info.key,
+            user_authority_info.key,
+            &[],
+            token_b_amount,
+        )?;
+        invoke(
+            &transfer_b_ix,
+            &[
+                user_token_b_info.clone(),
+                token_b_vault_info.clone(),
+                user_authority_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
+
+        // Mint LP tokens to user
+        let mint_to_ix = apl_token::instruction::mint_to(
+            &apl_token::id(),
+            lp_mint_info.key,
+            user_lp_info.key,
+            pool_info.key,
+            &[],
+            lp_amount,
+        )?;
+        invoke(
+            &mint_to_ix,
+            &[
+                lp_mint_info.clone(),
+                user_lp_info.clone(),
+                pool_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
 
         Ok(())
     }
@@ -181,10 +236,11 @@ impl Processor {
         let token_a_vault_info = next_account_info(account_info_iter)?;
         let token_b_vault_info = next_account_info(account_info_iter)?;
         let lp_mint_info = next_account_info(account_info_iter)?;
-        let _user_token_a_info = next_account_info(account_info_iter)?;
-        let _user_token_b_info = next_account_info(account_info_iter)?;
-        let _user_lp_info = next_account_info(account_info_iter)?;
-        let _user_authority_info = next_account_info(account_info_iter)?;
+        let user_token_a_info = next_account_info(account_info_iter)?;
+        let user_token_b_info = next_account_info(account_info_iter)?;
+        let user_lp_info = next_account_info(account_info_iter)?;
+        let user_authority_info = next_account_info(account_info_iter)?;
+        let token_program_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;
@@ -223,10 +279,62 @@ impl Processor {
             return Err(AmmError::SlippageExceeded.into());
         }
 
-        // TODO: Transfer tokens using CPI
-        // 1. Burn LP tokens
-        // 2. Transfer token A from vault to user
-        // 3. Transfer token B from vault to user
+        // Burn LP tokens from user
+        let burn_ix = apl_token::instruction::burn(
+            &apl_token::id(),
+            user_lp_info.key,
+            lp_mint_info.key,
+            user_authority_info.key,
+            &[],
+            lp_amount,
+        )?;
+        invoke(
+            &burn_ix,
+            &[
+                user_lp_info.clone(),
+                lp_mint_info.clone(),
+                user_authority_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
+
+        // Transfer token A from vault to user
+        let transfer_a_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            token_a_vault_info.key,
+            user_token_a_info.key,
+            pool_info.key,
+            &[],
+            token_a_amount,
+        )?;
+        invoke(
+            &transfer_a_ix,
+            &[
+                token_a_vault_info.clone(),
+                user_token_a_info.clone(),
+                pool_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
+
+        // Transfer token B from vault to user
+        let transfer_b_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            token_b_vault_info.key,
+            user_token_b_info.key,
+            pool_info.key,
+            &[],
+            token_b_amount,
+        )?;
+        invoke(
+            &transfer_b_ix,
+            &[
+                token_b_vault_info.clone(),
+                user_token_b_info.clone(),
+                pool_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
 
         Ok(())
     }
@@ -241,9 +349,10 @@ impl Processor {
         let pool_info = next_account_info(account_info_iter)?;
         let input_vault_info = next_account_info(account_info_iter)?;
         let output_vault_info = next_account_info(account_info_iter)?;
-        let _user_input_info = next_account_info(account_info_iter)?;
-        let _user_output_info = next_account_info(account_info_iter)?;
-        let _user_authority_info = next_account_info(account_info_iter)?;
+        let user_input_info = next_account_info(account_info_iter)?;
+        let user_output_info = next_account_info(account_info_iter)?;
+        let user_authority_info = next_account_info(account_info_iter)?;
+        let token_program_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;
@@ -274,9 +383,43 @@ impl Processor {
             return Err(AmmError::SlippageExceeded.into());
         }
 
-        // TODO: Transfer tokens using CPI
-        // 1. Transfer input tokens from user to vault
-        // 2. Transfer output tokens from vault to user
+        // Transfer input tokens from user to vault
+        let transfer_in_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            user_input_info.key,
+            input_vault_info.key,
+            user_authority_info.key,
+            &[],
+            amount_in,
+        )?;
+        invoke(
+            &transfer_in_ix,
+            &[
+                user_input_info.clone(),
+                input_vault_info.clone(),
+                user_authority_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
+
+        // Transfer output tokens from vault to user
+        let transfer_out_ix = apl_token::instruction::transfer(
+            &apl_token::id(),
+            output_vault_info.key,
+            user_output_info.key,
+            pool_info.key,
+            &[],
+            amount_out,
+        )?;
+        invoke(
+            &transfer_out_ix,
+            &[
+                output_vault_info.clone(),
+                user_output_info.clone(),
+                pool_info.clone(),
+                token_program_info.clone(),
+            ],
+        )?;
 
         Ok(())
     }
