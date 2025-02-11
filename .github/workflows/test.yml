@@ -35,7 +35,7 @@ jobs:
           solana config set --url http://localhost:8899
           mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
           solana-install init v1.17.9
-          cargo install cargo-build-sbf --locked
+          /home/runner/.local/share/solana/install/active_release/bin/cargo-build-sbf --version
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -52,6 +52,7 @@ jobs:
 
       - name: Build Rust packages
         run: |
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           cd programs/arch-program && cargo build-sbf
           cd ../associated-token-account && cargo build-sbf
           cd ../token && cargo build-sbf
