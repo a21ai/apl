@@ -23,4 +23,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run tests
-        run: cd packages/apl-sdk && yarn test
+        run: |
+          cd packages/arch-sdk && yarn build
+          cd ../apl-sdk && yarn build && yarn test
+          cd ../apl-cli && yarn build && yarn test

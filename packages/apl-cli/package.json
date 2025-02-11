@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc && chmod +x ./dist/index.js",
     "dev": "tsc --watch",
-    "test": "jest"
+    "test": "jest",
+    "pretest": "yarn build"
   },
   "dependencies": {
     "@repo/apl-sdk": "*",
