@@ -9,9 +9,34 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      BPF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/bpf
+      SBF_OUT_DIR: /home/runner/.cache/solana/v1.17.9/sbf
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.17.9/install)"
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
+          solana-keygen new --no-bip39-passphrase -o id.json
+          solana config set --keypair id.json
+          solana config set --url http://localhost:8899
+          mkdir -p /home/runner/.cache/solana/v1.17.9/{bpf,sbf}
+          rustup target add bpf
+          cargo install cargo-build-sbf --locked
+          rustup component add rust-src
+          solana-install init v1.17.9
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -25,6 +50,20 @@ jobs:
       # Build all dependencies using Turbo before running tests
       - name: Build packages
         run: yarn turbo build
+
+      - name: Build Rust packages
+        run: |
+          cd programs/arch-program && cargo build-sbf
+          cd ../associated-token-account && cargo build-sbf
+          cd ../token && cargo build-sbf
+          cd ../apl-amm && cargo build-sbf
+
+      - name: Test Rust packages
+        run: |
+          cd programs/arch-program && cargo test
+          cd ../associated-token-account && cargo test
+          cd ../token && cargo test
+          cd ../apl-amm && cargo test
 
       - name: Run sdk tests
         run: cd packages/apl-sdk && yarn test
