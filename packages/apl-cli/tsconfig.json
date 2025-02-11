@@ -7,11 +7,7 @@
     "module": "NodeNext",
     "baseUrl": ".",
     "paths": {
-      "@repo/*": ["../*/src"],
-      "@repo/arch-sdk": ["../arch-sdk/src"],
-      "@repo/arch-sdk/*": ["../arch-sdk/src/*"],
-      "@repo/apl-sdk": ["../apl-sdk/src"],
-      "@repo/apl-sdk/*": ["../apl-sdk/src/*"]
+      "@repo/*": ["../*/src"]
     }
   },
   "include": ["src/**/*"],

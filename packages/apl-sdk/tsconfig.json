@@ -10,9 +10,7 @@
     "types": ["jest", "node"],
     "baseUrl": ".",
     "paths": {
-      "@repo/*": ["../*/src"],
-      "@repo/arch-sdk": ["../arch-sdk/src"],
-      "@repo/arch-sdk/*": ["../arch-sdk/src/*"]
+      "@repo/*": ["../*/src"]
     }
   },
   "include": ["src/**/*"],
