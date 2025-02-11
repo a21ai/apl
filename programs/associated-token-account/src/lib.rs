@@ -1,14 +1,30 @@
 //! Program state processor
 
+mod tools;
+
 use arch_program::{
-    account::{next_account_info, AccountInfo}, entrypoint::ProgramResult, msg, program::{invoke, invoke_signed}, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, system_instruction::SystemInstruction
+    account::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    system_instruction,
 };
+use tools::create_pda_account;
+
+#[cfg(not(feature = "no-entrypoint"))]
+use arch_program::entrypoint;
+
+#[cfg(not(feature = "no-entrypoint"))]
+entrypoint!(process_instruction);
 
 /// Instruction processor
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    _input: &[u8],
+    input: &[u8],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -17,6 +33,14 @@ pub fn process_instruction(
     let spl_token_mint_info = next_account_info(account_info_iter)?;
     let system_program_info = next_account_info(account_info_iter)?;
     let spl_token_program_info = next_account_info(account_info_iter)?;
+
+    if input.len() < 36 {
+        msg!("Error: Instruction data has incorrect length");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let txid: [u8; 32] = input[0..32].try_into().unwrap();
+    let vout = u32::from_le_bytes(input[32..36].try_into().unwrap());
 
     let (associated_token_address, bump_seed) = get_associated_token_address_and_bump_seed(
         &wallet_account_info.key,
@@ -35,9 +59,17 @@ pub fn process_instruction(
         &[bump_seed],
     ];
 
+    create_pda_account(
+        txid,
+        vout,
+        system_program_info,
+        associated_token_account_info,
+        associated_token_account_signer_seeds,
+    )?;
+
     msg!("Allocate space for the associated token account");
     invoke_signed(
-        &SystemInstruction::new_write_bytes_instruction(
+        &system_instruction::write_bytes(
             0,
             apl_token::state::Account::LEN as u32,
             vec![0; apl_token::state::Account::LEN],
@@ -50,9 +82,9 @@ pub fn process_instruction(
         &[&associated_token_account_signer_seeds],
     )?;
 
-    msg!("Assign the associated token account to the SPL Token program");
+    msg!("Assign the associated token account to the APL Token program");
     invoke_signed(
-        &SystemInstruction::new_assign_ownership_instruction(associated_token_account_info.key.clone(), apl_token::id()),
+        &system_instruction::assign(associated_token_account_info.key.clone(), apl_token::id()),
         &[
             associated_token_account_info.clone(),
             system_program_info.clone(),

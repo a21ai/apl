@@ -2,14 +2,14 @@
 
 use {
     crate::instruction::MAX_SIGNERS,
-    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
-    num_enum::TryFromPrimitive,
     arch_program::{
         program_error::ProgramError,
         program_option::COption,
         program_pack::{IsInitialized, Pack, Sealed},
         pubkey::{Pubkey, PUBKEY_BYTES},
     },
+    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
+    num_enum::TryFromPrimitive,
 };
 
 /// Mint data.

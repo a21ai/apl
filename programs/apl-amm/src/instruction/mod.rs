@@ -2,11 +2,7 @@
 
 use {
     crate::error::AmmError,
-    arch_program::{
-        msg,
-        program_error::ProgramError,
-        pubkey::Pubkey,
-    },
+    arch_program::program_error::ProgramError,
     std::{convert::TryInto, mem::size_of},
 };
 

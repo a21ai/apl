@@ -84,7 +84,7 @@ impl Processor {
         } else {
             next_account_info(account_info_iter)?.key
         };
-        
+
         let mut account = Account::unpack_unchecked(&new_account_info.data.borrow())?;
         if account.is_initialized() {
             return Err(TokenError::AlreadyInUse.into());
@@ -131,10 +131,7 @@ impl Processor {
         Self::_process_initialize_account(program_id, accounts, Some(&owner))
     }
 
-    fn _process_initialize_multisig(
-        accounts: &[AccountInfo],
-        m: u8,
-    ) -> ProgramResult {
+    fn _process_initialize_multisig(accounts: &[AccountInfo], m: u8) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let multisig_info = next_account_info(account_info_iter)?;
 

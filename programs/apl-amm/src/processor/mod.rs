@@ -1,14 +1,11 @@
 //! Program processor
 
 use {
-    crate::{
-        error::AmmError,
-        instruction::AmmInstruction,
-        state::Pool,
-    },
+    crate::{error::AmmError, instruction::AmmInstruction, state::Pool},
     arch_program::{
         account::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
+        msg,
         program_error::ProgramError,
         program_pack::Pack,
         pubkey::Pubkey,
@@ -22,7 +19,93 @@ use math::*;
 pub struct Processor {}
 
 impl Processor {
-    // ... [Previous process and process_initialize_pool implementations] ...
+    /// Processes an instruction
+    pub fn process(
+        _program_id: &Pubkey,
+        accounts: &[AccountInfo],
+        instruction_data: &[u8],
+    ) -> ProgramResult {
+        let instruction = AmmInstruction::unpack(instruction_data)?;
+
+        match instruction {
+            AmmInstruction::InitializePool {
+                fee_numerator,
+                fee_denominator,
+            } => {
+                msg!("Instruction: InitializePool");
+                Self::process_initialize_pool(accounts, fee_numerator, fee_denominator)
+            }
+            AmmInstruction::AddLiquidity {
+                token_a_amount,
+                token_b_amount,
+                min_lp_amount,
+            } => {
+                msg!("Instruction: AddLiquidity");
+                Self::process_add_liquidity(accounts, token_a_amount, token_b_amount, min_lp_amount)
+            }
+            AmmInstruction::RemoveLiquidity {
+                lp_amount,
+                min_token_a_amount,
+                min_token_b_amount,
+            } => {
+                msg!("Instruction: RemoveLiquidity");
+                Self::process_remove_liquidity(
+                    accounts,
+                    lp_amount,
+                    min_token_a_amount,
+                    min_token_b_amount,
+                )
+            }
+            AmmInstruction::Swap {
+                amount_in,
+                min_amount_out,
+            } => {
+                msg!("Instruction: Swap");
+                Self::process_swap(accounts, amount_in, min_amount_out)
+            }
+        }
+    }
+
+    /// Processes an [InitializePool](enum.Instruction.html) instruction.
+    pub fn process_initialize_pool(
+        accounts: &[AccountInfo],
+        fee_numerator: u16,
+        fee_denominator: u16,
+    ) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+        let pool_info = next_account_info(account_info_iter)?;
+        let token_a_mint_info = next_account_info(account_info_iter)?;
+        let token_b_mint_info = next_account_info(account_info_iter)?;
+        let lp_mint_info = next_account_info(account_info_iter)?;
+        let token_a_vault_info = next_account_info(account_info_iter)?;
+        let token_b_vault_info = next_account_info(account_info_iter)?;
+        let _authority_info = next_account_info(account_info_iter)?;
+
+        // Validate pool state
+        let mut pool = Pool::unpack_unchecked(&pool_info.data.borrow())?;
+        if pool.is_initialized {
+            return Err(AmmError::AlreadyInitialized.into());
+        }
+
+        // Validate fee configuration
+        if fee_numerator == 0 || fee_denominator == 0 || fee_numerator >= fee_denominator {
+            return Err(AmmError::InvalidFeeConfig.into());
+        }
+
+        // Initialize pool
+        pool.token_a = *token_a_mint_info.key;
+        pool.token_b = *token_b_mint_info.key;
+        pool.lp_mint = *lp_mint_info.key;
+        pool.token_a_vault = *token_a_vault_info.key;
+        pool.token_b_vault = *token_b_vault_info.key;
+        pool.fee_numerator = fee_numerator;
+        pool.fee_denominator = fee_denominator;
+        pool.is_initialized = true;
+
+        Pool::pack(pool, &mut pool_info.data.borrow_mut())?;
+
+        Ok(())
+    }
 
     /// Processes an [AddLiquidity](enum.Instruction.html) instruction.
     pub fn process_add_liquidity(
@@ -36,10 +119,10 @@ impl Processor {
         let token_a_vault_info = next_account_info(account_info_iter)?;
         let token_b_vault_info = next_account_info(account_info_iter)?;
         let lp_mint_info = next_account_info(account_info_iter)?;
-        let user_token_a_info = next_account_info(account_info_iter)?;
-        let user_token_b_info = next_account_info(account_info_iter)?;
-        let user_lp_info = next_account_info(account_info_iter)?;
-        let user_authority_info = next_account_info(account_info_iter)?;
+        let _user_token_a_info = next_account_info(account_info_iter)?;
+        let _user_token_b_info = next_account_info(account_info_iter)?;
+        let _user_lp_info = next_account_info(account_info_iter)?;
+        let _user_authority_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;
@@ -98,10 +181,10 @@ impl Processor {
         let token_a_vault_info = next_account_info(account_info_iter)?;
         let token_b_vault_info = next_account_info(account_info_iter)?;
         let lp_mint_info = next_account_info(account_info_iter)?;
-        let user_token_a_info = next_account_info(account_info_iter)?;
-        let user_token_b_info = next_account_info(account_info_iter)?;
-        let user_lp_info = next_account_info(account_info_iter)?;
-        let user_authority_info = next_account_info(account_info_iter)?;
+        let _user_token_a_info = next_account_info(account_info_iter)?;
+        let _user_token_b_info = next_account_info(account_info_iter)?;
+        let _user_lp_info = next_account_info(account_info_iter)?;
+        let _user_authority_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;
@@ -158,9 +241,9 @@ impl Processor {
         let pool_info = next_account_info(account_info_iter)?;
         let input_vault_info = next_account_info(account_info_iter)?;
         let output_vault_info = next_account_info(account_info_iter)?;
-        let user_input_info = next_account_info(account_info_iter)?;
-        let user_output_info = next_account_info(account_info_iter)?;
-        let user_authority_info = next_account_info(account_info_iter)?;
+        let _user_input_info = next_account_info(account_info_iter)?;
+        let _user_output_info = next_account_info(account_info_iter)?;
+        let _user_authority_info = next_account_info(account_info_iter)?;
 
         // Validate pool state
         let pool = Pool::unpack(&pool_info.data.borrow())?;

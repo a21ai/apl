@@ -3,7 +3,8 @@
 use {
     crate::{check_program_account, error::TokenError},
     arch_program::{
-        account::AccountMeta, instruction::Instruction, msg, program_error::ProgramError, program_option::COption, pubkey::Pubkey
+        account::AccountMeta, instruction::Instruction, msg, program_error::ProgramError,
+        program_option::COption, pubkey::Pubkey,
     },
     std::{convert::TryInto, mem::size_of},
 };
@@ -750,9 +751,7 @@ pub fn initialize_mint(
     }
     .pack();
 
-    let accounts = vec![
-        AccountMeta::new(*mint_pubkey, false),
-    ];
+    let accounts = vec![AccountMeta::new(*mint_pubkey, false)];
 
     Ok(Instruction {
         program_id: *token_program_id,

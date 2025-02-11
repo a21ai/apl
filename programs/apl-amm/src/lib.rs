@@ -3,13 +3,7 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
-use arch_program::{
-    account::AccountInfo,
-    entrypoint,
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use arch_program::{account::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey};
 
 entrypoint!(process_instruction);
 fn process_instruction(

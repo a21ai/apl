@@ -1,12 +1,12 @@
 //! Error types
 
 use {
-    num_derive::FromPrimitive,
     arch_program::{
         decode_error::DecodeError,
         msg,
         program_error::{PrintProgramError, ProgramError},
     },
+    num_derive::FromPrimitive,
     thiserror::Error,
 };
 

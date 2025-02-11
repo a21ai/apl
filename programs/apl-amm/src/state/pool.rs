@@ -1,12 +1,12 @@
 //! Pool state definitions
 
 use {
-    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
     arch_program::{
         program_error::ProgramError,
         program_pack::{IsInitialized, Pack, Sealed},
-        pubkey::{Pubkey, PUBKEY_BYTES},
+        pubkey::Pubkey,
     },
+    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
 };
 
 /// Pool data.
@@ -43,15 +43,23 @@ impl Pack for Pool {
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
         let src = array_ref![src, 0, 165];
-        let (token_a, token_b, lp_mint, token_a_vault, token_b_vault, fee_numerator, fee_denominator, is_initialized) =
-            array_refs![src, 32, 32, 32, 32, 32, 2, 2, 1];
+        let (
+            token_a,
+            token_b,
+            lp_mint,
+            token_a_vault,
+            token_b_vault,
+            fee_numerator,
+            fee_denominator,
+            is_initialized,
+        ) = array_refs![src, 32, 32, 32, 32, 32, 2, 2, 1];
 
         Ok(Pool {
-            token_a: Pubkey::new_from_array(*token_a),
-            token_b: Pubkey::new_from_array(*token_b),
-            lp_mint: Pubkey::new_from_array(*lp_mint),
-            token_a_vault: Pubkey::new_from_array(*token_a_vault),
-            token_b_vault: Pubkey::new_from_array(*token_b_vault),
+            token_a: Pubkey::from_slice(token_a),
+            token_b: Pubkey::from_slice(token_b),
+            lp_mint: Pubkey::from_slice(lp_mint),
+            token_a_vault: Pubkey::from_slice(token_a_vault),
+            token_b_vault: Pubkey::from_slice(token_b_vault),
             fee_numerator: u16::from_le_bytes(*fee_numerator),
             fee_denominator: u16::from_le_bytes(*fee_denominator),
             is_initialized: match is_initialized {

@@ -1,12 +1,12 @@
 //! Error types
 
 use {
-    num_derive::FromPrimitive,
     arch_program::{
         decode_error::DecodeError,
         msg,
         program_error::{PrintProgramError, ProgramError},
     },
+    num_derive::FromPrimitive,
     thiserror::Error,
 };
 
@@ -34,6 +34,9 @@ pub enum AmmError {
     /// Math operation overflow
     #[error("Math operation overflow")]
     MathOverflow,
+    /// Invalid instruction data
+    #[error("Invalid instruction")]
+    InvalidInstruction,
 }
 
 impl From<AmmError> for ProgramError {
@@ -65,6 +68,7 @@ impl PrintProgramError for AmmError {
             AmmError::InvalidPoolTokens => msg!("Error: Invalid pool tokens"),
             AmmError::InvalidPoolState => msg!("Error: Invalid pool state"),
             AmmError::MathOverflow => msg!("Error: Math operation overflow"),
+            AmmError::InvalidInstruction => msg!("Error: Invalid instruction"),
         }
     }
 }
