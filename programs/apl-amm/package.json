@@ -1,0 +1,8 @@
+{
+  "name": "@repo/apl-amm",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "cargo build-sbf --manifest-path Cargo.toml",
+    "dev": "cargo build-sbf --manifest-path Cargo.toml"
+  }
+}

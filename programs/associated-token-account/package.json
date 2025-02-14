@@ -1,0 +1,6 @@
+{
+  "name": "@repo/associated-token-account",
+  "scripts": {
+    "build": "cargo build-sbf --manifest-path Cargo.toml"
+  }
+}

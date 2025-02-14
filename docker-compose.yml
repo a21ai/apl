@@ -1,0 +1,114 @@
+version: "3.8"
+
+services:
+  bitcoin:
+    image: bitcoin/bitcoin:latest
+    container_name: bitcoin-node
+    networks:
+      default:
+        aliases:
+          - bitcoin
+    ports:
+      - "18443:18443"
+      - "18444:18444"
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin
+    command: >
+      bitcoind
+      -regtest=1 
+      -server=1 
+      -fallbackfee=0.0002 
+      -txindex=1 
+      -listen=1 
+      -discover=0 
+      -dnsseed=0 
+      -dns=0 
+      -printtoconsole=1 
+      -rpcbind=0.0.0.0 
+      -rpcallowip=0.0.0.0/0
+      -rpcuser=bitcoin
+      -rpcpassword=bitcoin
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bitcoin-cli",
+          "-regtest",
+          "-rpcuser=bitcoin",
+          "-rpcpassword=bitcoin",
+          "getblockchaininfo",
+        ]
+      interval: 3s
+      timeout: 2s
+      retries: 3
+      start_period: 1s
+
+  electrs:
+    build:
+      context: https://github.com/Arch-Network/electrs.git#mempool
+      dockerfile: Dockerfile
+    container_name: electrs
+    networks:
+      default:
+        aliases:
+          - electrs
+    depends_on:
+      bitcoin:
+        condition: service_healthy
+    ports:
+      - "50001:50001"
+      - "4224:4224"
+      - "3002:3002"
+    command: >
+      --network regtest
+      --daemon-rpc-addr bitcoin:18443
+      --daemon-dir /home/bitcoin/.bitcoin
+      --db-dir /data/db
+      --electrum-rpc-addr 0.0.0.0:50001
+      --http-addr 0.0.0.0:3002
+      --monitoring-addr 0.0.0.0:4224
+      --address-search
+      --cookie bitcoin:bitcoin
+      --main-loop-delay 0
+      -vvvv
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
+      - electrs_data:/data/db
+    environment:
+      - RUST_BACKTRACE=0
+      - RUST_LOG=info
+    restart: on-failure
+    healthcheck:
+      # Test electrum connection by sending a simple protocol version request
+      test: ["CMD", "curl", "-s", "http://localhost:3002/blocks/tip/hash"]
+      interval: 3s
+      timeout: 2s
+      retries: 3
+      start_period: 1s
+
+  arch-validator:
+    image: ghcr.io/arch-network/local_validator:pr-643
+    container_name: arch-validator
+    depends_on:
+      bitcoin:
+        condition: service_healthy
+      electrs:
+        condition: service_healthy
+    ports:
+      - "9002:9002"
+      - "9003:9003"
+    command: local_validator
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 9002
+      --electrs-endpoint http://electrs:3002
+      --electrum-endpoint tcp://electrs:50001
+    environment:
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=full
+    volumes:
+      - bitcoin_data:/home/bitcoin/.bitcoin:ro
+    restart: on-failure
+
+volumes:
+  bitcoin_data:
+  electrs_data:

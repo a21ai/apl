@@ -1,0 +1,39 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install earthly
+        run: |
+          sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/latest/download/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'
+          earthly --version
+
+      - name: Build and test
+        run: earthly --ci +build
+
+      - name: Run tests
+        run: earthly --ci +test
+
+      - name: Check formatting
+        run: earthly --ci +check-fmt
+
+      - name: Run clippy
+        run: earthly --ci +check-clippy
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: program-artifacts
+          path: target/deploy/*.so
+          compression-level: 9 # Maximum compression to reduce upload time

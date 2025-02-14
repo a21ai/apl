@@ -1,0 +1,7 @@
+{
+  "name": "@repo/token",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "cargo build-sbf --manifest-path Cargo.toml"
+  }
+}
