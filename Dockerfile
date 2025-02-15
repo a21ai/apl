@@ -1,5 +1,5 @@
 # Start from official Rust image
-FROM --platform=linux/arm64 ghcr.io/arch-network/rust-with-solana:latest
+FROM ghcr.io/arch-network/rust-with-solana:latest
 
 # Set working directory
 WORKDIR /archway-turbo
@@ -11,8 +11,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     npm install -g yarn
 
 # Copy application code
-COPY . .
 
+COPY . .
 RUN yarn install
 RUN yarn turbo build
 
