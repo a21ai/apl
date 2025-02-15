@@ -44,6 +44,12 @@ export default function configCommand(program: Command) {
           config.network = options.network as Network;
         }
 
+        if (Object.keys(config).length === 0) {
+          console.error("Error: Please provide at least one option to set");
+          process.exitCode = 1;
+          return;
+        }
+
         await setConfig(config);
       } catch (error) {
         console.error(

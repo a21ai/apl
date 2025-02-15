@@ -6,7 +6,7 @@ import { RPCConfig } from "@repo/apl-sdk";
 // Network types supported by the CLI
 export type Network = "regtest" | "testnet" | "mainnet";
 
-interface CliConfig {
+export interface CliConfig {
   keypair: string;
   rpcUrl: string;
   network: Network;

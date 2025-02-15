@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "tsc",
-    "test": "vitest"
+    "test": "vitest --run"
   },
   "license": "MIT",
   "devDependencies": {

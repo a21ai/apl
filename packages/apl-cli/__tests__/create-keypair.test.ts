@@ -1,72 +1,109 @@
-import { Keypair } from '@solana/web3.js';
-import fs from 'fs';
-import path from 'path';
+import { jest } from "@jest/globals";
+import { Command } from "commander";
+import fs from "fs";
+import path from "path";
+import createKeypairCommand from "../src/commands/create-keypair.js";
+import * as configModule from "../src/config.js";
 
-// Mock fs module
-jest.mock('fs', () => ({
-  writeFileSync: jest.fn(),
-  existsSync: jest.fn(),
-  mkdirSync: jest.fn()
+// Mock modules
+jest.mock("fs");
+jest.mock("@scure/btc-signer/utils", () => ({
+  randomPrivateKeyBytes: () => new Uint8Array([1, 2, 3, 4]),
+  pubSchnorr: () => new Uint8Array([5, 6, 7, 8]),
 }));
+jest.mock("../src/config.js");
 
 // Mock process.exit
-jest.spyOn(process, 'exit').mockImplementation((code?: number) => undefined as never);
+const mockExit = jest
+  .spyOn(process, "exit")
+  .mockImplementation(() => undefined as never);
 
-describe('create-keypair command', () => {
+// Get mocked modules
+const mockedFs = jest.mocked(fs);
+
+describe("create-keypair command", () => {
+  let program: Command;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    program = new Command();
+    program.exitOverride();
+    createKeypairCommand(program);
+
+    // Reset process.exitCode
+    process.exitCode = 0;
+
+    // Reset console spies
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+
+    // Setup default mock implementations
+    mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.writeFileSync.mockImplementation(() => undefined);
+    mockedFs.mkdirSync.mockImplementation(() => undefined);
   });
 
-  it('should create a new keypair file with correct format', () => {
-    const mockKeypair = {
-      publicKey: {
-        toBytes: () => new Uint8Array([1, 2, 3])
-      },
-      secretKey: new Uint8Array([4, 5, 6])
-    };
-    
-    jest.spyOn(Keypair, 'generate').mockReturnValue(mockKeypair as unknown as Keypair);
-    
-    const outputPath = './test-keypair.json';
+  it("should create a new keypair file with correct format", async () => {
+    const outputPath = "/test/keypair.json";
+    mockedFs.existsSync.mockReturnValue(false);
+
+    await program.parseAsync([
+      "node",
+      "test",
+      "create-keypair",
+      "-o",
+      outputPath,
+    ]);
+
     const expectedContent = {
-      publicKey: Buffer.from([1, 2, 3]).toString('hex'),
-      secretKey: Buffer.from([4, 5, 6]).toString('hex')
+      publicKey: "05060708",
+      secretKey: "01020304",
     };
-    
-    // Execute command
-    const { default: createKeypairCommand } = require('../src/commands/create-keypair.js');
-    createKeypairCommand({ output: outputPath });
-    
-    // Verify file was written with correct content
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      path.resolve(outputPath),
+
+    expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
+      outputPath,
       JSON.stringify(expectedContent, null, 2)
     );
   });
 
-  it('should create output directory if it doesn\'t exist', () => {
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
-    
-    const outputPath = './nested/dir/keypair.json';
-    const { default: createKeypairCommand } = require('../src/commands/create-keypair.js');
-    createKeypairCommand({ output: outputPath });
-    
-    expect(fs.mkdirSync).toHaveBeenCalledWith(
-      path.dirname(path.resolve(outputPath)),
-      { recursive: true }
-    );
+  it("should create output directory if it doesn't exist", async () => {
+    const outputPath = "/test/dir/keypair.json";
+    mockedFs.existsSync.mockReturnValue(false);
+
+    await program.parseAsync([
+      "node",
+      "test",
+      "create-keypair",
+      "-o",
+      outputPath,
+    ]);
+
+    expect(mockedFs.mkdirSync).toHaveBeenCalledWith(path.dirname(outputPath), {
+      recursive: true,
+    });
   });
 
-  it('should handle write errors gracefully', () => {
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {
-      throw new Error('Write failed');
+  it("should handle write errors gracefully", async () => {
+    const outputPath = "/test/keypair.json";
+    mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.writeFileSync.mockImplementation(() => {
+      throw new Error("Write failed");
     });
-    
-    const consoleSpy = jest.spyOn(console, 'error');
-    const { default: createKeypairCommand } = require('../src/commands/create-keypair.js');
-    createKeypairCommand({ output: 'test.json' });
-    
-    expect(consoleSpy).toHaveBeenCalledWith('Error:', 'Write failed');
-    expect(process.exit).toHaveBeenCalledWith(1);
+
+    const consoleSpy = jest.spyOn(console, "error");
+
+    await program.parseAsync([
+      "node",
+      "test",
+      "create-keypair",
+      "-o",
+      outputPath,
+    ]);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error:",
+      expect.stringContaining("Write failed")
+    );
+    expect(mockExit).toHaveBeenCalledWith(1);
   });
 });

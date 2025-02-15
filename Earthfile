@@ -1,21 +1,13 @@
 VERSION 0.8
 
 rustbase:
-    FROM rust:latest
+    FROM --platform=linux/arm64 ghcr.io/arch-network/rust-with-solana:latest
     WORKDIR /archway-turbo
 
 setup:
     FROM +rustbase
     ENV CARGO_INCREMENTAL=0
     
-    # Install required packages
-    RUN apt-get update -y && \
-        apt-get install -y --no-install-recommends \
-        debian-archive-keyring \
-        sudo make build-essential clang pkg-config curl libssl-dev git jq && \
-        rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
-    RUN rustup component add rustfmt && rustup component add clippy
-    RUN rustup default stable
 
 deps:
     FROM +setup
@@ -30,16 +22,9 @@ deps:
     # Install yarn and turbo
     RUN npm install -g yarn turbo
 
-    # Install Solana CLI tools
-    #RUN sh -c "$(curl -sSfL https://release.solana.com/v1.17.16/install)" 
-    RUN curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/solana-developers/solana-install/main/install.sh | bash
-    RUN export PATH="/root/.local/share/solana/install/active_release/bin:$PATH"
-
 build:
     FROM +deps
 
-    RUN echo PATH: $PATH
-    
     COPY . .
     
     # Install dependencies

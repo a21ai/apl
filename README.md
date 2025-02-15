@@ -23,3 +23,9 @@ docker compose up -d
 ```
 
 This will start a local validator RPC url running on http://localhost:9002.
+
+Then, you can run the project with:
+
+```bash
+turbo dev
+```
