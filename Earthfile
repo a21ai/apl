@@ -1,7 +1,7 @@
 VERSION 0.8
 
 rustbase:
-    FROM --platform=linux/arm64 ghcr.io/arch-network/rust-with-solana:latest
+    FROM ghcr.io/arch-network/rust-with-solana:latest
     WORKDIR /archway-turbo
 
 setup:
