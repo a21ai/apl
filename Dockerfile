@@ -4,6 +4,8 @@ FROM ghcr.io/arch-network/rust-with-solana:latest
 # Set working directory
 WORKDIR /archway-turbo
 
+RUN rustup default stable
+
 # Install Node.js and yarn
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get update && \
