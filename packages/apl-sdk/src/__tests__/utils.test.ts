@@ -287,6 +287,48 @@ describe("Utils", () => {
         waitForConfirmation(mockRpc, "txid", { timeout: 100, maxAttempts: 2 })
       ).rejects.toThrow("Transaction not confirmed after 2 attempts");
     });
+
+    it("should use default options when none provided", async () => {
+      const mockRpc = {
+        getProcessedTransaction: jest
+          .fn()
+          .mockResolvedValueOnce({ status: "Processed" }),
+      } as unknown as RpcConnection;
+
+      await expect(
+        waitForConfirmation(mockRpc, "txid")
+      ).resolves.toBeUndefined();
+
+      expect(mockRpc.getProcessedTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("should use default timeout when only maxAttempts provided", async () => {
+      const mockRpc = {
+        getProcessedTransaction: jest
+          .fn()
+          .mockResolvedValueOnce({ status: "Processed" }),
+      } as unknown as RpcConnection;
+
+      await expect(
+        waitForConfirmation(mockRpc, "txid", { maxAttempts: 5 })
+      ).resolves.toBeUndefined();
+
+      expect(mockRpc.getProcessedTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("should use default maxAttempts when only timeout provided", async () => {
+      const mockRpc = {
+        getProcessedTransaction: jest
+          .fn()
+          .mockResolvedValueOnce({ status: "Processed" }),
+      } as unknown as RpcConnection;
+
+      await expect(
+        waitForConfirmation(mockRpc, "txid", { timeout: 1000 })
+      ).resolves.toBeUndefined();
+
+      expect(mockRpc.getProcessedTransaction).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("createAndSignTransaction", () => {

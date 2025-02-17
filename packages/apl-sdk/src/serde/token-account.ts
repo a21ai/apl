@@ -38,53 +38,54 @@ export const ACCOUNT_LEN = 164;
  * @returns Deserialized TokenAccount object
  */
 export function deserialize(buffer: Buffer): TokenAccount {
+  // Check buffer length for each field
+  if (buffer.length < 32) {
+    throw new Error("Buffer too short for mint");
+  }
+  if (buffer.length < 64) {
+    throw new Error("Buffer too short for owner");
+  }
+  if (buffer.length < 72) {
+    throw new Error("Buffer too short for amount");
+  }
+  if (buffer.length < 108) {
+    throw new Error("Buffer too short for delegate");
+  }
+  if (buffer.length < 109) {
+    throw new Error("Buffer too short for state");
+  }
+  if (buffer.length < 117) {
+    throw new Error("Buffer too short for delegated amount");
+  }
+  if (buffer.length < 153) {
+    throw new Error("Buffer too short for close authority");
+  }
   if (buffer.length !== ACCOUNT_LEN) {
     throw new Error(`Invalid buffer length: ${buffer.length}`);
   }
 
   // Extract mint (32 bytes)
-  if (buffer.length < 32) {
-    throw new Error("Buffer too short for mint");
-  }
   const mint = buffer.slice(0, 32);
 
   // Extract owner (32 bytes)
-  if (buffer.length < 64) {
-    throw new Error("Buffer too short for owner");
-  }
   const owner = buffer.slice(32, 64);
 
   // Extract amount (8 bytes)
-  if (buffer.length < 72) {
-    throw new Error("Buffer too short for amount");
-  }
   const amount = readUInt64LE(buffer, 64);
 
   // Extract delegate (36 bytes: 4 byte tag + 32 byte pubkey)
-  if (buffer.length < 108) {
-    throw new Error("Buffer too short for delegate");
-  }
   const delegate = deserializeOptionPubkey(buffer.slice(72, 108));
 
   // Extract state (1 byte)
-  if (buffer.length <= 108) {
-    throw new Error("Buffer too short for state");
-  }
   const stateValue = buffer[108] as number;
   if (stateValue === undefined || stateValue > AccountState.Frozen) {
     throw new Error("Invalid account state");
   }
 
   // Extract delegated amount (8 bytes)
-  if (buffer.length < 117) {
-    throw new Error("Buffer too short for delegated amount");
-  }
   const delegated_amount = readUInt64LE(buffer, 109);
 
   // Extract close authority (36 bytes: 4 byte tag + 32 byte pubkey)
-  if (buffer.length < 153) {
-    throw new Error("Buffer too short for close authority");
-  }
   const close_authority = deserializeOptionPubkey(buffer.slice(117, 153));
 
   return {

@@ -1,6 +1,6 @@
 import { Pubkey, RuntimeTransaction, Instruction } from "@repo/arch-sdk";
-import { createDeployTxs } from "../src/actions/deploy-program";
-import { SYSTEM_PROGRAM_ID } from "../src/constants";
+import { createDeployTxs } from "../deploy-program";
+import { SYSTEM_PROGRAM_ID } from "../../constants";
 
 describe("deploy-program", () => {
   describe("createDeployTxs", () => {

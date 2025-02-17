@@ -1,6 +1,6 @@
 import { Pubkey, RuntimeTransaction, Instruction } from "@repo/arch-sdk";
-import { createExecutableTx } from "../src/actions/make-executable";
-import { SYSTEM_PROGRAM_ID } from "../src/constants";
+import { createExecutableTx } from "../make-executable";
+import { SYSTEM_PROGRAM_ID } from "../../constants";
 
 describe("make-executable", () => {
   describe("createExecutableTx", () => {

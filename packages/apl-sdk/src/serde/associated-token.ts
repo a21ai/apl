@@ -1,4 +1,4 @@
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@repo/apl-sdk";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "../constants.js";
 import { Pubkey } from "@repo/arch-sdk";
 import { sha256 } from "@noble/hashes/sha256";
 import { secp256k1 } from "@noble/curves/secp256k1";
@@ -44,7 +44,7 @@ export function getAssociatedTokenAddress(
  * @return A tuple of [program address, bump seed]
  * @throws Error if no valid program address is found or if max seeds are exceeded
  */
-function findProgramAddress(
+export function findProgramAddress(
   seeds: Array<Buffer | Uint8Array>,
   programId: Pubkey
 ): [Pubkey, number] {
