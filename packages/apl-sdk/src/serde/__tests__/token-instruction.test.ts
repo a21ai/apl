@@ -220,4 +220,120 @@ describe("token instruction serialization", () => {
       });
     });
   });
+
+  describe("additional instruction coverage", () => {
+    describe("deserialize", () => {
+      it("should correctly deserialize Approve instruction", () => {
+        const amount = BigInt(1000);
+        const data = Buffer.alloc(9);
+        data[0] = TokenInstruction.Approve;
+        data.writeBigUInt64LE(amount, 1);
+        const deserialized = deserialize(data);
+
+        expect(deserialized).not.toBeNull();
+        expect(deserialized?.type).toBe("Approve");
+        expect(deserialized?.info.amount).toBe("1000");
+      });
+
+      it("should correctly deserialize MintTo instruction", () => {
+        const amount = BigInt(2000);
+        const data = Buffer.alloc(9);
+        data[0] = TokenInstruction.MintTo;
+        data.writeBigUInt64LE(amount, 1);
+        const deserialized = deserialize(data);
+
+        expect(deserialized).not.toBeNull();
+        expect(deserialized?.type).toBe("MintTo");
+        expect(deserialized?.info.amount).toBe("2000");
+      });
+
+      it("should correctly deserialize Burn instruction", () => {
+        const amount = BigInt(3000);
+        const data = Buffer.alloc(9);
+        data[0] = TokenInstruction.Burn;
+        data.writeBigUInt64LE(amount, 1);
+        const deserialized = deserialize(data);
+
+        expect(deserialized).not.toBeNull();
+        expect(deserialized?.type).toBe("Burn");
+        expect(deserialized?.info.amount).toBe("3000");
+      });
+
+      it("should handle insufficient data length for amount", () => {
+        const data = Buffer.from([TokenInstruction.Transfer, 1, 2, 3]); // Not enough bytes for u64
+        const deserialized = deserialize(data);
+        expect(deserialized).toBeNull();
+      });
+
+      it("should handle insufficient data length for decimals", () => {
+        const data = Buffer.from([TokenInstruction.InitializeMint]); // No decimals byte
+        const deserialized = deserialize(data);
+        expect(deserialized).toBeNull();
+      });
+
+      it("should handle invalid u64 data", () => {
+        // Create a buffer with invalid bytes that would cause BigInt conversion to fail
+        const data = Buffer.from([
+          TokenInstruction.Transfer,
+          0xff, // Create invalid data by making the buffer too short
+        ]);
+        const deserialized = deserialize(data);
+        expect(deserialized).toBeNull();
+      });
+    });
+
+    describe("serialize additional instructions", () => {
+      const testPriv = randomPrivateKeyBytes();
+      const testPubkey = pubSchnorr(testPriv) as Pubkey;
+
+      it("should serialize InitializeAccount2 instruction", () => {
+        const result = serialize(TokenInstruction.InitializeAccount2, {
+          owner: testPubkey,
+        });
+        expect(result[0]).toBe(TokenInstruction.InitializeAccount2);
+        expect(Buffer.from(result.slice(1, 33))).toEqual(
+          Buffer.from(testPubkey)
+        );
+      });
+
+      it("should serialize InitializeAccount3 instruction", () => {
+        const result = serialize(TokenInstruction.InitializeAccount3, {
+          owner: testPubkey,
+        });
+        expect(result[0]).toBe(TokenInstruction.InitializeAccount3);
+        expect(Buffer.from(result.slice(1, 33))).toEqual(
+          Buffer.from(testPubkey)
+        );
+      });
+
+      it("should serialize UiAmountToAmount instruction", () => {
+        const uiAmount = "1.5";
+        const result = serialize(TokenInstruction.UiAmountToAmount, {
+          uiAmount,
+        });
+        expect(result[0]).toBe(TokenInstruction.UiAmountToAmount);
+        expect(Buffer.from(result.slice(1)).toString()).toBe(uiAmount);
+      });
+
+      it("should serialize InitializeMint2 instruction", () => {
+        const data = {
+          decimals: 9,
+          mintAuthority: testPubkey,
+          freezeAuthority: testPubkey,
+        };
+        const result = serialize(TokenInstruction.InitializeMint2, data);
+        expect(result[0]).toBe(TokenInstruction.InitializeMint2);
+        expect(result[1]).toBe(9); // decimals
+        expect(Buffer.from(result.slice(2, 34))).toEqual(
+          Buffer.from(testPubkey)
+        ); // mint authority
+        // For Some(freezeAuthority), we expect a 4-byte Some tag followed by the pubkey
+        const someTag = Buffer.from([1, 0, 0, 0]); // Some tag in Rust
+        expect(Buffer.from(result.slice(34, 38))).toEqual(someTag);
+        expect(Buffer.from(result.slice(38, 70))).toEqual(
+          Buffer.from(testPubkey)
+        ); // freeze authority
+      });
+    });
+  });
 });

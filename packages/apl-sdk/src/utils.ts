@@ -83,6 +83,28 @@ export function createWriteBytesInstruction(
   return instruction;
 }
 
+export function createExtendBytesInstruction(
+  pubkey: Pubkey,
+  data: Uint8Array
+): Instruction {
+  // Create instruction data by concatenating:
+  // 1. Instruction tag [1] (1 byte)
+  // 2. Data bytes
+  const instructionTag = new Uint8Array([1]);
+
+  // Concatenate instruction tag and data
+  const instructionData = new Uint8Array(1 + data.length);
+  instructionData.set(instructionTag, 0);
+  instructionData.set(data, 1);
+
+  const instruction: Instruction = {
+    program_id: SYSTEM_PROGRAM_ID,
+    accounts: [{ pubkey, is_signer: true, is_writable: true }],
+    data: instructionData,
+  };
+  return instruction;
+}
+
 export type Keypair = {
   publicKey: Pubkey;
   secretKey: Pubkey;
@@ -169,38 +191,6 @@ export function getTaprootAddress(keypair: Keypair): string {
 export function getTaprootAddressFromPubkey(publicKey: Pubkey): string {
   const { address } = btc.p2tr(publicKey);
   return address!;
-}
-
-/**
- * Extract the public key from a taproot address by decoding the bech32m format
- * @param address The taproot address (starts with bc1p)
- * @returns The x-only public key used in the taproot address
- */
-export function getPubkeyFromTaprootAddress(address: string): Pubkey {
-  try {
-    // const a = new bitcore.Address(address);
-    // console.log("Address:", a.toString());
-
-    // Decode the Bech32m address
-    const decoded = bech32m.decode(address);
-
-    // Extract witness version and program
-    const witnessVersion = decoded.words[0]; // Should be 1 for Taproot
-    const program = bech32m.fromWords(decoded.words.slice(1));
-
-    // For taproot addresses, witness version should be 1 and program length should be 32 bytes
-    if (witnessVersion !== 1 || program.length !== 32) {
-      throw new Error(
-        "Invalid Taproot address: incorrect witness version or program length"
-      );
-    }
-
-    // The program is the x-only public key for Taproot
-    return new Uint8Array(program);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    throw new Error(`Invalid taproot address: ${message}`);
-  }
 }
 
 /**
@@ -324,4 +314,18 @@ export async function waitForConfirmation(
   }
 
   throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);
+}
+
+/**
+ * Creates an instruction to make a program executable
+ * @param programId The public key of the program to make executable
+ * @returns Instruction to make the program executable
+ */
+export function createExecutableInstruction(programId: Pubkey): Instruction {
+  const instruction: Instruction = {
+    program_id: SYSTEM_PROGRAM_ID,
+    accounts: [{ pubkey: programId, is_signer: true, is_writable: true }],
+    data: new Uint8Array([2]), // Instruction tag 2 for making program executable
+  };
+  return instruction;
 }

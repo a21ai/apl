@@ -177,45 +177,16 @@ export function deserialize(data: Uint8Array): ParsedTokenInstruction | null {
 
   switch (instructionType) {
     case TokenInstruction.Transfer:
-    case TokenInstruction.TransferChecked: {
-      const amount = readU64(remainingData, 0);
-      if (amount === null) return null;
-
-      return {
-        type:
-          instructionType === TokenInstruction.Transfer
-            ? "Transfer"
-            : "TransferChecked",
-        info: {
-          amount: amount.toString(),
-        },
-      };
-    }
-
+    case TokenInstruction.TransferChecked:
+    case TokenInstruction.Approve:
     case TokenInstruction.MintTo:
-    case TokenInstruction.MintToChecked: {
+    case TokenInstruction.Burn: {
       const amount = readU64(remainingData, 0);
       if (amount === null) return null;
 
+      const type = TokenInstruction[instructionType];
       return {
-        type:
-          instructionType === TokenInstruction.MintTo
-            ? "MintTo"
-            : "MintToChecked",
-        info: {
-          amount: amount.toString(),
-        },
-      };
-    }
-
-    case TokenInstruction.Burn:
-    case TokenInstruction.BurnChecked: {
-      const amount = readU64(remainingData, 0);
-      if (amount === null) return null;
-
-      return {
-        type:
-          instructionType === TokenInstruction.Burn ? "Burn" : "BurnChecked",
+        type,
         info: {
           amount: amount.toString(),
         },

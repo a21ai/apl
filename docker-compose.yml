@@ -103,7 +103,7 @@ services:
       --electrs-endpoint http://electrs:3002
       --electrum-endpoint tcp://electrs:50001
     environment:
-      - RUST_LOG=debug
+      - RUST_LOG=info
       - RUST_BACKTRACE=full
     volumes:
       - bitcoin_data:/home/bitcoin/.bitcoin:ro
