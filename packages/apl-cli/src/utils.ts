@@ -1,6 +1,12 @@
 import fs from "fs";
-import { readConfig, rpcConfig, Network } from "./config.js";
-import { Keypair, sendCoins, RpcConnection, PubkeyUtil } from "@repo/apl-sdk";
+import { readConfig, Network } from "./config.js";
+import {
+  Keypair,
+  sendCoins,
+  RpcConnection,
+  PubkeyUtil,
+  UtxoMetaData,
+} from "@repo/apl-sdk";
 import prompts from "prompts";
 
 /**
@@ -27,11 +33,13 @@ export function handleError(error: unknown): never {
 
 /**
  * Load keypair data and convert public key to Arch format
+ * @param path Optional path to keypair file. If not provided, uses path from config
  * @returns {Object} Object containing keypair data and Arch pubkey
  */
-export function loadKeypair(): Keypair {
+export function loadKeypair(path?: string): Keypair {
   const config = readConfig();
-  const keypairData = JSON.parse(fs.readFileSync(config.keypair, "utf8"));
+  const keypairPath = path || config.keypair;
+  const keypairData = JSON.parse(fs.readFileSync(keypairPath, "utf8"));
 
   return {
     publicKey: PubkeyUtil.fromHex(keypairData.publicKey),
@@ -57,7 +65,7 @@ export async function getUtxo(
       throw new Error("Contract address is required for regtest mode");
     }
     console.log(`Sending ${amount} sats (${amount / 1e8} BTC) to contract...`);
-    return await sendCoins(rpcConfig[network], contractAddress, amount);
+    return await sendCoins(readConfig().rpcConfig, contractAddress, amount);
   } else {
     // For testnet/mainnet, prompt for UTXO details
     console.log(
@@ -93,4 +101,13 @@ export async function getUtxo(
       vout: response.vout,
     };
   }
+}
+
+export async function sendCoinsToContract(
+  network: Network,
+  contractAddress: string,
+  amount: number
+): Promise<UtxoMetaData> {
+  const config = readConfig();
+  return await sendCoins(config.rpcConfig, contractAddress, amount);
 }

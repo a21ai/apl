@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { getConfig, setConfig } from "../config.js";
-import { Network } from "../config.js";
+import { readConfig, setConfig, Network } from "../config.js";
+import type { CliConfig } from "../config.js";
 
 export default function configCommand(program: Command) {
   const config = program
@@ -10,15 +10,12 @@ export default function configCommand(program: Command) {
   config
     .command("get")
     .description("Get current configuration")
-    .action(async () => {
+    .action(() => {
       try {
-        await getConfig();
+        const config = readConfig();
+        console.log(JSON.stringify(config, null, 2));
       } catch (error) {
-        console.error(
-          "Error:",
-          error instanceof Error ? error.message : "Unknown error"
-        );
-        process.exitCode = 1;
+        console.error("Error reading configuration:", error);
       }
     });
 
@@ -28,10 +25,21 @@ export default function configCommand(program: Command) {
     .option("-u, --url <url>", "RPC endpoint URL")
     .option("-k, --keypair <path>", "keypair file path")
     .option("--network <network>", "network to use (regtest/testnet/mainnet)")
+    .option("--rpc-url <url>", "Set RPC URL")
+    .option("--rpc-username <username>", "Set RPC username")
+    .option("--rpc-password <password>", "Set RPC password")
     .action(async (options) => {
       try {
-        const config: { rpcUrl?: string; keypair?: string; network?: Network } =
-          {};
+        const config: Partial<CliConfig> = {
+          ...readConfig(),
+          rpcConfig: {
+            url: options.rpcUrl ?? readConfig().rpcConfig?.url ?? "",
+            username:
+              options.rpcUsername ?? readConfig().rpcConfig?.username ?? "",
+            password:
+              options.rpcPassword ?? readConfig().rpcConfig?.password ?? "",
+          },
+        };
 
         if (options.url) config.rpcUrl = options.url;
         if (options.keypair) config.keypair = options.keypair;
@@ -44,7 +52,14 @@ export default function configCommand(program: Command) {
           config.network = options.network as Network;
         }
 
-        if (Object.keys(config).length === 0) {
+        if (
+          !options.url &&
+          !options.keypair &&
+          !options.network &&
+          !options.rpcUrl &&
+          !options.rpcUsername &&
+          !options.rpcPassword
+        ) {
           console.error("Error: Please provide at least one option to set");
           process.exitCode = 1;
           return;

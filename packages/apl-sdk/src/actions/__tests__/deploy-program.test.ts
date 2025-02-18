@@ -1,6 +1,6 @@
 import { Pubkey, RuntimeTransaction, Instruction } from "@repo/arch-sdk";
-import { createDeployTxs } from "../deploy-program";
-import { SYSTEM_PROGRAM_ID } from "../../constants";
+import { createDeployTxs } from "../deploy-program.js";
+import { SYSTEM_PROGRAM_ID } from "../../constants.js";
 
 describe("deploy-program", () => {
   describe("createDeployTxs", () => {
@@ -39,7 +39,7 @@ describe("deploy-program", () => {
       expect(txs.length).toBeGreaterThan(1);
 
       // Verify each transaction
-      txs.forEach((tx) => {
+      txs.forEach((tx: any) => {
         expect(tx.message.signers).toEqual([programId]);
         expect(tx.message.instructions).toHaveLength(1);
 

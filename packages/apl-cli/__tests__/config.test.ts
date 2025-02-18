@@ -20,6 +20,11 @@ const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(os.homedir(), ".apl-sdk", "id.json"),
   rpcUrl: "http://localhost:9002",
   network: "regtest",
+  rpcConfig: {
+    url: "http://localhost:18443",
+    username: "bitcoin",
+    password: "bitcoin",
+  },
 };
 
 // Setup mock implementations
@@ -102,6 +107,11 @@ describe("Config Management", () => {
     keypair: path.join(os.homedir(), ".apl-sdk", "id.json"),
     rpcUrl: "http://localhost:9002",
     network: "regtest",
+    rpcConfig: {
+      url: "http://localhost:18443",
+      username: "bitcoin",
+      password: "bitcoin",
+    },
   };
 
   beforeEach(() => {

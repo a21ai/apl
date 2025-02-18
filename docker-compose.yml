@@ -38,9 +38,9 @@ services:
           "-rpcpassword=bitcoin",
           "getblockchaininfo",
         ]
-      interval: 3s
-      timeout: 2s
-      retries: 3
+      interval: 1s
+      timeout: 1s
+      retries: 2
       start_period: 1s
 
   electrs:
@@ -81,9 +81,9 @@ services:
     healthcheck:
       # Test electrum connection by sending a simple protocol version request
       test: ["CMD", "curl", "-s", "http://localhost:3002/blocks/tip/hash"]
-      interval: 3s
-      timeout: 2s
-      retries: 3
+      interval: 1s
+      timeout: 1s
+      retries: 2
       start_period: 1s
 
   arch-validator:
@@ -108,6 +108,34 @@ services:
     volumes:
       - bitcoin_data:/home/bitcoin/.bitcoin:ro
     restart: on-failure
+    healthcheck:
+      test:
+        ["CMD", "/bin/sh", "-c", "timeout 1 bash -c '</dev/tcp/localhost/9002'"]
+      interval: 1s
+      timeout: 1s
+      retries: 2
+      start_period: 2s
+
+  apl-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/archway-turbo
+    command: >
+      /bin/bash -c "
+      cd /archway-turbo &&
+      yarn apl-cli config set --url http://arch-validator:9002 --rpc-url http://bitcoin:18443 --keypair ./keypairs/wallet.json &&
+      yarn apl-cli create-token --mint-keypair ./keypairs/apl-sats.json &&
+      yarn apl-cli create-token --mint-keypair ./keypairs/scat.json &&
+      yarn apl-cli create-account 5f491363b5f6d4d6248308a17121af4725cb6bb61f5963fc74d9542c5d5584ed &&
+      yarn apl-cli create-account 8965006a7590d76735d6c1ce2cf0e36efa6cad707bcbfbfb095d8449a7b0a7fc &&
+      yarn apl-cli mint -m 5f491363b5f6d4d6248308a17121af4725cb6bb61f5963fc74d9542c5d5584ed -a 100000000 &&
+      yarn apl-cli mint -m 8965006a7590d76735d6c1ce2cf0e36efa6cad707bcbfbfb095d8449a7b0a7fc -a 42000000000
+      "
+    depends_on:
+      arch-validator:
+        condition: service_healthy
 
 volumes:
   bitcoin_data:

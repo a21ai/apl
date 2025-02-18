@@ -20,10 +20,13 @@ export default function createTokenCommand(program: Command) {
     .description("Create a new token")
     .option("-d, --decimals <number>", "number of decimals", "9")
     .option("-f, --freeze-authority <pubkey>", "optional freeze authority")
+    .option("-m, --mint-keypair <path>", "path to mint keypair file")
     .action(async (options) => {
       try {
         const rpcConnection = createRpcConnection();
-        const mintKeypair = createKeypair();
+        const mintKeypair = options.mintKeypair
+          ? loadKeypair(options.mintKeypair)
+          : createKeypair();
         const walletKeypair = loadKeypair();
         const config = readConfig();
 

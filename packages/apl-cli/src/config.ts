@@ -1,7 +1,6 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { RPCConfig } from "@repo/apl-sdk";
 
 // Network types supported by the CLI
 export type Network = "regtest" | "testnet" | "mainnet";
@@ -10,32 +9,26 @@ export interface CliConfig {
   keypair: string;
   rpcUrl: string;
   network: Network;
+  rpcConfig: {
+    url: string;
+    username: string;
+    password: string;
+  };
 }
 
 const CONFIG_DIR = path.join(os.homedir(), ".apl-cli");
 
-export const rpcConfig: Record<Network, RPCConfig> = {
-  regtest: {
-    url: "http://localhost:18443",
-    username: "bitcoin",
-    password: "bitcoin",
-  },
-  testnet: {
-    url: "",
-    username: "",
-    password: "",
-  },
-  mainnet: {
-    url: "",
-    username: "",
-    password: "",
-  },
+const DEFAULT_RPC_CONFIG = {
+  url: "http://localhost:18443",
+  username: "bitcoin",
+  password: "bitcoin",
 };
 
 export const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(CONFIG_DIR, "keypair.json"),
   rpcUrl: "http://localhost:9002",
   network: "regtest",
+  rpcConfig: DEFAULT_RPC_CONFIG,
 };
 
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
@@ -63,6 +56,11 @@ export function readConfig(): CliConfig {
     return {
       ...DEFAULT_CONFIG,
       ...config,
+      // Ensure rpcConfig has all required fields with default values as fallback
+      rpcConfig: {
+        ...DEFAULT_RPC_CONFIG,
+        ...config.rpcConfig,
+      },
     };
   } catch (error) {
     console.error("Error reading config:", error);
@@ -81,6 +79,14 @@ export function writeConfig(config: Partial<CliConfig>): void {
       currentConfig = {
         ...DEFAULT_CONFIG,
         ...JSON.parse(configStr),
+      };
+    }
+
+    // Handle rpcConfig updates specially to merge fields
+    if (config.rpcConfig) {
+      config.rpcConfig = {
+        ...currentConfig.rpcConfig,
+        ...config.rpcConfig,
       };
     }
 
@@ -103,6 +109,13 @@ export async function getConfig(): Promise<void> {
   console.log("\n🔗 RPC URL:", config.rpcUrl);
   console.log("🔑 Keypair Path:", config.keypair);
   console.log("🌐 Network:", config.network);
+
+  // Print RPC configuration
+  console.log("\n🔧 RPC Configuration:");
+  console.log("  URL:", config.rpcConfig.url);
+  console.log("  Username:", config.rpcConfig.username);
+  console.log("  Password:", config.rpcConfig.password ? "********" : "");
+
   console.log("\n📂 Config Location:", CONFIG_FILE);
   console.log("=".repeat(30) + "\n");
 }

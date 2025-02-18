@@ -19,6 +19,11 @@ const DEFAULT_CONFIG: CliConfig = {
   keypair: path.join(os.homedir(), ".apl-sdk", "id.json"),
   rpcUrl: "http://localhost:9002",
   network: "regtest",
+  rpcConfig: {
+    url: "http://localhost:18443",
+    username: "bitcoin",
+    password: "bitcoin",
+  },
 };
 
 describe("Config Command", () => {
@@ -59,23 +64,32 @@ describe("Config Command", () => {
 
   describe("get subcommand", () => {
     it("should call getConfig", async () => {
+      const config = { ...DEFAULT_CONFIG };
+      mockedConfigModule.readConfig.mockReturnValue(config);
+
       await program.parseAsync(["node", "test", "config", "get"]);
-      expect(configModule.getConfig).toHaveBeenCalled();
+      expect(mockedConfigModule.readConfig).toHaveBeenCalled();
+      expect(console.log).toHaveBeenCalledWith(JSON.stringify(config, null, 2));
     });
 
     it("should handle errors", async () => {
       const error = new Error("Test error");
-      mockedConfigModule.getConfig.mockImplementationOnce(() => {
+      mockedConfigModule.readConfig.mockImplementationOnce(() => {
         throw error;
       });
 
       await program.parseAsync(["node", "test", "config", "get"]);
-      expect(console.error).toHaveBeenCalledWith("Error:", error.message);
+      expect(console.error).toHaveBeenCalledWith(
+        "Error reading configuration:",
+        error
+      );
     });
   });
 
   describe("set subcommand", () => {
     it("should require at least one option", async () => {
+      mockedConfigModule.readConfig.mockReturnValue(DEFAULT_CONFIG);
+
       await program.parseAsync(["node", "test", "config", "set"]);
       expect(process.exitCode).toBe(1);
       expect(console.error).toHaveBeenCalledWith(
@@ -85,14 +99,19 @@ describe("Config Command", () => {
 
     it("should call setConfig with url option", async () => {
       const url = "http://test:8899";
+      mockedConfigModule.readConfig.mockReturnValue(DEFAULT_CONFIG);
+
       await program.parseAsync(["node", "test", "config", "set", "-u", url]);
-      expect(configModule.setConfig).toHaveBeenCalledWith({
+      expect(mockedConfigModule.setConfig).toHaveBeenCalledWith({
+        ...DEFAULT_CONFIG,
         rpcUrl: url,
       });
     });
 
     it("should call setConfig with keypair option", async () => {
       const keypair = "/test/keypair.json";
+      mockedConfigModule.readConfig.mockReturnValue(DEFAULT_CONFIG);
+
       await program.parseAsync([
         "node",
         "test",
@@ -101,13 +120,16 @@ describe("Config Command", () => {
         "-k",
         keypair,
       ]);
-      expect(configModule.setConfig).toHaveBeenCalledWith({
+      expect(mockedConfigModule.setConfig).toHaveBeenCalledWith({
+        ...DEFAULT_CONFIG,
         keypair,
       });
     });
 
     it("should call setConfig with network option", async () => {
       const network = "testnet";
+      mockedConfigModule.readConfig.mockReturnValue(DEFAULT_CONFIG);
+
       await program.parseAsync([
         "node",
         "test",
@@ -116,8 +138,37 @@ describe("Config Command", () => {
         "--network",
         network,
       ]);
-      expect(configModule.setConfig).toHaveBeenCalledWith({
+      expect(mockedConfigModule.setConfig).toHaveBeenCalledWith({
+        ...DEFAULT_CONFIG,
         network,
+      });
+    });
+
+    it("should call setConfig with RPC options", async () => {
+      const rpcUrl = "http://test:18443";
+      const rpcUsername = "testuser";
+      const rpcPassword = "testpass";
+      mockedConfigModule.readConfig.mockReturnValue(DEFAULT_CONFIG);
+
+      await program.parseAsync([
+        "node",
+        "test",
+        "config",
+        "set",
+        "--rpc-url",
+        rpcUrl,
+        "--rpc-username",
+        rpcUsername,
+        "--rpc-password",
+        rpcPassword,
+      ]);
+      expect(mockedConfigModule.setConfig).toHaveBeenCalledWith({
+        ...DEFAULT_CONFIG,
+        rpcConfig: {
+          url: rpcUrl,
+          username: rpcUsername,
+          password: rpcPassword,
+        },
       });
     });
   });
